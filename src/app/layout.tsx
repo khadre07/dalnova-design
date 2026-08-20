@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, Geist, Geist_Mono } from "next/font/google";
+import PreviewNotice from "@/components/PreviewNotice";
 import { SiteProvider } from "@/lib/site-state";
 import "./globals.css";
 
@@ -25,6 +26,11 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
+/* Safe by default: the site is treated as a prototype unless someone sets
+   NEXT_PUBLIC_PREVIEW=0. While it is a prototype it carries invented SLA
+   figures and contact details, and must not be indexed. */
+const IS_PREVIEW = process.env.NEXT_PUBLIC_PREVIEW !== "0";
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://dalnova.tech"),
   title: {
@@ -40,6 +46,7 @@ export const metadata: Metadata = {
     "blockchain entreprise",
     "supervision infrastructure",
   ],
+  robots: IS_PREVIEW ? { index: false, follow: false } : undefined,
   openGraph: {
     type: "website",
     siteName: "Dalnova Technologies",
@@ -67,7 +74,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body>
-        <SiteProvider>{children}</SiteProvider>
+        <SiteProvider>
+          {children}
+          {IS_PREVIEW ? <PreviewNotice /> : null}
+        </SiteProvider>
       </body>
     </html>
   );

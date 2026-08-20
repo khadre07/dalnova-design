@@ -641,6 +641,110 @@
   }
 
   /* ------------------------------------------------------------------
+     Project tags riding the conduits
+  ------------------------------------------------------------------- */
+
+  .conduit-tag {
+    position: absolute;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    /* The anchor sits on the curve at t ~ 0.83, which is past his silhouette
+       in the empty band between the copy and the figure. Anything earlier put
+       the names on his chest, where nobody could read them. */
+    transform: translate(0.7rem, -0.55rem);
+    white-space: nowrap;
+    animation: conduit-tag-charge 5.4s var(--ease-out) infinite;
+  }
+
+  .conduit-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .conduit-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    transform: translateY(0.25rem);
+    flex: none;
+  }
+
+  .conduit-name {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .conduit-meta {
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: #66757b;
+  }
+
+  /* The tag brightens as its own charge passes, then settles back. Same 5.4s
+     cycle and the same per-conduit delay as .conduit-pulse. */
+  @keyframes conduit-tag-charge {
+    0%,
+    100% {
+      opacity: 0.42;
+    }
+    12% {
+      opacity: 1;
+    }
+    45% {
+      opacity: 0.6;
+    }
+  }
+
+  /* ------------------------------------------------------------------
+     Prototype notice — amber, because this is a message from people
+  ------------------------------------------------------------------- */
+
+  .preview-notice {
+    position: fixed;
+    left: 50%;
+    bottom: 1rem;
+    z-index: 60;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    max-width: calc(100vw - 2rem);
+    padding: 0.6rem 1rem;
+    border: 1px solid color-mix(in oklab, var(--color-ember) 45%, transparent);
+    border-radius: 2px;
+    background: rgba(9, 12, 16, 0.92);
+    backdrop-filter: blur(10px);
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: #b6a58f;
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  .preview-notice strong {
+    color: var(--color-ember);
+    font-weight: 600;
+  }
+
+  .preview-dot {
+    flex: none;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-ember);
+    box-shadow: 0 0 8px var(--color-ember);
+  }
+
+  /* ------------------------------------------------------------------
      Instrument HUD
   ------------------------------------------------------------------- */
 
@@ -667,6 +771,12 @@
       opacity: 0.35;
       stroke-dashoffset: 0;
       stroke-dasharray: none;
+    }
+
+    /* The project names stay readable; only their pulsing stops. */
+    .conduit-tag {
+      animation: none;
+      opacity: 0.9;
     }
 
     /* Reduced motion means gentler, not broken: keep the fade, drop the travel */

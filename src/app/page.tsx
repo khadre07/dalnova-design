@@ -12,8 +12,8 @@ export default function Page() {
     <>
       {/* Fixed backdrop layers. The figure never unmounts and never re-enters:
           one continuous shot from the hero to the footer. */}
-      <div className="pointer-events-none fixed inset-0 z-0" aria-hidden="true">
-        <div className="grid-field absolute inset-0 opacity-[0.5]" />
+      <div className="pointer-events-none fixed inset-0 z-0">
+        <div className="grid-field absolute inset-0 opacity-[0.5]" aria-hidden="true" />
 
         <div
           className="mx-auto flex h-full max-w-[1560px] justify-end"
@@ -26,7 +26,7 @@ export default function Page() {
 
         {/* Scrim: on narrow screens the figure sits behind the copy, so the
             left edge is darkened enough to keep body text at AA contrast. */}
-        <div className="stage-scrim absolute inset-0" />
+        <div className="stage-scrim absolute inset-0" aria-hidden="true" />
       </div>
 
       <SiteNav />

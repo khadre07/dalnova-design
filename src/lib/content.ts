@@ -12,9 +12,13 @@ export type Capability = {
   points: string[];
 };
 
+/** Rides one light conduit each, out of the reactor and across the frame. */
+export type Project = { name: string; meta: string };
+
 export type Content = {
   nav: { href: string; label: string }[];
   navCta: string;
+  projects: Project[];
   hero: {
     eyebrow: string;
     title: string[];
@@ -56,6 +60,14 @@ export const CONTENT: Record<Lang, Content> = {
       { href: "#contact", label: "Contact" },
     ],
     navCta: "Parler à un ingénieur",
+    /* PLACEHOLDERS — un seul nom est réel (Archi-Files). Remplacez les trois
+       autres par vos vrais projets, l'ordre suit les conduits de haut en bas. */
+    projects: [
+      { name: "Archi-Files", meta: "GED & archivage légal" },
+      { name: "Sentinel-24", meta: "Supervision & astreinte" },
+      { name: "Ledger-Trace", meta: "Traçabilité certifiée" },
+      { name: "Nova-Ops", meta: "Modèles en production" },
+    ],
     hero: {
       eyebrow: "Infogérance · IA · Blockchain · Support",
       title: ["Vos systèmes", "tournent. Même", "à 3 h du matin."],
@@ -194,6 +206,12 @@ export const CONTENT: Record<Lang, Content> = {
       { href: "#contact", label: "Contact" },
     ],
     navCta: "Talk to an engineer",
+    projects: [
+      { name: "Archi-Files", meta: "Records & legal archiving" },
+      { name: "Sentinel-24", meta: "Monitoring & on-call" },
+      { name: "Ledger-Trace", meta: "Certified traceability" },
+      { name: "Nova-Ops", meta: "Models in production" },
+    ],
     hero: {
       eyebrow: "Managed IT · AI · Blockchain · Support",
       title: ["Your systems", "stay up. Even", "at 3 in the morning."],

@@ -10,11 +10,63 @@ const TEXTURE = "/robot.webp";
    own emissive pixels, not eyeballed — every conduit is anchored to it. */
 const REACTOR = { x: 53, y: 29 };
 
+/* Eye centres, also measured: the brightest cyan cluster in the top 16% of the
+   texture, split at its widest horizontal gap. Both land on the same scanline,
+   which is how we know the detection caught eyes and not helmet highlights.
+   Y is flipped here because texture space counts up from the bottom. */
+const EYE_L = { x: 0.498, y: 1 - 0.0958 };
+const EYE_R = { x: 0.599, y: 1 - 0.0927 };
+const EYE_RADIUS = 0.032;
+
+/* One conduit per project, in SVG user units on a 0..100 box that maps onto the
+   figure. `t` is where along the curve the project's node sits — chosen so the
+   labels land in the gap between the copy and his silhouette rather than on
+   either. Control points are ordered top to bottom, matching CONTENT.projects. */
+const CONDUITS = [
+  { c1: [30, REACTOR.y - 4], c2: [10, 14], end: [-70, 9], t: 0.829 },
+  { c1: [26, REACTOR.y + 2], c2: [6, 36], end: [-70, 34], t: 0.82 },
+  { c1: [28, REACTOR.y + 8], c2: [8, 62], end: [-70, 68], t: 0.825 },
+  { c1: [34, REACTOR.y + 14], c2: [14, 88], end: [-70, 96], t: 0.838 },
+] as const;
+
+/** Point on a cubic Bézier. Solved directly rather than via getPointAtLength,
+ *  which would force a layout flush on every resize. */
+function bezier(
+  p0: readonly [number, number],
+  p1: readonly [number, number],
+  p2: readonly [number, number],
+  p3: readonly [number, number],
+  t: number,
+): [number, number] {
+  const u = 1 - t;
+  const a = u * u * u;
+  const b = 3 * u * u * t;
+  const c = 3 * u * t * t;
+  const d = t * t * t;
+  return [
+    a * p0[0] + b * p1[0] + c * p2[0] + d * p3[0],
+    a * p0[1] + b * p1[1] + c * p2[1] + d * p3[1],
+  ];
+}
+
 const VERT = /* glsl */ `
+  uniform float uBend;
   varying vec2 vUv;
+  varying float vBulge;
+
   void main() {
     vUv = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+
+    // The plane is bent into a shallow cylinder. Combined with a perspective
+    // camera this is what lets a flat cut-out read as a body with a front and
+    // two flanks when it turns — position.x runs -0.5..0.5, so the cosine
+    // peaks at the centre line and falls to zero at both silhouette edges.
+    vec3 p = position;
+    float bulge = cos(position.x * 3.14159265);
+    p.z += bulge * uBend;
+    vBulge = bulge;
+
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
   }
 `;
 
@@ -28,9 +80,26 @@ const FRAG = /* glsl */ `
   uniform float uProgress;
   uniform float uIntensity;
   uniform float uPulse;
+  uniform float uAspect;
+  uniform float uTurn;
+  uniform vec2  uEyeL;
+  uniform vec2  uEyeR;
+  uniform float uEyeRadius;
   varying vec2 vUv;
+  varying float vBulge;
 
   float luma(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
+
+  float hash(float n) { return fract(sin(n) * 43758.5453123); }
+
+  /* Value noise over time. Stepped-and-smoothed rather than a sine, because a
+     sine reads as a machine breathing and we want an arc that is not quite
+     stable. */
+  float flicker(float t) {
+    float i = floor(t);
+    float f = fract(t);
+    return mix(hash(i), hash(i + 1.0), f * f * (3.0 - 2.0 * f));
+  }
 
   void main() {
     vec2 uv = vUv;
@@ -62,15 +131,33 @@ const FRAG = /* glsl */ `
     float sweepPos = fract(uv.y * 0.55 - uTime * 0.055);
     float sweep = smoothstep(0.055, 0.0, abs(sweepPos - 0.5));
 
-    // Emissive parts (eyes, reactor) already glow in the render; push them
-    // toward whichever accent the current section owns.
+    // Emissive parts already glow in the render; push them toward whichever
+    // accent the current section owns.
     float hot = smoothstep(0.52, 0.94, luma(g.rgb));
 
     vec3 col = base.rgb;
-    col *= 0.88 + 0.12 * uProgress;                       // page darkens as you descend
-    col += uAccent * rim * (0.30 + 0.50 * sweep) * uIntensity;
+    col *= 0.88 + 0.12 * uProgress;
+
+    // Cylinder shading: the flanks fall away from the light as he turns, which
+    // is most of what sells the rotation.
+    col *= 0.80 + 0.20 * vBulge;
+
+    // The edge he is turning toward catches more of the accent.
+    float lead = clamp((uv.x - 0.5) * uTurn * 4.0, 0.0, 1.0);
+    col += uAccent * rim * (0.30 + 0.50 * sweep + 0.35 * lead) * uIntensity;
     col += uAccent * sweep * g.a * 0.09 * uIntensity;
     col += uAccent * hot * (0.55 + 0.35 * uPulse) * uIntensity;
+
+    /* Eyes. Distances are corrected for the texture's aspect so the halo is a
+       circle in pixels rather than an ellipse in UV. Two rates are mixed: a
+       fast unsteady shimmer, and a rare hard spark. */
+    vec2 fix = vec2(1.0, 1.0 / uAspect);
+    float dEye = min(length((uv - uEyeL) * fix), length((uv - uEyeR) * fix));
+    float eyeMask = smoothstep(uEyeRadius, 0.0, dEye);
+    float shimmer = flicker(uTime * 9.0);
+    float spark = smoothstep(0.90, 1.0, flicker(uTime * 2.6));
+    float eyeGain = (0.45 + 0.85 * shimmer + 1.7 * spark) * uIntensity;
+    col += uAccent * eyeMask * eyeGain * max(base.a, 0.35);
 
     // Interlace, barely there. Removing it makes the figure look pasted on.
     float scan = 0.5 + 0.5 * sin(uv.y / uTexel.y * 0.9);
@@ -125,7 +212,7 @@ export default function RobotStage() {
         renderer = new THREE.WebGLRenderer({
           canvas,
           alpha: true,
-          antialias: false,
+          antialias: true,
           powerPreference: "high-performance",
         });
       } catch {
@@ -136,8 +223,14 @@ export default function RobotStage() {
       renderer.setClearAlpha(0);
 
       const scene = new THREE.Scene();
-      const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 10);
-      camera.position.z = 1;
+
+      // Perspective, not orthographic: without foreshortening a rotating plane
+      // just gets narrower, and the turn reads as a closing door.
+      const FOV = 32;
+      const CAM_Z = 6;
+      const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 100);
+      camera.position.z = CAM_Z;
+      const visibleHeight = 2 * CAM_Z * Math.tan((FOV / 2) * (Math.PI / 180));
 
       const texture = await new THREE.TextureLoader()
         .loadAsync(TEXTURE)
@@ -152,7 +245,7 @@ export default function RobotStage() {
       texture.colorSpace = THREE.SRGBColorSpace;
       texture.minFilter = THREE.LinearMipmapLinearFilter;
       texture.magFilter = THREE.LinearFilter;
-      texture.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
+      texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 
       const texW = texture.image.width as number;
       const texH = texture.image.height as number;
@@ -166,58 +259,80 @@ export default function RobotStage() {
         uProgress: { value: 0 },
         uIntensity: { value: reduced ? 0.55 : 1 },
         uPulse: { value: 0 },
+        uAspect: { value: texAspect },
+        uTurn: { value: 0 },
+        uBend: { value: 0 },
+        uEyeL: { value: new THREE.Vector2(EYE_L.x, EYE_L.y) },
+        uEyeR: { value: new THREE.Vector2(EYE_R.x, EYE_R.y) },
+        uEyeRadius: { value: EYE_RADIUS },
       };
 
+      // Segmented across x so the cylindrical bend is smooth; one segment down
+      // y, because nothing displaces vertically.
       const mesh = new THREE.Mesh(
-        new THREE.PlaneGeometry(2, 2),
+        new THREE.PlaneGeometry(1, 1, 96, 1),
         new THREE.ShaderMaterial({
           uniforms,
           vertexShader: VERT,
           fragmentShader: FRAG,
           transparent: true,
           depthWrite: false,
+          side: THREE.DoubleSide,
         }),
       );
       scene.add(mesh);
 
-      /* Fit the figure to the stage and publish its pixel box, so the conduit
-         overlay can anchor to the reactor instead of guessing at it. */
       let stage = { w: 1, h: 1 };
       const baseScale = { x: 1, y: 1 };
       let baseY = 0;
+
       const layout = () => {
         const rect = host.getBoundingClientRect();
         stage = { w: Math.max(1, rect.width), h: Math.max(1, rect.height) };
+
+        camera.aspect = stage.w / stage.h;
+        camera.updateProjectionMatrix();
+        const visibleWidth = visibleHeight * camera.aspect;
 
         // Narrow *viewports* stack the figure behind the copy, so it sits
         // smaller there. Measuring the stage instead of the window shrank the
         // figure on desktop too, because the column is only ~47vw wide.
         const narrow = window.innerWidth < 1024;
-        // 0.88 plus the downward offset below keeps his head clear of the
-        // 68px header, so the language toggle stays readable over him.
-        const fill = narrow ? 0.7 : 0.88;
-        baseY = narrow ? 0 : -0.06;
-        let sy = fill;
-        let sx = (sy * stage.h * texAspect) / stage.w;
-        if (sx > 0.98) {
-          sx = 0.98;
-          sy = (sx * stage.w) / (texAspect * stage.h);
+        // The turn swings him sideways, so he needs a little more clearance
+        // under the 68px header than a static figure would.
+        const fill = narrow ? 0.68 : 0.86;
+
+        let worldH = visibleHeight * fill;
+        let worldW = worldH * texAspect;
+        if (worldW > visibleWidth * 0.94) {
+          worldW = visibleWidth * 0.94;
+          worldH = worldW / texAspect;
         }
-        baseScale.x = sx;
-        baseScale.y = sy;
-        mesh.scale.set(sx, sy, 1);
+
+        baseScale.x = worldW;
+        baseScale.y = worldH;
+        baseY = narrow ? 0 : -visibleHeight * 0.035;
+        mesh.scale.set(worldW, worldH, 1);
+
+        // Bend depth is tied to his width, so the curvature looks the same
+        // whatever size he is drawn at.
+        uniforms.uBend.value = narrow ? worldW * 0.08 : worldW * 0.15;
 
         const dpr = Math.min(window.devicePixelRatio || 1, narrow ? 1.5 : 2);
         renderer.setPixelRatio(dpr);
         renderer.setSize(stage.w, stage.h, false);
 
-        // The conduit overlay tracks the figure's real pixel box, including the
-        // vertical offset, so the reactor anchor never drifts off his chest.
+        // The conduit overlay tracks the figure's projected box. It is taken
+        // from the unrotated bounds on purpose: the conduits start hidden
+        // behind his body, so a few pixels of swing never show.
+        const pxPerUnit = stage.h / visibleHeight;
+        const boxW = worldW * pxPerUnit;
+        const boxH = worldH * pxPerUnit;
         setBox({
-          left: (stage.w * (1 - sx)) / 2,
-          top: (stage.h * (1 - sy)) / 2 - (baseY * stage.h) / 2,
-          width: stage.w * sx,
-          height: stage.h * sy,
+          left: (stage.w - boxW) / 2,
+          top: (stage.h - boxH) / 2 - baseY * pxPerUnit,
+          width: boxW,
+          height: boxH,
         });
       };
 
@@ -244,8 +359,6 @@ export default function RobotStage() {
       let easedProgress = 0;
       let raf = 0;
       let running = true;
-      // THREE.Clock is deprecated; performance.now() is all this needs and it
-      // survives a pause without accumulating the time the tab spent hidden.
       let started = performance.now();
       let paused = 0;
 
@@ -262,15 +375,24 @@ export default function RobotStage() {
         uniforms.uTime.value = elapsed;
         uniforms.uPulse.value = 0.5 + 0.5 * Math.sin(elapsed * 1.15);
 
-        eased.x += (pointer.x - eased.x) * 0.055;
-        eased.y += (pointer.y - eased.y) * 0.055;
+        eased.x += (pointer.x - eased.x) * 0.05;
+        eased.y += (pointer.y - eased.y) * 0.05;
 
-        // Levitation, pointer drift, and a slow recession as the page scrolls.
-        const breathe = Math.sin(elapsed * 0.55) * 0.012;
-        mesh.position.x = eased.x * 0.045;
-        mesh.position.y = baseY + breathe - eased.y * 0.03 - easedProgress * 0.05;
-        mesh.rotation.z = -eased.x * 0.018;
-        mesh.rotation.y = eased.x * 0.06;
+        /* Rotation. A slow idle sweep so he is never still, plus the pointer,
+           which is the part that reads as "he turned to look at me". Capped at
+           ~28°: past that a flat cut-out starts to look like a sheet of paper
+           on edge, and the illusion of a body breaks. */
+        const idleTurn = Math.sin(elapsed * 0.24) * 0.15;
+        const turn = Math.max(-0.49, Math.min(0.49, idleTurn + eased.x * 0.34));
+        mesh.rotation.y = turn;
+        mesh.rotation.x = eased.y * 0.05;
+        mesh.rotation.z = -eased.x * 0.015;
+        uniforms.uTurn.value = turn;
+
+        const breathe = Math.sin(elapsed * 0.55) * 0.03;
+        mesh.position.x = eased.x * 0.1;
+        mesh.position.y = baseY + breathe - eased.y * 0.07 - easedProgress * 0.16;
+
         // Recession is applied from the stored base each frame. Multiplying the
         // live scale would compound it and walk the figure off screen.
         const recede = 1 - easedProgress * 0.09;
@@ -293,9 +415,13 @@ export default function RobotStage() {
       };
 
       if (reduced) {
-        // One frame is enough: a still, correctly lit composition.
+        // One frame is enough: a still, correctly lit composition, turned very
+        // slightly off-axis so he still reads as a volume rather than a decal.
         uniforms.uTime.value = 2.4;
         uniforms.uPulse.value = 0.5;
+        uniforms.uTurn.value = 0.1;
+        mesh.rotation.y = 0.1;
+        mesh.position.y = baseY;
         renderer.render(scene, camera);
         running = false;
       } else {
@@ -337,9 +463,12 @@ export default function RobotStage() {
   }, [reduced]);
 
   return (
-    <div ref={hostRef} className="relative h-full w-full" aria-hidden="true">
+    /* The host is not aria-hidden: the project tags inside it are real
+       information. Each purely decorative child opts out individually. */
+    <div ref={hostRef} className="relative h-full w-full">
       {/* Ground glow: the figure needs something to stand in, or it floats in a void */}
       <div
+        aria-hidden="true"
         className="pointer-events-none absolute inset-0 transition-[background] duration-[1200ms]"
         style={{
           background: `radial-gradient(58% 46% at 52% 62%, ${ACCENT_HEX[accent]}1f 0%, transparent 72%)`,
@@ -359,12 +488,17 @@ export default function RobotStage() {
         <img
           src={TEXTURE}
           alt=""
+          aria-hidden="true"
           className="absolute inset-0 z-10 m-auto h-full w-auto max-w-none object-contain"
           style={{ filter: `drop-shadow(0 0 60px ${ACCENT_HEX[accent]}55)` }}
         />
       ) : (
         <>
-          <canvas ref={canvasRef} className="absolute inset-0 z-10 block h-full w-full" />
+          <canvas
+            ref={canvasRef}
+            aria-hidden="true"
+            className="absolute inset-0 z-10 block h-full w-full"
+          />
           {/* Scripting off: the canvas would stay an empty rectangle and the
               right half of the page would look broken rather than quiet. */}
           <noscript>
@@ -377,6 +511,8 @@ export default function RobotStage() {
           </noscript>
         </>
       )}
+
+      {box && !failed ? <ConduitLabels box={box} accent={ACCENT_HEX[accent]} /> : null}
     </div>
   );
 }
@@ -385,14 +521,10 @@ export default function RobotStage() {
    reference shot, turned to our purpose: the robot is the hub, and the four
    disciplines are what it feeds. */
 function Conduits({ box, accent, reduced }: { box: Box; accent: string; reduced: boolean }) {
-  // One conduit per discipline. They leave the reactor, curve out of frame to
-  // the left, and terminate off-canvas behind the copy.
-  const paths = [
-    `M ${REACTOR.x} ${REACTOR.y} C 30 ${REACTOR.y - 4}, 10 14, -70 9`,
-    `M ${REACTOR.x} ${REACTOR.y} C 26 ${REACTOR.y + 2}, 6 36, -70 34`,
-    `M ${REACTOR.x} ${REACTOR.y} C 28 ${REACTOR.y + 8}, 8 62, -70 68`,
-    `M ${REACTOR.x} ${REACTOR.y} C 34 ${REACTOR.y + 14}, 14 88, -70 96`,
-  ];
+  const paths = CONDUITS.map(
+    (c) =>
+      `M ${REACTOR.x} ${REACTOR.y} C ${c.c1[0]} ${c.c1[1]}, ${c.c2[0]} ${c.c2[1]}, ${c.end[0]} ${c.end[1]}`,
+  );
 
   return (
     <svg
@@ -436,5 +568,50 @@ function Conduits({ box, accent, reduced }: { box: Box; accent: string; reduced:
 
       <circle cx={REACTOR.x} cy={REACTOR.y} r="1.6" fill={accent} opacity="0.55" />
     </svg>
+  );
+}
+
+/* Project tags riding the conduits. Rendered as HTML rather than <text>: the
+   SVG above uses preserveAspectRatio="none", which would stretch any type
+   inside it out of shape. */
+function ConduitLabels({ box, accent }: { box: Box; accent: string }) {
+  const { t } = useSite();
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-20 hidden xl:block">
+      {CONDUITS.map((conduit, i) => {
+        const project = t.projects[i];
+        if (!project) return null;
+
+        const [ux, uy] = bezier(
+          [REACTOR.x, REACTOR.y],
+          conduit.c1,
+          conduit.c2,
+          conduit.end,
+          conduit.t,
+        );
+
+        return (
+          <div
+            key={project.name}
+            className="conduit-tag"
+            style={{
+              left: box.left + (ux / 100) * box.width,
+              top: box.top + (uy / 100) * box.height,
+              // Lit in time with the charge running down its own conduit.
+              animationDelay: `${i * 1.35}s`,
+            }}
+          >
+            <span className="conduit-dot" style={{ background: accent }} />
+            <span className="conduit-text">
+              <span className="conduit-name" style={{ color: accent }}>
+                {project.name}
+              </span>
+              <span className="conduit-meta">{project.meta}</span>
+            </span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
