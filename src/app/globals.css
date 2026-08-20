@@ -1,0 +1,688 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------
+   Dalnova Technologies — design tokens
+   Colours are sampled directly from the robot render, not invented:
+   #05070A / #0B1117 / #40454B / #B2C4C3 are its own values, and
+   #35D2FF / #FF9A45 are its arc-reactor cyan and its flank rim-light.
+   Semantics: cyan = machine, amber = human.
+------------------------------------------------------------------- */
+
+@theme {
+  --color-void: #05070a;
+  --color-carbon: #0b1117;
+  --color-panel: #101922;
+  --color-steel: #2a3238;
+  --color-steel-hi: #40454b;
+  --color-chrome: #b2c4c3;
+  --color-chrome-dim: #6f7a7f;
+  --color-arc: #35d2ff;
+  --color-arc-deep: #0b7fa8;
+  --color-ember: #ff9a45;
+
+  --font-display: var(--font-archivo), "Arial Narrow", system-ui, sans-serif;
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
+}
+
+:root {
+  /* Emil's curves — the built-ins are too weak to read as intentional */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+
+  --rail: 1px;
+  --shell-x: clamp(1.25rem, 4vw, 4.5rem);
+
+  color-scheme: dark;
+}
+
+/* Element defaults live in @layer base and component classes in
+   @layer components. Unlayered rules outrank every Tailwind utility, so
+   leaving .btn unlayered made `hidden lg:inline-flex` a no-op and the
+   header CTA sat on top of the wordmark on phones. */
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-void);
+    color: var(--color-chrome);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: var(--color-arc);
+    color: var(--color-void);
+  }
+
+  /* Focus is a product feature, not an afterthought */
+  :focus-visible {
+    outline: 2px solid var(--color-arc);
+    outline-offset: 3px;
+    border-radius: 1px;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+@layer components {
+  /* ------------------------------------------------------------------
+     Type roles
+  ------------------------------------------------------------------- */
+
+  /* Archivo's width axis is the whole point: expanded uppercase reads as
+     machined signage rather than another SaaS grotesk. */
+  .t-display {
+    font-family: var(--font-display);
+    font-variation-settings: "wdth" 112;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: -0.012em;
+    line-height: 0.92;
+    color: #eaf3f5;
+    text-wrap: balance;
+  }
+
+  /* Sized so the three written lines stay three lines in the 50%-width column,
+     and so the telemetry panel below still clears the fold at 900px tall. */
+  .t-display-xl {
+    font-size: clamp(1.8rem, 4.35vw, 4rem);
+  }
+
+  @media (min-width: 480px) {
+    .t-display-xl {
+      font-size: clamp(2.1rem, 4.35vw, 4rem);
+    }
+  }
+
+  .t-display-lg {
+    font-size: clamp(2rem, 4.2vw, 3.4rem);
+  }
+
+  .t-display-sm {
+    font-size: clamp(1.1rem, 1.7vw, 1.45rem);
+    font-variation-settings: "wdth" 104;
+    letter-spacing: 0.005em;
+    line-height: 1.05;
+  }
+
+  /* Mono carries every label, reading, and unit — the telemetry voice */
+  .t-mono {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-chrome-dim);
+    font-weight: 500;
+  }
+
+  .t-lede {
+    font-size: clamp(1.0625rem, 1.35vw, 1.2rem);
+    line-height: 1.62;
+    color: #97a6ab;
+    text-wrap: pretty;
+  }
+
+  .t-body {
+    color: #8a999f;
+    text-wrap: pretty;
+  }
+
+  /* ------------------------------------------------------------------
+     Surfaces — hard edges only. Nothing here is rounded above 2px:
+     machined panels, not pill-shaped cards.
+  ------------------------------------------------------------------- */
+
+  .grid-field {
+    background-image: radial-gradient(
+      circle at center,
+      rgba(120, 165, 180, 0.16) 1px,
+      transparent 1px
+    );
+    background-size: 30px 30px;
+  }
+
+  .hairline {
+    border: var(--rail) solid color-mix(in oklab, var(--color-steel) 62%, transparent);
+  }
+
+  .rule {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--color-steel-hi) 80%, transparent),
+      transparent 78%
+    );
+  }
+
+  /* Corner ticks: the console framing that makes the right column read as
+     an instrument rather than a picture frame. */
+  .ticks::before,
+  .ticks::after {
+    content: "";
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    border-color: var(--color-steel-hi);
+    pointer-events: none;
+  }
+
+  .ticks::before {
+    top: -1px;
+    left: -1px;
+    border-top: 1px solid;
+    border-left: 1px solid;
+  }
+
+  .ticks::after {
+    bottom: -1px;
+    right: -1px;
+    border-bottom: 1px solid;
+    border-right: 1px solid;
+  }
+
+  /* ------------------------------------------------------------------
+     Controls
+  ------------------------------------------------------------------- */
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.85rem 1.4rem;
+    border-radius: 2px;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+      transform 160ms var(--ease-out),
+      background-color 200ms ease,
+      border-color 200ms ease,
+      color 200ms ease,
+      box-shadow 260ms var(--ease-out);
+  }
+
+  .btn:active {
+    transform: scale(0.975);
+  }
+
+  .btn-primary {
+    background: var(--color-arc);
+    color: #02171f;
+    border: 1px solid var(--color-arc);
+    box-shadow: 0 0 0 0 rgba(53, 210, 255, 0.45);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: #cfdcdf;
+    border: 1px solid color-mix(in oklab, var(--color-steel-hi) 85%, transparent);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .btn-primary:hover {
+      box-shadow: 0 0 28px -4px rgba(53, 210, 255, 0.55);
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--color-arc);
+      color: #eaf3f5;
+    }
+  }
+
+  /* ------------------------------------------------------------------
+     Stage
+  ------------------------------------------------------------------- */
+
+  /* On phones the figure sits directly behind the copy, so it is dimmed and
+     veiled until body text clears AA against it. Atmosphere is not worth an
+     unreadable paragraph. */
+  .stage-slot {
+    opacity: 0.2;
+  }
+
+  .stage-scrim {
+    background: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--color-void) 82%, transparent) 0%,
+      color-mix(in oklab, var(--color-void) 72%, transparent) 100%
+    );
+  }
+
+  @media (min-width: 1024px) {
+    .stage-slot {
+      opacity: 1;
+    }
+
+    .stage-scrim {
+      background: linear-gradient(
+        100deg,
+        var(--color-void) 0%,
+        color-mix(in oklab, var(--color-void) 72%, transparent) 26%,
+        transparent 46%
+      );
+    }
+  }
+
+  /* ------------------------------------------------------------------
+     Navigation
+  ------------------------------------------------------------------- */
+
+  .nav-link {
+    position: relative;
+    padding-block: 0.4rem;
+    transition: color 200ms ease;
+  }
+
+  .nav-link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 1px;
+    width: 100%;
+    background: var(--color-arc);
+    transform-origin: left;
+    transform: scaleX(0);
+    transition: transform 240ms var(--ease-out);
+  }
+
+  .lang-btn {
+    padding: 0.4rem 0.6rem;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    color: var(--color-chrome-dim);
+    transition: color 200ms ease, background-color 200ms ease;
+  }
+
+  .lang-btn[data-active="true"] {
+    color: var(--color-void);
+    background: var(--color-chrome);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .nav-link:hover {
+      color: #eaf3f5;
+    }
+
+    .nav-link:hover::after {
+      transform: scaleX(1);
+    }
+
+    .lang-btn:not([data-active="true"]):hover {
+      color: #eaf3f5;
+    }
+  }
+
+  /* Mobile menu ---------------------------------------------------- */
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .menu-btn {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 40px;
+    height: 40px;
+    padding: 0 9px;
+    background: transparent;
+    border: 1px solid color-mix(in oklab, var(--color-steel-hi) 85%, transparent);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: transform 160ms var(--ease-out), border-color 200ms ease;
+  }
+
+  .menu-btn:active {
+    transform: scale(0.96);
+  }
+
+  .menu-bar {
+    display: block;
+    height: 1.5px;
+    width: 100%;
+    background: #cfdcdf;
+    transition:
+      transform 220ms var(--ease-out),
+      opacity 180ms ease;
+  }
+
+  .menu-bar[data-bar="top"][data-open="true"] {
+    transform: translateY(3.25px) rotate(45deg);
+  }
+
+  .menu-bar[data-bar="bottom"][data-open="true"] {
+    transform: translateY(-3.25px) rotate(-45deg);
+  }
+
+  .mobile-menu {
+    position: fixed;
+    inset: 68px 0 0;
+    z-index: 45;
+    padding: 2.5rem var(--shell-x) 3rem;
+    background: rgba(5, 7, 10, 0.97);
+    backdrop-filter: blur(18px);
+    opacity: 0;
+    /* Never from scale(0): the panel should look like it was already there */
+    transform: scale(0.985);
+    /* visibility rather than display, so the fade actually gets to play; it is
+       delayed out and instant in, and keeps the closed panel off the tab order. */
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      opacity 200ms var(--ease-out),
+      transform 200ms var(--ease-out),
+      visibility 0s linear 200ms;
+  }
+
+  .mobile-menu[data-open="true"] {
+    opacity: 1;
+    transform: scale(1);
+    visibility: visible;
+    pointer-events: auto;
+    transition-delay: 0s, 0s, 0s;
+  }
+
+  .mobile-link {
+    display: block;
+    padding: 1rem 0;
+    border-bottom: 1px solid color-mix(in oklab, var(--color-steel) 60%, transparent);
+    font-family: var(--font-display);
+    font-variation-settings: "wdth" 108;
+    font-weight: 600;
+    font-size: 1.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    color: #eaf3f5;
+  }
+
+  /* ------------------------------------------------------------------
+     Capability modules
+  ------------------------------------------------------------------- */
+
+  .module {
+    transition: background-color 300ms ease;
+  }
+
+  .module-rail {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    opacity: 0.55;
+    transition: opacity 300ms ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .module:hover {
+      background-color: #0b1219;
+    }
+
+    .module:hover .module-rail {
+      opacity: 1;
+    }
+  }
+
+  /* ------------------------------------------------------------------
+     Method timeline
+  ------------------------------------------------------------------- */
+
+  .step-node {
+    position: absolute;
+    left: -4px;
+    top: 0.55rem;
+    width: 7px;
+    height: 7px;
+    background: var(--color-void);
+    border: 1px solid var(--color-arc);
+    border-radius: 50%;
+  }
+
+  /* ------------------------------------------------------------------
+     Statistics
+  ------------------------------------------------------------------- */
+
+  .stat-value {
+    font-family: var(--font-display);
+    font-variation-settings: "wdth" 108;
+    font-weight: 600;
+    font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+    line-height: 1;
+    color: #eaf3f5;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat-unit {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--color-arc);
+  }
+
+  /* ------------------------------------------------------------------
+     Contact channels
+  ------------------------------------------------------------------- */
+
+  .channel {
+    display: grid;
+    grid-template-columns: 8.5rem 1fr auto;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.15rem 1.25rem;
+    transition: background-color 220ms ease;
+  }
+
+  .channel-value {
+    font-family: var(--font-mono);
+    font-size: 0.9375rem;
+    color: #dcebee;
+    overflow-wrap: anywhere;
+  }
+
+  .channel-arrow {
+    color: var(--color-chrome-dim);
+    transform: translateX(0);
+    transition: transform 220ms var(--ease-out), color 220ms ease;
+  }
+
+  @media (max-width: 480px) {
+    .channel {
+      grid-template-columns: 1fr auto;
+    }
+
+    .channel > .t-mono {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .channel:hover {
+      background-color: #0b1219;
+    }
+
+    .channel:hover .channel-arrow {
+      transform: translateX(4px);
+      color: #eaf3f5;
+    }
+  }
+
+  .footer-link {
+    font-size: 0.8125rem;
+    color: #7d8c92;
+    transition: color 200ms ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .footer-link:hover {
+      color: #eaf3f5;
+    }
+  }
+
+  /* ------------------------------------------------------------------
+     Scroll hint
+  ------------------------------------------------------------------- */
+
+  .scroll-tick {
+    display: block;
+    width: 1px;
+    height: 34px;
+    background: linear-gradient(180deg, var(--color-arc), transparent);
+    animation: scroll-tick 2.6s var(--ease-in-out) infinite;
+    transform-origin: top;
+  }
+
+  @keyframes scroll-tick {
+    0%,
+    100% {
+      transform: scaleY(0.4);
+      opacity: 0.4;
+    }
+    45% {
+      transform: scaleY(1);
+      opacity: 1;
+    }
+  }
+
+  /* ------------------------------------------------------------------
+     Scroll reveal — transitions, not keyframes, so a fast scroll can
+     retarget mid-flight instead of restarting.
+  ------------------------------------------------------------------- */
+
+  /* Hidden only once scripting has proved itself. Without this guard the whole
+     page is a black rectangle until hydration lands — and stays one forever if
+     the bundle fails, which is not a trade a marketing site should make. */
+  [data-js="on"] .reveal {
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+      opacity 620ms var(--ease-out),
+      transform 620ms var(--ease-out);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+
+  [data-js="on"] .reveal[data-shown="true"] {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Hero entrance, same bargain: visible by default, animated when we can. */
+  [data-js="on"] .hero-in {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  [data-js="on"] .hero[data-ready="true"] .hero-in {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+      opacity 700ms var(--ease-out),
+      transform 700ms var(--ease-out);
+    transition-delay: calc(120ms + var(--i, 0) * 70ms);
+  }
+
+  /* ------------------------------------------------------------------
+     Conduits — a charge leaving the reactor and running out to the
+     disciplines. CSS rather than JS so it keeps its rhythm while the
+     main thread is busy hydrating.
+  ------------------------------------------------------------------- */
+
+  .conduit-pulse {
+    stroke-dasharray: 5 195;
+    stroke-dashoffset: 200;
+    opacity: 0;
+    animation: conduit-run 5.4s linear infinite;
+  }
+
+  @keyframes conduit-run {
+    0% {
+      stroke-dashoffset: 200;
+      opacity: 0;
+    }
+    8% {
+      opacity: 0.9;
+    }
+    70% {
+      opacity: 0.55;
+    }
+    100% {
+      stroke-dashoffset: 0;
+      opacity: 0;
+    }
+  }
+
+  /* ------------------------------------------------------------------
+     Instrument HUD
+  ------------------------------------------------------------------- */
+
+  .hud-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid color-mix(in oklab, var(--color-steel) 55%, transparent);
+  }
+
+  .hud-row:last-child {
+    border-bottom: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    .conduit-pulse {
+      animation: none;
+      opacity: 0.35;
+      stroke-dashoffset: 0;
+      stroke-dasharray: none;
+    }
+
+    /* Reduced motion means gentler, not broken: keep the fade, drop the travel */
+    [data-js="on"] .reveal,
+    [data-js="on"] .hero-in {
+      transform: none;
+      transition-duration: 240ms;
+    }
+
+    .btn:active {
+      transform: none;
+    }
+
+    .scroll-tick {
+      animation: none;
+      opacity: 0.6;
+    }
+  }
+}
