@@ -32,11 +32,44 @@ pour toute donnée, tout libellé et toute unité.
 
 Rien n'a de rayon de bordure au-dessus de 2 px. Ce sont des panneaux usinés.
 
+## Passer au modèle 3D
+
+Déposez un fichier nommé **`public/robot.glb`**. C'est tout : `Stage.tsx` teste
+sa présence au chargement et bascule sur la scène 3D. Sans fichier, ou si le
+chargement échoue, la scène plate reprend la main — le site ne casse jamais.
+
+Ce que la scène fait automatiquement avec le modèle :
+
+- **Cadrage** : mesure de la boîte englobante, recentrage, mise à l'échelle à
+  une unité de haut, puis recul de la caméra jusqu'au remplissage voulu. Peu
+  importe l'échelle et l'origine d'origine du fichier.
+- **Matériaux** : reflets calculés depuis un studio généré en mémoire
+  (`RoomEnvironment`), sans HDRI à télécharger. Sans ça, du métal n'a rien à
+  refléter et ressemble à du plastique gris.
+- **Émissif** : tout matériau ou maille dont le nom contient `eye`, `iris`,
+  `core`, `reactor`, `glow`, `led`… reçoit la couleur de la section active.
+  **Nommez vos yeux et votre réacteur en conséquence dans le modèle**, sinon
+  ils resteront éteints.
+- **Faisceaux** : ancrés sur les émissifs situés dans le quart supérieur. À
+  défaut, sur un point par défaut à l'avant de la tête.
+- **Animation** : si le fichier contient un clip nommé `idle`, `breath`,
+  `stand` ou `loop`, il est joué en boucle.
+
+Contraintes pratiques : format `.glb` (binaire, textures incluses), moins de
+~8 Mo, orienté Y vers le haut et **face tournée vers +Z**. Un modèle qui
+regarde ailleurs apparaîtra de profil au chargement.
+
+Un passage de réglage sera nécessaire une fois le vrai modèle en place :
+position des ancres de faisceaux, intensité des lumières et cadrage vertical
+dépendent de sa morphologie.
+
 ## Structure
 
 | Fichier | Rôle |
 | --- | --- |
-| `src/components/RobotStage.tsx` | Scène WebGL, shader de rim-light, conduits, replis |
+| `src/components/Stage.tsx` | Choisit la scène selon la présence de `robot.glb` |
+| `src/components/RobotStage.tsx` | Scène plate : shader de rim-light, conduits, faisceaux |
+| `src/components/RobotModelStage.tsx` | Scène 3D : chargement `.glb`, cadrage, éclairage |
 | `src/lib/site-state.tsx` | Langue, progression de scroll, accent actif |
 | `src/lib/content.ts` | Tout le texte FR et EN |
 | `src/app/globals.css` | Jetons, rôles typographiques, composants |

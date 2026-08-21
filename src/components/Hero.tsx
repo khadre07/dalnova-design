@@ -8,10 +8,24 @@ export default function Hero() {
   const ref = useAccentZone("arc");
   const [ready, setReady] = useState(false);
 
-  // One orchestrated entrance on load. Scroll reveals take over below the fold.
+  /* One orchestrated entrance on load. Scroll reveals take over below the fold.
+     The frame callback exists so the browser paints the closed state once and
+     the transition actually runs — but it is raced against a timer, because a
+     busy main thread can starve rAF and that would leave the headline
+     permanently invisible. Whichever fires first wins. */
   useEffect(() => {
-    const id = window.requestAnimationFrame(() => setReady(true));
-    return () => window.cancelAnimationFrame(id);
+    let done = false;
+    const open = () => {
+      if (done) return;
+      done = true;
+      setReady(true);
+    };
+    const frame = window.requestAnimationFrame(open);
+    const timer = window.setTimeout(open, 250);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(timer);
+    };
   }, []);
 
   // Stagger index only. Whether the line is hidden at all is decided in CSS,

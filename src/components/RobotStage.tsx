@@ -8,7 +8,7 @@ const TEXTURE = "/robot.webp";
 
 /* The arc reactor sits at 53% / 29% of the cut-out. Measured from the render's
    own emissive pixels, not eyeballed — every conduit is anchored to it. */
-const REACTOR = { x: 53, y: 29 };
+export const REACTOR = { x: 53, y: 29 };
 
 /* Eye centres, also measured: the brightest cyan cluster in the top 16% of the
    texture, split at its widest horizontal gap. Both land on the same scanline,
@@ -19,13 +19,13 @@ const EYE_R = { x: 0.599, y: 1 - 0.0927 };
 const EYE_RADIUS = 0.032;
 
 /** What the beams are made of. Ones and zeroes, nothing cleverer. */
-const BINARY = "01011010010110100101100101101001011010010110";
+export const BINARY = "01011010010110100101100101101001011010010110";
 
 /* One conduit per project, in SVG user units on a 0..100 box that maps onto the
    figure. `t` is where along the curve the project's node sits — chosen so the
    labels land in the gap between the copy and his silhouette rather than on
    either. Control points are ordered top to bottom, matching CONTENT.projects. */
-const CONDUITS = [
+export const CONDUITS = [
   { c1: [30, REACTOR.y - 4], c2: [10, 14], end: [-70, 9], t: 0.829 },
   { c1: [26, REACTOR.y + 2], c2: [6, 36], end: [-70, 34], t: 0.82 },
   { c1: [28, REACTOR.y + 8], c2: [8, 62], end: [-70, 68], t: 0.825 },
@@ -34,7 +34,7 @@ const CONDUITS = [
 
 /** Point on a cubic Bézier. Solved directly rather than via getPointAtLength,
  *  which would force a layout flush on every resize. */
-function bezier(
+export function bezier(
   p0: readonly [number, number],
   p1: readonly [number, number],
   p2: readonly [number, number],
@@ -190,7 +190,7 @@ const FRAG = /* glsl */ `
   }
 `;
 
-type Box = { left: number; top: number; width: number; height: number };
+export type Box = { left: number; top: number; width: number; height: number };
 
 export default function RobotStage() {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -637,7 +637,7 @@ export default function RobotStage() {
 /* Light conduits leaving the reactor. This is the borrowed idea from the
    reference shot, turned to our purpose: the robot is the hub, and the four
    disciplines are what it feeds. */
-function Conduits({ box, accent, reduced }: { box: Box; accent: string; reduced: boolean }) {
+export function Conduits({ box, accent, reduced }: { box: Box; accent: string; reduced: boolean }) {
   const paths = CONDUITS.map(
     (c) =>
       `M ${REACTOR.x} ${REACTOR.y} C ${c.c1[0]} ${c.c1[1]}, ${c.c2[0]} ${c.c2[1]}, ${c.end[0]} ${c.end[1]}`,
@@ -689,7 +689,7 @@ function Conduits({ box, accent, reduced }: { box: Box; accent: string; reduced:
 }
 
 /** One eye's beam. Positioned every frame by the render loop, never by React. */
-function EyeBeam({
+export function EyeBeam({
   ref,
   accent,
 }: {
@@ -714,7 +714,7 @@ function EyeBeam({
 /* Project tags riding the conduits. Rendered as HTML rather than <text>: the
    SVG above uses preserveAspectRatio="none", which would stretch any type
    inside it out of shape. */
-function ConduitLabels({ box, accent }: { box: Box; accent: string }) {
+export function ConduitLabels({ box, accent }: { box: Box; accent: string }) {
   const { t } = useSite();
 
   return (

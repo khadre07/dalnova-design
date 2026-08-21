@@ -4,7 +4,7 @@ import Footer from "@/components/Footer";
 import Hero from "@/components/Hero";
 import Method from "@/components/Method";
 import Proof from "@/components/Proof";
-import RobotStage from "@/components/RobotStage";
+import Stage from "@/components/Stage";
 import SiteNav from "@/components/SiteNav";
 
 export default function Page() {
@@ -20,7 +20,7 @@ export default function Page() {
           style={{ paddingInline: "var(--shell-x)" }}
         >
           <div className="stage-slot h-full w-full lg:w-[47%]">
-            <RobotStage />
+            <Stage />
           </div>
         </div>
 
