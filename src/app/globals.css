@@ -601,13 +601,16 @@
     transform: translateY(18px);
   }
 
+  /* The copy starts after the eyes have caught and the beams have reached the
+     left of the frame, so it reads as written by him. The 0.25s / 0.52s / 0.62s
+     ignition timings live in RobotStage's render loop. */
   [data-js="on"] .hero[data-ready="true"] .hero-in {
     opacity: 1;
     transform: translateY(0);
     transition:
-      opacity 700ms var(--ease-out),
-      transform 700ms var(--ease-out);
-    transition-delay: calc(120ms + var(--i, 0) * 70ms);
+      opacity 620ms var(--ease-out),
+      transform 620ms var(--ease-out);
+    transition-delay: calc(940ms + var(--i, 0) * 85ms);
   }
 
   /* ------------------------------------------------------------------
@@ -654,7 +657,21 @@
        the names on his chest, where nobody could read them. */
     transform: translate(0.7rem, -0.55rem);
     white-space: nowrap;
-    animation: conduit-tag-charge 5.4s var(--ease-out) infinite;
+    opacity: 0;
+    animation:
+      conduit-tag-in 620ms var(--ease-out) forwards,
+      conduit-tag-charge 5.4s var(--ease-out) infinite;
+  }
+
+  @keyframes conduit-tag-in {
+    from {
+      opacity: 0;
+      transform: translate(-0.6rem, -0.55rem);
+    }
+    to {
+      opacity: 0.42;
+      transform: translate(0.7rem, -0.55rem);
+    }
   }
 
   .conduit-text {
@@ -699,6 +716,59 @@
     }
     45% {
       opacity: 0.6;
+    }
+  }
+
+  /* ------------------------------------------------------------------
+     Eye beams — a data stream leaving the eyes, in ones and zeroes
+  ------------------------------------------------------------------- */
+
+  .eye-beam {
+    position: absolute;
+    left: 0;
+    top: 0;
+    /* The element's origin is the eye itself; JS only translates it, so the
+       binary never ends up rotated onto its head and unreadable. */
+    transform-origin: 0 50%;
+    will-change: transform, opacity;
+  }
+
+  .eye-beam-ray {
+    position: absolute;
+    left: -270px;
+    top: -5px;
+    width: 270px;
+    height: 10px;
+    /* A wedge, wide at the eye and tapering away, rather than a flat bar */
+    clip-path: polygon(0% 42%, 100% 0%, 100% 100%, 0% 58%);
+    filter: blur(1.5px);
+    opacity: 0.75;
+  }
+
+  .eye-beam-code {
+    position: absolute;
+    left: -252px;
+    top: -16px;
+    width: 236px;
+    overflow: hidden;
+    white-space: nowrap;
+    font-family: var(--font-mono);
+    font-size: 0.5rem;
+    letter-spacing: 0.22em;
+    font-weight: 500;
+    /* Fades out as it travels away, so the stream has no hard end */
+    mask-image: linear-gradient(90deg, transparent 0%, #000 38%, #000 88%, transparent 100%);
+    animation: eye-stream 2.6s linear infinite;
+  }
+
+  /* Travels toward the eye, as if being read in rather than spat out. One
+     character cell is 1em plus its tracking, so the loop is seamless. */
+  @keyframes eye-stream {
+    from {
+      transform: translateX(-1.22em);
+    }
+    to {
+      transform: translateX(0);
     }
   }
 
@@ -777,6 +847,10 @@
     .conduit-tag {
       animation: none;
       opacity: 0.9;
+    }
+
+    .eye-beam-code {
+      animation: none;
     }
 
     /* Reduced motion means gentler, not broken: keep the fade, drop the travel */

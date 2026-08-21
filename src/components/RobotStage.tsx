@@ -18,6 +18,9 @@ const EYE_L = { x: 0.498, y: 1 - 0.0958 };
 const EYE_R = { x: 0.599, y: 1 - 0.0927 };
 const EYE_RADIUS = 0.032;
 
+/** What the beams are made of. Ones and zeroes, nothing cleverer. */
+const BINARY = "01011010010110100101100101101001011010010110";
+
 /* One conduit per project, in SVG user units on a 0..100 box that maps onto the
    figure. `t` is where along the curve the project's node sits — chosen so the
    labels land in the gap between the copy and his silhouette rather than on
@@ -85,6 +88,8 @@ const FRAG = /* glsl */ `
   uniform vec2  uEyeL;
   uniform vec2  uEyeR;
   uniform float uEyeRadius;
+  uniform float uIgnite;
+  uniform float uFlash;
   varying vec2 vUv;
   varying float vBulge;
 
@@ -126,6 +131,20 @@ const FRAG = /* glsl */ `
     float rim = clamp(length(vec2(ax, ay)) * 1.7, 0.0, 1.0);
     rim = pow(rim, 0.85);
 
+    /* Past 90 degrees we are looking at the far side of the plane, where the
+       texture would otherwise show his face mirrored onto his back. Instead the
+       reverse is drawn as an unlit silhouette: rim light along the edge, and
+       just enough of the reactor bleeding through to say the chest is still
+       lit, only facing away. */
+    if (!gl_FrontFacing) {
+      float hotBack = smoothstep(0.52, 0.94, luma(g.rgb));
+      vec3 backCol = vec3(0.018, 0.026, 0.034);
+      backCol += uAccent * rim * (0.75 + 0.35 * uPulse) * uIntensity;
+      backCol += uAccent * hotBack * 0.16 * uIntensity;
+      gl_FragColor = vec4(backCol, base.a);
+      return;
+    }
+
     // A single scan travels bottom to top, slow enough to feel like a system
     // sweeping itself rather than a screensaver.
     float sweepPos = fract(uv.y * 0.55 - uTime * 0.055);
@@ -137,6 +156,9 @@ const FRAG = /* glsl */ `
 
     vec3 col = base.rgb;
     col *= 0.88 + 0.12 * uProgress;
+    // He is powered down until the eyes catch, so the ignition reads as the
+    // whole figure waking rather than two lamps switching on.
+    col *= mix(0.42, 1.0, uIgnite);
 
     // Cylinder shading: the flanks fall away from the light as he turns, which
     // is most of what sells the rotation.
@@ -156,7 +178,8 @@ const FRAG = /* glsl */ `
     float eyeMask = smoothstep(uEyeRadius, 0.0, dEye);
     float shimmer = flicker(uTime * 9.0);
     float spark = smoothstep(0.90, 1.0, flicker(uTime * 2.6));
-    float eyeGain = (0.45 + 0.85 * shimmer + 1.7 * spark) * uIntensity;
+    float eyeGain = (0.45 + 0.85 * shimmer + 1.7 * spark) * uIntensity * uIgnite;
+    eyeGain += uFlash;
     col += uAccent * eyeMask * eyeGain * max(base.a, 0.35);
 
     // Interlace, barely there. Removing it makes the figure look pasted on.
@@ -177,6 +200,16 @@ export default function RobotStage() {
   const [failed, setFailed] = useState(false);
   const [reduced, setReduced] = useState(false);
   const [box, setBox] = useState<Box | null>(null);
+
+  // Fixed length, so hook order is stable.
+  const beamL = useRef<HTMLDivElement>(null);
+  const beamR = useRef<HTMLDivElement>(null);
+  // The reactor and the eyes are all on his front, so the conduits and their
+  // project tags have to leave with them when he turns away.
+  // Two layers, not one: the conduits sit behind the figure and the tags in
+  // front of it, so they cannot share a stacking context.
+  const frontRef = useRef<HTMLDivElement>(null);
+  const tagsRef = useRef<HTMLDivElement>(null);
 
   // Live values the render loop reads, so the loop never re-subscribes and the
   // WebGL scene is never torn down when the accent or scroll position changes.
@@ -265,6 +298,8 @@ export default function RobotStage() {
         uEyeL: { value: new THREE.Vector2(EYE_L.x, EYE_L.y) },
         uEyeR: { value: new THREE.Vector2(EYE_R.x, EYE_R.y) },
         uEyeRadius: { value: EYE_RADIUS },
+        uIgnite: { value: 0 },
+        uFlash: { value: 0 },
       };
 
       // Segmented across x so the cylindrical bend is smooth; one segment down
@@ -316,7 +351,9 @@ export default function RobotStage() {
 
         // Bend depth is tied to his width, so the curvature looks the same
         // whatever size he is drawn at.
-        uniforms.uBend.value = narrow ? worldW * 0.08 : worldW * 0.15;
+        // Deeper than a subtle curve: at 90 degrees the bulge is all that is
+        // left of him, so it has to carry the silhouette on its own.
+        uniforms.uBend.value = narrow ? worldW * 0.12 : worldW * 0.24;
 
         const dpr = Math.min(window.devicePixelRatio || 1, narrow ? 1.5 : 2);
         renderer.setPixelRatio(dpr);
@@ -375,15 +412,23 @@ export default function RobotStage() {
         uniforms.uTime.value = elapsed;
         uniforms.uPulse.value = 0.5 + 0.5 * Math.sin(elapsed * 1.15);
 
+        /* Ignition. The eyes come up at 0.25s and overshoot at 0.5s; the beams
+           follow, then the copy. The whole opening reads as the figure powering
+           on and writing the page, rather than a page that happens to contain a
+           figure. Timings are duplicated in globals.css for the text. */
+        const ignite = Math.max(0, Math.min(1, (elapsed - 0.25) / 0.4));
+        uniforms.uIgnite.value = ignite * ignite * (3 - 2 * ignite);
+        uniforms.uFlash.value = 2.4 * Math.exp(-Math.pow((elapsed - 0.52) / 0.17, 2));
+        beamIntro = Math.max(0, Math.min(1, (elapsed - 0.62) / 0.45));
+
         eased.x += (pointer.x - eased.x) * 0.05;
         eased.y += (pointer.y - eased.y) * 0.05;
 
-        /* Rotation. A slow idle sweep so he is never still, plus the pointer,
-           which is the part that reads as "he turned to look at me". Capped at
-           ~28°: past that a flat cut-out starts to look like a sheet of paper
-           on edge, and the illusion of a body breaks. */
-        const idleTurn = Math.sin(elapsed * 0.24) * 0.15;
-        const turn = Math.max(-0.49, Math.min(0.49, idleTurn + eased.x * 0.34));
+        /* Rotation. The scroll owns the big move: nothing at the top, a full
+           half turn by the bottom of the page. The idle sweep and the pointer
+           ride on top so he is never quite still. */
+        const idleTurn = Math.sin(elapsed * 0.24) * 0.08;
+        const turn = easedProgress * Math.PI + idleTurn + eased.x * 0.22;
         mesh.rotation.y = turn;
         mesh.rotation.x = eased.y * 0.05;
         mesh.rotation.z = -eased.x * 0.015;
@@ -398,7 +443,49 @@ export default function RobotStage() {
         const recede = 1 - easedProgress * 0.09;
         mesh.scale.set(baseScale.x * recede, baseScale.y * recede, 1);
 
+        mesh.updateMatrixWorld();
+        placeBeams(turn);
+
         renderer.render(scene, camera);
+      };
+
+      /* The beams are HTML, so they need the eyes' screen position every frame.
+         Taken from the real transform rather than a guess: the eye sits on the
+         bent surface, so its z is the same cosine the vertex shader applies. */
+      const eyeVec = new THREE.Vector3();
+      const beamRefs = [beamL, beamR];
+      let beamIntro = 0;
+      const placeBeams = (turn: number) => {
+        // cos of the turn is how much of his front we still see. Behind the
+        // 90-degree line the eyes are pointing away and the beams must go.
+        const facing = Math.cos(turn);
+        const visible = Math.max(0, Math.min(1, (facing - 0.12) / 0.88));
+
+        const frontOpacity = String(visible * beamIntro);
+        if (frontRef.current) frontRef.current.style.opacity = frontOpacity;
+        if (tagsRef.current) tagsRef.current.style.opacity = frontOpacity;
+
+        for (const [i, eye] of [EYE_L, EYE_R].entries()) {
+          const node = beamRefs[i].current;
+          if (!node) continue;
+
+          if (visible <= 0.001) {
+            node.style.opacity = "0";
+            continue;
+          }
+
+          const lx = eye.x - 0.5;
+          const ly = eye.y - 0.5;
+          eyeVec.set(lx, ly, Math.cos(lx * Math.PI) * uniforms.uBend.value);
+          eyeVec.applyMatrix4(mesh.matrixWorld);
+          eyeVec.project(camera);
+
+          const px = (eyeVec.x * 0.5 + 0.5) * stage.w;
+          const py = (-eyeVec.y * 0.5 + 0.5) * stage.h;
+
+          node.style.opacity = String(visible * beamIntro);
+          node.style.transform = `translate3d(${px.toFixed(1)}px, ${py.toFixed(1)}px, 0)`;
+        }
       };
 
       const start = () => {
@@ -420,8 +507,12 @@ export default function RobotStage() {
         uniforms.uTime.value = 2.4;
         uniforms.uPulse.value = 0.5;
         uniforms.uTurn.value = 0.1;
+        uniforms.uIgnite.value = 1;
+        beamIntro = 1;
         mesh.rotation.y = 0.1;
         mesh.position.y = baseY;
+        mesh.updateMatrixWorld();
+        placeBeams(0.1);
         renderer.render(scene, camera);
         running = false;
       } else {
@@ -454,7 +545,12 @@ export default function RobotStage() {
         (mesh.material as import("three").ShaderMaterial).dispose();
         renderer.dispose();
       };
-    })();
+    })().catch((error) => {
+      // Without this the IIFE's rejection is an unhandled promise and the stage
+      // just silently stays blank, which is exactly how it failed once.
+      console.error("[RobotStage]", error);
+      if (!disposed) setFailed(true);
+    });
 
     return () => {
       disposed = true;
@@ -478,7 +574,11 @@ export default function RobotStage() {
       {/* Conduits sit *under* the figure. Drawn on top they read as scratches
           across his chest; drawn behind, the light appears to leave the reactor
           and pass around the body, which is the whole point of the device. */}
-      {box && !failed ? <Conduits box={box} accent={ACCENT_HEX[accent]} reduced={reduced} /> : null}
+      {box && !failed ? (
+        <div ref={frontRef} className="absolute inset-0 z-0" style={{ opacity: 0 }}>
+          <Conduits box={box} accent={ACCENT_HEX[accent]} reduced={reduced} />
+        </div>
+      ) : null}
 
       {failed ? (
         // No WebGL: still a lit, composed figure. The site does not lose its hero.
@@ -512,7 +612,24 @@ export default function RobotStage() {
         </>
       )}
 
-      {box && !failed ? <ConduitLabels box={box} accent={ACCENT_HEX[accent]} /> : null}
+      {!failed ? (
+        <div
+          className="pointer-events-none absolute inset-0 z-[15] hidden lg:block"
+          aria-hidden="true"
+        >
+          {/* Written out twice rather than mapped: collecting refs into an
+              array is a ref read during render. */}
+          <EyeBeam ref={beamL} accent={ACCENT_HEX[accent]} />
+          <EyeBeam ref={beamR} accent={ACCENT_HEX[accent]} />
+        </div>
+      ) : null}
+
+      {box && !failed ? (
+        <div ref={tagsRef} className="absolute inset-0 z-20" style={{ opacity: 0 }}>
+          <ConduitLabels box={box} accent={ACCENT_HEX[accent]} />
+        </div>
+      ) : null}
+
     </div>
   );
 }
@@ -571,6 +688,29 @@ function Conduits({ box, accent, reduced }: { box: Box; accent: string; reduced:
   );
 }
 
+/** One eye's beam. Positioned every frame by the render loop, never by React. */
+function EyeBeam({
+  ref,
+  accent,
+}: {
+  ref: React.RefObject<HTMLDivElement | null>;
+  accent: string;
+}) {
+  return (
+    <div ref={ref} className="eye-beam" style={{ opacity: 0 }}>
+      <span
+        className="eye-beam-ray"
+        style={{
+          background: `linear-gradient(270deg, ${accent}cc 0%, ${accent}33 42%, transparent 100%)`,
+        }}
+      />
+      <span className="eye-beam-code" style={{ color: accent }}>
+        {BINARY}
+      </span>
+    </div>
+  );
+}
+
 /* Project tags riding the conduits. Rendered as HTML rather than <text>: the
    SVG above uses preserveAspectRatio="none", which would stretch any type
    inside it out of shape. */
@@ -598,8 +738,9 @@ function ConduitLabels({ box, accent }: { box: Box; accent: string }) {
             style={{
               left: box.left + (ux / 100) * box.width,
               top: box.top + (uy / 100) * box.height,
-              // Lit in time with the charge running down its own conduit.
-              animationDelay: `${i * 1.35}s`,
+              // Two animations: the entrance, staggered just after the copy,
+              // then the recurring charge on its own conduit's rhythm.
+              animationDelay: `${1.25 + i * 0.11}s, ${1.6 + i * 1.35}s`,
             }}
           >
             <span className="conduit-dot" style={{ background: accent }} />
