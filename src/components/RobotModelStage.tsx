@@ -10,7 +10,7 @@ export const MODEL_URL = "/robot.glb";
 
 /** Seconds before he starts to come up, and how long the rise takes. */
 const RISE_DELAY = 0.12;
-const RISE_TIME = 1.35;
+const RISE_TIME = 2.6;
 /** How far under he starts, in the normalised space where he is one unit tall
  *  and his feet rest at -0.5. Deep enough that the clip leaves nothing of him
  *  showing at the first frame. */
@@ -77,9 +77,9 @@ const WATER_FRAG = /* glsl */ `
 
     /* The one big ring that leaves the surface when he breaks it. It travels
        outward, widens, and thins as it goes — a single event, not a loop. */
-    float front = uWakeAge * 0.85;
-    float wave = exp(-pow((r - front) * 5.5, 2.0));
-    wave *= exp(-uWakeAge * 1.1) * smoothstep(0.0, 0.15, uWakeAge);
+    float front = uWakeAge * 0.5;
+    float wave = exp(-pow((r - front) * 4.2, 2.0));
+    wave *= exp(-uWakeAge * 0.6) * smoothstep(0.0, 0.2, uWakeAge);
 
     /* The dot field, seen through the water. The lookup is displaced by the
        swell, which is what breaks the grid up instead of sliding it. */
@@ -102,7 +102,13 @@ const WATER_FRAG = /* glsl */ `
     // The pool of light he stands in, brightest just beyond his feet.
     float pool = exp(-r * 3.2) * (1.0 - exp(-r * 9.0));
 
-    float a = rings * 0.30 + grid * 0.16 + smear * 0.42 + pool * 0.40 + wave * 0.55;
+    /* The swell over him on his way up. uWake is taken from how near his crown
+       is to the surface, so this grows while he is still under it — the water
+       lifts before he shows, which is the only thing standing between the
+       reveal and a second of empty stage. */
+    float bulge = exp(-r * 2.2) * uWake;
+
+    float a = rings * 0.30 + grid * 0.16 + smear * 0.42 + pool * 0.40 + wave * 0.55 + bulge * 0.45;
     // Nothing survives to the edge, so the plane needs no horizon.
     a *= smoothstep(1.0, 0.22, r) * uIgnite;
 
@@ -488,11 +494,17 @@ export default function RobotModelStage({
            the fast part is spent before he is anywhere near the surface and he
            is through it in the first few frames.
 
-           Under a second and a half start to finish. It is the first thing
-           anyone sees, and an entrance long enough to notice waiting for is an
-           entrance that has failed. */
+           Slow on purpose. He is under for the best part of a second before
+           anything of him shows, which is why the surface is made to swell
+           over him first — an empty stage that long reads as a page that has
+           not finished loading. */
         const rise = Math.max(0, Math.min(1, (elapsed - RISE_DELAY) / RISE_TIME));
-        const risen = rise * rise * (3 - 2 * rise);
+        /* Quintic rather than cubic. Both start and end at rest, but the cubic
+           still has acceleration left at each end and you can see it change;
+           this one has none, so there is no moment where the movement is
+           handed over. It is what makes a slow rise read as gliding rather
+           than as being drawn upward. */
+        const risen = rise * rise * rise * (rise * (rise * 6 - 15) + 10);
 
         const ignite = Math.max(0, Math.min(1, (elapsed - 0.25) / 0.4));
         // The water comes up with him: he is what is lighting it.
