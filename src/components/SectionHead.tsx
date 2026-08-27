@@ -1,18 +1,47 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+import { fireCharge } from "@/lib/charge";
 import Reveal from "./Reveal";
 
 export default function SectionHead({
   eyebrow,
   title,
   lede,
+  conduit,
 }: {
   eyebrow: string;
   title: string;
   lede?: string;
+  /** Which conduit carries this section. Omit and no charge is sent. */
+  conduit?: number;
 }) {
+  const ref = useRef<HTMLElement>(null);
+
+  /* Same thresholds as <Reveal>, so the charge leaves the reactor on the frame
+     its section's blocks start waiting for it — and leaves again every time the
+     section comes back, since the copy is being written again. */
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || conduit === undefined) return;
+
+    const once = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.intersectionRatio < 0.06) return;
+        fireCharge(conduit);
+        if (once) observer.disconnect();
+      },
+      { threshold: [0, 0.06] },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [conduit]);
+
   return (
-    <header>
+    <header ref={ref}>
       <Reveal>
         <p className="t-mono flex items-center gap-3">
           <span className="h-px w-8 bg-[#40454b]" aria-hidden="true" />
@@ -20,8 +49,14 @@ export default function SectionHead({
         </p>
       </Reveal>
 
-      <Reveal delay={60}>
-        <h2 className="t-display t-display-lg mt-5 max-w-[18ch]">{title}</h2>
+      {/* reveal-flat: the wrapper only fades, so the line is not moved by the
+          reveal and the mask at the same time. */}
+      <Reveal delay={60} className="reveal-flat">
+        <h2 className="t-display t-display-lg mt-5 max-w-[18ch]">
+          <span className="line-clip block">
+            <span className="line-rise block">{title}</span>
+          </span>
+        </h2>
       </Reveal>
 
       {lede ? (

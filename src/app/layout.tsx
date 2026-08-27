@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, Geist, Geist_Mono } from "next/font/google";
+import { Archivo, Geist, Geist_Mono, Martian_Mono } from "next/font/google";
 import PreviewNotice from "@/components/PreviewNotice";
 import { SiteProvider } from "@/lib/site-state";
 import "./globals.css";
@@ -11,6 +11,23 @@ const archivo = Archivo({
   subsets: ["latin"],
   axes: ["wdth"],
   variable: "--font-archivo",
+  display: "swap",
+});
+
+/* The spec face, for numbers only — never prose.
+
+   An extended monospace with squared bowls: the wide, machined letterform of
+   an instrument readout. Chosen over the obvious "futuristic" picks, which are
+   costume rather than engineering.
+
+   The reason it is this one specifically: its zero is slashed by design, not
+   behind an OpenType feature. Checked, not assumed — Archivo, Chakra Petch,
+   Geist and Geist Mono all expose no `zero` feature at all, so asking for a
+   slashed zero on any of them silently does nothing. */
+const martian = Martian_Mono({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  variable: "--font-martian",
   display: "swap",
 });
 
@@ -63,7 +80,14 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={`${archivo.variable} ${geist.variable} ${geistMono.variable}`}>
+    /* The pre-paint script below stamps data-js onto this element, so the
+       client tree legitimately carries an attribute the server never sent.
+       Without this, every single page load reported a hydration mismatch. */
+    <html
+      lang="fr"
+      className={`${archivo.variable} ${martian.variable} ${geist.variable} ${geistMono.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         {/* Runs before paint, so the reveal animations only ever hide content
             on a browser that is definitely able to bring it back. */}

@@ -12,13 +12,9 @@ export type Capability = {
   points: string[];
 };
 
-/** Rides one light conduit each, out of the reactor and across the frame. */
-export type Project = { name: string; meta: string };
-
 export type Content = {
   nav: { href: string; label: string }[];
   navCta: string;
-  projects: Project[];
   hero: {
     eyebrow: string;
     title: string[];
@@ -27,7 +23,22 @@ export type Content = {
     ctaSecondary: string;
     scrollHint: string;
   };
-  telemetry: { label: string; value: string }[];
+  /* The headline commitment, read as an instrument: one figure with its unit,
+     a gauge showing it against the floor the contract guarantees, and the two
+     secondary readings beside it. */
+  spec: {
+    label: string;
+    link: string;
+    value: string;
+    unit: string;
+    floor: string;
+    ceiling: string;
+    /** Real numbers, for the gauge's width and for assistive technology. */
+    min: number;
+    max: number;
+    now: number;
+    chips: { label: string; value: string }[];
+  };
   capabilities: { eyebrow: string; title: string; lede: string; items: Capability[] };
   method: {
     eyebrow: string;
@@ -41,6 +52,19 @@ export type Content = {
     note: string;
     stats: { value: string; unit: string; label: string }[];
   };
+  /* Placeholders on purpose. Drop files into public/ and set `src`; the frame
+     stops announcing itself as empty the moment there is something in it.
+     Nothing here invents a client, a project or a relationship. */
+  gallery: {
+    eyebrow: string;
+    title: string;
+    lede: string;
+    previous: string;
+    next: string;
+    emptyLabel: string;
+    items: { src: string; alt: string; caption: string }[];
+  };
+  partners: { label: string; slots: string[] };
   contact: {
     eyebrow: string;
     title: string;
@@ -48,7 +72,14 @@ export type Content = {
     channels: { label: string; value: string; href: string; accent: Accent }[];
     ctaPrimary: string;
   };
-  footer: { blurb: string; rights: string; columns: { title: string; links: string[] }[] };
+  /* A footer link either goes somewhere or it is not a link. Columns whose
+     pages do not exist yet render as plain text rather than as anchors back to
+     the top of the page, which is a dead end dressed up as navigation. */
+  footer: {
+    blurb: string;
+    rights: string;
+    columns: { title: string; links: { label: string; href?: string }[] }[];
+  };
 };
 
 export const CONTENT: Record<Lang, Content> = {
@@ -60,14 +91,6 @@ export const CONTENT: Record<Lang, Content> = {
       { href: "#contact", label: "Contact" },
     ],
     navCta: "Parler à un ingénieur",
-    /* PLACEHOLDERS — un seul nom est réel (Archi-Files). Remplacez les trois
-       autres par vos vrais projets, l'ordre suit les conduits de haut en bas. */
-    projects: [
-      { name: "Archi-Files", meta: "GED & archivage légal" },
-      { name: "Sentinel-24", meta: "Supervision & astreinte" },
-      { name: "Ledger-Trace", meta: "Traçabilité certifiée" },
-      { name: "Nova-Ops", meta: "Modèles en production" },
-    ],
     hero: {
       eyebrow: "Infogérance · IA · Blockchain · Support",
       title: ["Vos systèmes", "tournent. Même", "à 3 h du matin."],
@@ -76,11 +99,21 @@ export const CONTENT: Record<Lang, Content> = {
       ctaSecondary: "Voir nos engagements",
       scrollHint: "Faites défiler",
     },
-    telemetry: [
-      { label: "Disponibilité", value: "99,95 %" },
-      { label: "Prise en charge", value: "< 15 min" },
-      { label: "Supervision", value: "24/7/365" },
-    ],
+    spec: {
+      label: "Disponibilité engagée",
+      link: "Voir les engagements",
+      value: "99,95",
+      unit: "%",
+      floor: "99,00 %",
+      ceiling: "100 %",
+      min: 99,
+      max: 100,
+      now: 99.95,
+      chips: [
+        { label: "Prise en charge", value: "< 15 min" },
+        { label: "Supervision", value: "24/7/365" },
+      ],
+    },
     capabilities: {
       eyebrow: "Capacités",
       title: "Quatre métiers, une seule astreinte",
@@ -176,6 +209,25 @@ export const CONTENT: Record<Lang, Content> = {
         { value: "30", unit: "j", label: "Préavis de réversibilité" },
       ],
     },
+    gallery: {
+      eyebrow: "Terrain",
+      title: "Ce que nous exploitons",
+      lede: "Salles, baies, consoles, interventions. Remplacez ces cadres par vos propres photos : un cliché réel vaut plus que tout le reste de cette page.",
+      previous: "Image précédente",
+      next: "Image suivante",
+      emptyLabel: "Emplacement ",
+      items: [
+        { src: "", alt: "", caption: "Salle serveurs — à remplacer" },
+        { src: "", alt: "", caption: "Console de supervision — à remplacer" },
+        { src: "", alt: "", caption: "Baie réseau — à remplacer" },
+        { src: "", alt: "", caption: "Intervention sur site — à remplacer" },
+        { src: "", alt: "", caption: "Astreinte de nuit — à remplacer" },
+      ],
+    },
+    partners: {
+      label: "Partenaires et certifications",
+      slots: ["Logo 01", "Logo 02", "Logo 03", "Logo 04", "Logo 05", "Logo 06"],
+    },
     contact: {
       eyebrow: "Contact",
       title: "Un incident, un projet, ou une question d'architecture",
@@ -191,9 +243,27 @@ export const CONTENT: Record<Lang, Content> = {
       blurb: "Dalnova Technologies exploite, sécurise et outille les systèmes d'information de ses clients.",
       rights: "Tous droits réservés.",
       columns: [
-        { title: "Métiers", links: ["Infogérance", "Support", "IA appliquée", "Blockchain"] },
-        { title: "Société", links: ["À propos", "Recrutement", "Références"] },
-        { title: "Légal", links: ["Mentions légales", "Confidentialité", "Sécurité"] },
+        {
+          title: "Métiers",
+          links: [
+            { label: "Infogérance", href: "#infogerance" },
+            { label: "Support", href: "#support" },
+            { label: "IA appliquée", href: "#ia" },
+            { label: "Blockchain", href: "#blockchain" },
+          ],
+        },
+        {
+          title: "Société",
+          links: [{ label: "À propos" }, { label: "Recrutement" }, { label: "Références" }],
+        },
+        {
+          title: "Légal",
+          links: [
+            { label: "Mentions légales" },
+            { label: "Confidentialité" },
+            { label: "Sécurité" },
+          ],
+        },
       ],
     },
   },
@@ -206,12 +276,6 @@ export const CONTENT: Record<Lang, Content> = {
       { href: "#contact", label: "Contact" },
     ],
     navCta: "Talk to an engineer",
-    projects: [
-      { name: "Archi-Files", meta: "Records & legal archiving" },
-      { name: "Sentinel-24", meta: "Monitoring & on-call" },
-      { name: "Ledger-Trace", meta: "Certified traceability" },
-      { name: "Nova-Ops", meta: "Models in production" },
-    ],
     hero: {
       eyebrow: "Managed IT · AI · Blockchain · Support",
       title: ["Your systems", "stay up. Even", "at 3 in the morning."],
@@ -220,11 +284,21 @@ export const CONTENT: Record<Lang, Content> = {
       ctaSecondary: "See our commitments",
       scrollHint: "Scroll",
     },
-    telemetry: [
-      { label: "Availability", value: "99.95%" },
-      { label: "First response", value: "< 15 min" },
-      { label: "Monitoring", value: "24/7/365" },
-    ],
+    spec: {
+      label: "Committed availability",
+      link: "See our commitments",
+      value: "99.95",
+      unit: "%",
+      floor: "99.00 %",
+      ceiling: "100 %",
+      min: 99,
+      max: 100,
+      now: 99.95,
+      chips: [
+        { label: "First response", value: "< 15 min" },
+        { label: "Monitoring", value: "24/7/365" },
+      ],
+    },
     capabilities: {
       eyebrow: "Capabilities",
       title: "Four disciplines, one on-call rota",
@@ -320,6 +394,25 @@ export const CONTENT: Record<Lang, Content> = {
         { value: "30", unit: "d", label: "Exit notice" },
       ],
     },
+    gallery: {
+      eyebrow: "On the ground",
+      title: "What we actually run",
+      lede: "Rooms, racks, consoles, call-outs. Replace these frames with your own photographs: one real picture is worth more than the rest of this page.",
+      previous: "Previous image",
+      next: "Next image",
+      emptyLabel: "Slot ",
+      items: [
+        { src: "", alt: "", caption: "Server room — to replace" },
+        { src: "", alt: "", caption: "Monitoring console — to replace" },
+        { src: "", alt: "", caption: "Network rack — to replace" },
+        { src: "", alt: "", caption: "On-site call-out — to replace" },
+        { src: "", alt: "", caption: "Night on-call — to replace" },
+      ],
+    },
+    partners: {
+      label: "Partners and certifications",
+      slots: ["Logo 01", "Logo 02", "Logo 03", "Logo 04", "Logo 05", "Logo 06"],
+    },
     contact: {
       eyebrow: "Contact",
       title: "An incident, a project, or an architecture question",
@@ -335,9 +428,23 @@ export const CONTENT: Record<Lang, Content> = {
       blurb: "Dalnova Technologies runs, secures and tools the information systems of its clients.",
       rights: "All rights reserved.",
       columns: [
-        { title: "Disciplines", links: ["Managed IT", "Support", "Applied AI", "Blockchain"] },
-        { title: "Company", links: ["About", "Careers", "References"] },
-        { title: "Legal", links: ["Legal notice", "Privacy", "Security"] },
+        {
+          title: "Disciplines",
+          links: [
+            { label: "Managed IT", href: "#infogerance" },
+            { label: "Support", href: "#support" },
+            { label: "Applied AI", href: "#ia" },
+            { label: "Blockchain", href: "#blockchain" },
+          ],
+        },
+        {
+          title: "Company",
+          links: [{ label: "About" }, { label: "Careers" }, { label: "References" }],
+        },
+        {
+          title: "Legal",
+          links: [{ label: "Legal notice" }, { label: "Privacy" }, { label: "Security" }],
+        },
       ],
     },
   },

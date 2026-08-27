@@ -11,7 +11,9 @@ export default function PreviewNotice() {
 
   return (
     <div className="preview-notice" role="note">
-      <span className="preview-dot" aria-hidden="true" />
+      {/* Hazard hatching rather than a glowing dot: diagonal stripes already
+          mean "not finished, do not rely on this" everywhere else in the world. */}
+      <span className="preview-hazard" aria-hidden="true" />
       <span>
         {lang === "fr" ? (
           <>

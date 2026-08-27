@@ -5,7 +5,10 @@ import Wordmark from "./Wordmark";
 
 export default function Footer() {
   const { t } = useSite();
-  const year = 2026;
+  /* Read at render rather than pinned to a literal: the page is statically
+     generated, so a hardcoded year silently goes stale the first January
+     nobody redeploys. */
+  const year = new Date().getFullYear();
 
   return (
     <footer className="border-t border-[#2a3238] pt-14 pb-10">
@@ -20,10 +23,14 @@ export default function Footer() {
             <p className="t-mono">{column.title}</p>
             <ul className="mt-4 flex flex-col gap-2.5">
               {column.links.map((link) => (
-                <li key={link}>
-                  <a href="#top" className="footer-link">
-                    {link}
-                  </a>
+                <li key={link.label}>
+                  {link.href ? (
+                    <a href={link.href} className="footer-link">
+                      {link.label}
+                    </a>
+                  ) : (
+                    <span className="footer-link is-static">{link.label}</span>
+                  )}
                 </li>
               ))}
             </ul>

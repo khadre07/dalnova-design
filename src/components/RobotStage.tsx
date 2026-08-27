@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { CHARGE_MS, onCharge, replay } from "@/lib/charge";
 import { ACCENT_HEX } from "@/lib/content";
 import { useSite } from "@/lib/site-state";
 
@@ -18,39 +19,15 @@ const EYE_L = { x: 0.498, y: 1 - 0.0958 };
 const EYE_R = { x: 0.599, y: 1 - 0.0927 };
 const EYE_RADIUS = 0.032;
 
-/** What the beams are made of. Ones and zeroes, nothing cleverer. */
-export const BINARY = "01011010010110100101100101101001011010010110";
-
-/* One conduit per project, in SVG user units on a 0..100 box that maps onto the
-   figure. `t` is where along the curve the project's node sits — chosen so the
-   labels land in the gap between the copy and his silhouette rather than on
-   either. Control points are ordered top to bottom, matching CONTENT.projects. */
+/* One conduit per section, in SVG user units on a 0..100 box that maps onto
+   the figure. Control points are ordered top to bottom, matching the order the
+   sections appear down the page. */
 export const CONDUITS = [
-  { c1: [30, REACTOR.y - 4], c2: [10, 14], end: [-70, 9], t: 0.829 },
-  { c1: [26, REACTOR.y + 2], c2: [6, 36], end: [-70, 34], t: 0.82 },
-  { c1: [28, REACTOR.y + 8], c2: [8, 62], end: [-70, 68], t: 0.825 },
-  { c1: [34, REACTOR.y + 14], c2: [14, 88], end: [-70, 96], t: 0.838 },
+  { c1: [30, REACTOR.y - 4], c2: [10, 14], end: [-70, 9] },
+  { c1: [26, REACTOR.y + 2], c2: [6, 36], end: [-70, 34] },
+  { c1: [28, REACTOR.y + 8], c2: [8, 62], end: [-70, 68] },
+  { c1: [34, REACTOR.y + 14], c2: [14, 88], end: [-70, 96] },
 ] as const;
-
-/** Point on a cubic Bézier. Solved directly rather than via getPointAtLength,
- *  which would force a layout flush on every resize. */
-export function bezier(
-  p0: readonly [number, number],
-  p1: readonly [number, number],
-  p2: readonly [number, number],
-  p3: readonly [number, number],
-  t: number,
-): [number, number] {
-  const u = 1 - t;
-  const a = u * u * u;
-  const b = 3 * u * u * t;
-  const c = 3 * u * t * t;
-  const d = t * t * t;
-  return [
-    a * p0[0] + b * p1[0] + c * p2[0] + d * p3[0],
-    a * p0[1] + b * p1[1] + c * p2[1] + d * p3[1],
-  ];
-}
 
 const VERT = /* glsl */ `
   uniform float uBend;
@@ -195,30 +172,25 @@ export type Box = { left: number; top: number; width: number; height: number };
 export default function RobotStage() {
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { accent, progress } = useSite();
+  const { accent, progressRef } = useSite();
 
   const [failed, setFailed] = useState(false);
   const [reduced, setReduced] = useState(false);
   const [box, setBox] = useState<Box | null>(null);
 
-  // Fixed length, so hook order is stable.
-  const beamL = useRef<HTMLDivElement>(null);
-  const beamR = useRef<HTMLDivElement>(null);
-  // The reactor and the eyes are all on his front, so the conduits and their
-  // project tags have to leave with them when he turns away.
-  // Two layers, not one: the conduits sit behind the figure and the tags in
-  // front of it, so they cannot share a stacking context.
+  // The reactor is on his front, so the conduits leaving it have to go with
+  // him when he turns away.
   const frontRef = useRef<HTMLDivElement>(null);
-  const tagsRef = useRef<HTMLDivElement>(null);
 
-  // Live values the render loop reads, so the loop never re-subscribes and the
-  // WebGL scene is never torn down when the accent or scroll position changes.
-  // Written in an effect, not during render: a render-phase ref write is unsafe
-  // under concurrent rendering, where a render can be thrown away.
-  const target = useRef({ accent: ACCENT_HEX.arc, progress: 0 });
+  // The accent the loop is easing toward, kept in a ref so the WebGL scene is
+  // never torn down when a section hands the rim light over. Written in an
+  // effect, not during render: a render-phase ref write is unsafe under
+  // concurrent rendering, where a render can be thrown away. Scroll progress
+  // needs no equivalent — the provider writes it straight into a ref.
+  const targetAccent = useRef(ACCENT_HEX.arc);
   useEffect(() => {
-    target.current = { accent: ACCENT_HEX[accent], progress };
-  }, [accent, progress]);
+    targetAccent.current = ACCENT_HEX[accent];
+  }, [accent]);
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -355,7 +327,7 @@ export default function RobotStage() {
         // left of him, so it has to carry the silhouette on its own.
         uniforms.uBend.value = narrow ? worldW * 0.12 : worldW * 0.24;
 
-        const dpr = Math.min(window.devicePixelRatio || 1, narrow ? 1.5 : 2);
+        const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
         renderer.setPixelRatio(dpr);
         renderer.setSize(stage.w, stage.h, false);
 
@@ -403,11 +375,11 @@ export default function RobotStage() {
         raf = window.requestAnimationFrame(frame);
         const elapsed = (performance.now() - started) / 1000;
 
-        nextAccent.set(target.current.accent);
+        nextAccent.set(targetAccent.current);
         currentAccent.lerp(nextAccent, 0.045);
         uniforms.uAccent.value.copy(currentAccent);
 
-        easedProgress += (target.current.progress - easedProgress) * 0.07;
+        easedProgress += (progressRef.current - easedProgress) * 0.07;
         uniforms.uProgress.value = easedProgress;
         uniforms.uTime.value = elapsed;
         uniforms.uPulse.value = 0.5 + 0.5 * Math.sin(elapsed * 1.15);
@@ -419,18 +391,18 @@ export default function RobotStage() {
         const ignite = Math.max(0, Math.min(1, (elapsed - 0.25) / 0.4));
         uniforms.uIgnite.value = ignite * ignite * (3 - 2 * ignite);
         uniforms.uFlash.value = 2.4 * Math.exp(-Math.pow((elapsed - 0.52) / 0.17, 2));
-        beamIntro = Math.max(0, Math.min(1, (elapsed - 0.62) / 0.45));
+        overlayIntro = Math.max(0, Math.min(1, (elapsed - 0.62) / 0.45));
 
         eased.x += (pointer.x - eased.x) * 0.05;
         eased.y += (pointer.y - eased.y) * 0.05;
 
-        /* Rotation. The scroll owns the big move: nothing at the top, a full
-           half turn by the bottom of the page. The idle sweep and the pointer
-           ride on top so he is never quite still. */
-        const idleTurn = Math.sin(elapsed * 0.24) * 0.08;
-        const turn = easedProgress * Math.PI + idleTurn + eased.x * 0.22;
+        /* He turns to face the copy as the page goes down — negative Y swings
+           his front toward screen-left, which is where the words are. A third
+           of a right angle by the bottom: enough to read as addressing them,
+           short of the profile where a flat cut-out goes thin. */
+        const turn = -easedProgress * 0.55 + Math.sin(elapsed * 0.24) * 0.05 + eased.x * 0.1;
         mesh.rotation.y = turn;
-        mesh.rotation.x = eased.y * 0.05;
+        mesh.rotation.x = eased.y * 0.03;
         mesh.rotation.z = -eased.x * 0.015;
         uniforms.uTurn.value = turn;
 
@@ -444,47 +416,20 @@ export default function RobotStage() {
         mesh.scale.set(baseScale.x * recede, baseScale.y * recede, 1);
 
         mesh.updateMatrixWorld();
-        placeBeams(turn);
+        placeOverlays(turn);
 
         renderer.render(scene, camera);
       };
 
-      /* The beams are HTML, so they need the eyes' screen position every frame.
-         Taken from the real transform rather than a guess: the eye sits on the
-         bent surface, so its z is the same cosine the vertex shader applies. */
-      const eyeVec = new THREE.Vector3();
-      const beamRefs = [beamL, beamR];
-      let beamIntro = 0;
-      const placeBeams = (turn: number) => {
-        // cos of the turn is how much of his front we still see. Behind the
-        // 90-degree line the eyes are pointing away and the beams must go.
+      /* The conduits are on his front, so they go with him when he turns. */
+      let overlayIntro = 0;
+      const placeOverlays = (turn: number) => {
+        // cos of the turn is how much of his front we still see.
         const facing = Math.cos(turn);
         const visible = Math.max(0, Math.min(1, (facing - 0.12) / 0.88));
 
-        const frontOpacity = String(visible * beamIntro);
-        if (frontRef.current) frontRef.current.style.opacity = frontOpacity;
-        if (tagsRef.current) tagsRef.current.style.opacity = frontOpacity;
-
-        for (const [i, eye] of [EYE_L, EYE_R].entries()) {
-          const node = beamRefs[i].current;
-          if (!node) continue;
-
-          if (visible <= 0.001) {
-            node.style.opacity = "0";
-            continue;
-          }
-
-          const lx = eye.x - 0.5;
-          const ly = eye.y - 0.5;
-          eyeVec.set(lx, ly, Math.cos(lx * Math.PI) * uniforms.uBend.value);
-          eyeVec.applyMatrix4(mesh.matrixWorld);
-          eyeVec.project(camera);
-
-          const px = (eyeVec.x * 0.5 + 0.5) * stage.w;
-          const py = (-eyeVec.y * 0.5 + 0.5) * stage.h;
-
-          node.style.opacity = String(visible * beamIntro);
-          node.style.transform = `translate3d(${px.toFixed(1)}px, ${py.toFixed(1)}px, 0)`;
+        if (frontRef.current) {
+          frontRef.current.style.opacity = String(visible * overlayIntro);
         }
       };
 
@@ -508,11 +453,11 @@ export default function RobotStage() {
         uniforms.uPulse.value = 0.5;
         uniforms.uTurn.value = 0.1;
         uniforms.uIgnite.value = 1;
-        beamIntro = 1;
+        overlayIntro = 1;
         mesh.rotation.y = 0.1;
         mesh.position.y = baseY;
         mesh.updateMatrixWorld();
-        placeBeams(0.1);
+        placeOverlays(0.1);
         renderer.render(scene, camera);
         running = false;
       } else {
@@ -556,7 +501,7 @@ export default function RobotStage() {
       disposed = true;
       cleanup();
     };
-  }, [reduced]);
+  }, [reduced, progressRef]);
 
   return (
     /* The host is not aria-hidden: the project tags inside it are real
@@ -593,42 +538,12 @@ export default function RobotStage() {
           style={{ filter: `drop-shadow(0 0 60px ${ACCENT_HEX[accent]}55)` }}
         />
       ) : (
-        <>
-          <canvas
-            ref={canvasRef}
-            aria-hidden="true"
-            className="absolute inset-0 z-10 block h-full w-full"
-          />
-          {/* Scripting off: the canvas would stay an empty rectangle and the
-              right half of the page would look broken rather than quiet. */}
-          <noscript>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={TEXTURE}
-              alt=""
-              className="absolute inset-0 z-10 m-auto h-[88%] w-auto max-w-none object-contain"
-            />
-          </noscript>
-        </>
-      )}
-
-      {!failed ? (
-        <div
-          className="pointer-events-none absolute inset-0 z-[15] hidden lg:block"
+        <canvas
+          ref={canvasRef}
           aria-hidden="true"
-        >
-          {/* Written out twice rather than mapped: collecting refs into an
-              array is a ref read during render. */}
-          <EyeBeam ref={beamL} accent={ACCENT_HEX[accent]} />
-          <EyeBeam ref={beamR} accent={ACCENT_HEX[accent]} />
-        </div>
-      ) : null}
-
-      {box && !failed ? (
-        <div ref={tagsRef} className="absolute inset-0 z-20" style={{ opacity: 0 }}>
-          <ConduitLabels box={box} accent={ACCENT_HEX[accent]} />
-        </div>
-      ) : null}
+          className="absolute inset-0 z-10 block h-full w-full"
+        />
+      )}
 
     </div>
   );
@@ -638,6 +553,19 @@ export default function RobotStage() {
    reference shot, turned to our purpose: the robot is the hub, and the four
    disciplines are what it feeds. */
 export function Conduits({ box, accent, reduced }: { box: Box; accent: string; reduced: boolean }) {
+  const pulses = useRef<(SVGPathElement | null)[]>([]);
+
+  /* Quiet until a section calls. The conduits used to pulse on an endless
+     five-second loop, which made the light mean nothing; now a charge only
+     ever runs because a section asked for one, and the copy it is carrying
+     appears when it lands. */
+  useEffect(() => {
+    if (reduced) return;
+    return onCharge((index) => {
+      replay(pulses.current[index % CONDUITS.length], `conduit-fire ${CHARGE_MS}ms linear`);
+    });
+  }, [reduced]);
+
   const paths = CONDUITS.map(
     (c) =>
       `M ${REACTOR.x} ${REACTOR.y} C ${c.c1[0]} ${c.c1[1]}, ${c.c2[0]} ${c.c2[1]}, ${c.end[0]} ${c.end[1]}`,
@@ -669,90 +597,52 @@ export function Conduits({ box, accent, reduced }: { box: Box; accent: string; r
             vectorEffect="non-scaling-stroke"
           />
           {!reduced ? (
-            <path
-              className="conduit-pulse"
-              d={d}
-              fill="none"
-              stroke={accent}
-              strokeWidth="2.4"
-              strokeLinecap="round"
-              vectorEffect="non-scaling-stroke"
-              style={{ animationDelay: `${i * 1.35}s` }}
-            />
+            /* Two travellers on the same wire. The faint one runs forever, so
+               the conduits are never dead metal; the bright one runs only when
+               a section asks for it. Same path, same normalisation, different
+               errand.
+
+               pathLength normalises the curve to 200 units whatever its real
+               length, so one dash offset is exactly one traversal — the same
+               timing on every conduit and at every window size. */
+            <>
+              <path
+                className="conduit-flow"
+                d={d}
+                pathLength={200}
+                fill="none"
+                stroke={accent}
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                vectorEffect="non-scaling-stroke"
+                style={{ animationDelay: `${i * 1.7}s` }}
+              />
+              <path
+                ref={(node) => {
+                  pulses.current[i] = node;
+                }}
+                className="conduit-pulse"
+                d={d}
+                pathLength={200}
+                fill="none"
+                stroke={accent}
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                vectorEffect="non-scaling-stroke"
+              />
+            </>
           ) : null}
         </g>
       ))}
 
-      <circle cx={REACTOR.x} cy={REACTOR.y} r="1.6" fill={accent} opacity="0.55" />
-    </svg>
-  );
-}
-
-/** One eye's beam. Positioned every frame by the render loop, never by React. */
-export function EyeBeam({
-  ref,
-  accent,
-}: {
-  ref: React.RefObject<HTMLDivElement | null>;
-  accent: string;
-}) {
-  return (
-    <div ref={ref} className="eye-beam" style={{ opacity: 0 }}>
-      <span
-        className="eye-beam-ray"
-        style={{
-          background: `linear-gradient(270deg, ${accent}cc 0%, ${accent}33 42%, transparent 100%)`,
-        }}
+      <circle
+        className={reduced ? undefined : "conduit-core"}
+        cx={REACTOR.x}
+        cy={REACTOR.y}
+        r="1.6"
+        fill={accent}
+        opacity="0.55"
       />
-      <span className="eye-beam-code" style={{ color: accent }}>
-        {BINARY}
-      </span>
-    </div>
-  );
-}
-
-/* Project tags riding the conduits. Rendered as HTML rather than <text>: the
-   SVG above uses preserveAspectRatio="none", which would stretch any type
-   inside it out of shape. */
-export function ConduitLabels({ box, accent }: { box: Box; accent: string }) {
-  const { t } = useSite();
-
-  return (
-    <div className="pointer-events-none absolute inset-0 z-20 hidden xl:block">
-      {CONDUITS.map((conduit, i) => {
-        const project = t.projects[i];
-        if (!project) return null;
-
-        const [ux, uy] = bezier(
-          [REACTOR.x, REACTOR.y],
-          conduit.c1,
-          conduit.c2,
-          conduit.end,
-          conduit.t,
-        );
-
-        return (
-          <div
-            key={project.name}
-            className="conduit-tag"
-            style={{
-              left: box.left + (ux / 100) * box.width,
-              top: box.top + (uy / 100) * box.height,
-              // Two animations: the entrance, staggered just after the copy,
-              // then the recurring charge on its own conduit's rhythm.
-              animationDelay: `${1.25 + i * 0.11}s, ${1.6 + i * 1.35}s`,
-            }}
-          >
-            <span className="conduit-dot" style={{ background: accent }} />
-            <span className="conduit-text">
-              <span className="conduit-name" style={{ color: accent }}>
-                {project.name}
-              </span>
-              <span className="conduit-meta">{project.meta}</span>
-            </span>
-          </div>
-        );
-      })}
-    </div>
+    </svg>
   );
 }

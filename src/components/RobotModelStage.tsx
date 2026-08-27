@@ -3,37 +3,49 @@
 import { useEffect, useRef, useState } from "react";
 import { ACCENT_HEX } from "@/lib/content";
 import { useSite } from "@/lib/site-state";
-import {
-  Conduits,
-  ConduitLabels,
-  EyeBeam,
-  type Box,
-} from "./RobotStage";
+import { Conduits, type Box } from "./RobotStage";
 
 export const MODEL_URL = "/robot.glb";
+
+/* The glow map that came with the model: black everywhere except the eyes,
+   the reactor and the seams. Kept out of the .glb on purpose — held apart it
+   can be multiplied by whichever accent the current section owns, which is
+   what makes the figure answer the page instead of glowing one fixed colour. */
+const EMISSIVE_URL = "/robot-emissive.png";
 
 /** Materials whose name looks like a light source get the accent pushed into
  *  their emissive channel, so the eyes and reactor follow the section colour
  *  the same way the flat version does. */
 const EMISSIVE_NAME = /eye|iris|core|reactor|glow|emis|led|light|lamp/i;
 
-export default function RobotModelStage({ onFailed }: { onFailed?: () => void }) {
+export default function RobotModelStage({
+  onFailed,
+  onReady,
+}: {
+  onFailed?: () => void;
+  /** Fired once the first frame is on screen, so the poster can step aside. */
+  onReady?: () => void;
+}) {
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const beamL = useRef<HTMLDivElement>(null);
-  const beamR = useRef<HTMLDivElement>(null);
   const frontRef = useRef<HTMLDivElement>(null);
-  const tagsRef = useRef<HTMLDivElement>(null);
 
-  const { accent, progress } = useSite();
+  const { accent, progressRef } = useSite();
+  /* Held in a ref so the scene effect never re-runs — and written from an
+     effect, because a ref write during render is unsafe under concurrent
+     rendering, where a render can be thrown away. */
+  const readyRef = useRef(onReady);
+  useEffect(() => {
+    readyRef.current = onReady;
+  }, [onReady]);
   const [failed, setFailed] = useState(false);
   const [reduced, setReduced] = useState(false);
   const [box, setBox] = useState<Box | null>(null);
 
-  const target = useRef({ accent: ACCENT_HEX.arc, progress: 0 });
+  const targetAccent = useRef(ACCENT_HEX.arc);
   useEffect(() => {
-    target.current = { accent: ACCENT_HEX[accent], progress };
-  }, [accent, progress]);
+    targetAccent.current = ACCENT_HEX[accent];
+  }, [accent]);
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -103,6 +115,12 @@ export default function RobotModelStage({ onFailed }: { onFailed?: () => void })
       const root = new THREE.Group();
       scene.add(root);
 
+      // Started together: the glow map is small and there is no reason to pay
+      // for it in series behind a four-megabyte model.
+      const glowPromise = new THREE.TextureLoader()
+        .loadAsync(EMISSIVE_URL)
+        .catch(() => null);
+
       let gltf;
       try {
         gltf = await new GLTFLoader().loadAsync(MODEL_URL);
@@ -116,6 +134,14 @@ export default function RobotModelStage({ onFailed }: { onFailed?: () => void })
         renderer.dispose();
         pmrem.dispose();
         return;
+      }
+
+      const glow = await glowPromise;
+      if (glow) {
+        glow.colorSpace = THREE.SRGBColorSpace;
+        // glTF UVs count down from the top; three's loader default does not.
+        glow.flipY = false;
+        glow.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
       }
 
       const model = gltf.scene;
@@ -142,8 +168,18 @@ export default function RobotModelStage({ onFailed }: { onFailed?: () => void })
         for (const raw of materials) {
           const material = raw as import("three").MeshStandardMaterial;
           if (!material) continue;
+          /* Two ways in. If a glow map came with the model it is the mask and
+             every material takes it — this one arrives as a single mesh called
+             "model", so a name-matching pass would have found nothing. Failing
+             that, fall back to materials whose name reads like a light. */
           const named = `${material.name} ${mesh.name}`;
-          if (EMISSIVE_NAME.test(named)) {
+          if (glow) {
+            material.emissiveMap = glow;
+            material.emissive = new THREE.Color(ACCENT_HEX.arc);
+            material.emissiveIntensity = 2.4;
+            material.needsUpdate = true;
+            emissiveMeshes.push(mesh);
+          } else if (EMISSIVE_NAME.test(named)) {
             material.emissive = new THREE.Color(ACCENT_HEX.arc);
             material.emissiveIntensity = 2.6;
             material.toneMapped = false;
@@ -151,27 +187,6 @@ export default function RobotModelStage({ onFailed }: { onFailed?: () => void })
           }
         }
       });
-
-      /* Beam anchors. Anything emissive in the top quarter of the figure is
-         taken to be an eye; failing that, we aim at a point on the front of the
-         head, which is right for a humanoid and harmless for anything else. */
-      const localEyes: import("three").Vector3[] = [];
-      const tmp = new THREE.Vector3();
-      for (const mesh of emissiveMeshes) {
-        const meshBounds = new THREE.Box3().setFromObject(mesh);
-        meshBounds.getCenter(tmp);
-        root.worldToLocal(tmp.clone());
-        if (tmp.y > bounds.min.y + size.y * 0.72) {
-          localEyes.push(new THREE.Vector3(tmp.x * unit, tmp.y * unit, tmp.z * unit));
-        }
-      }
-      if (localEyes.length === 0) {
-        localEyes.push(new THREE.Vector3(-0.035, 0.44, 0.09));
-        localEyes.push(new THREE.Vector3(0.035, 0.44, 0.09));
-      }
-      if (localEyes.length === 1) {
-        localEyes.push(localEyes[0].clone().setX(-localEyes[0].x));
-      }
 
       // An idle clip, if the model brought one. Never a walk or a wave: he is
       // standing in a hero, not performing.
@@ -183,7 +198,6 @@ export default function RobotModelStage({ onFailed }: { onFailed?: () => void })
 
       let stage = { w: 1, h: 1 };
       let baseY = 0;
-      let modelHeight = 1;
 
       const layout = () => {
         const rect = host.getBoundingClientRect();
@@ -193,27 +207,34 @@ export default function RobotModelStage({ onFailed }: { onFailed?: () => void })
         camera.updateProjectionMatrix();
 
         const narrow = window.innerWidth < 1024;
-        const fill = narrow ? 0.7 : 0.86;
+        const frameFill = narrow ? 0.7 : 0.86;
 
         // Frame by distance rather than by scaling him: pull the camera back
-        // until a unit-tall figure occupies `fill` of the viewport height.
+        // until a unit-tall figure occupies `frameFill` of the viewport height.
+        // The scale stays at 1 — applying frameFill here as well would square
+        // it and leave the figure a head shorter than the flat scene's.
         const vFov = (camera.fov * Math.PI) / 180;
-        const distance = 1 / (2 * fill * Math.tan(vFov / 2));
+        const distance = 1 / (2 * frameFill * Math.tan(vFov / 2));
         camera.position.set(0, 0, distance);
         camera.lookAt(0, 0, 0);
 
         baseY = narrow ? 0 : -0.03;
-        modelHeight = fill;
 
-        const dpr = Math.min(window.devicePixelRatio || 1, narrow ? 1.5 : 2);
+        /* Capped at 1.5 rather than 2. A PBR figure lit by an environment map
+           costs fragments, and ratio 2 is four times the pixels of ratio 1 for
+           a difference nobody can see on a figure this size. */
+        const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
         renderer.setPixelRatio(dpr);
         renderer.setSize(stage.w, stage.h, false);
 
-        const boxH = stage.h * fill;
+        // baseY is in world units; the overlay is in pixels. The visible height
+        // at this distance is 1 / frameFill, so this is the conversion.
+        const pxPerUnit = stage.h * frameFill;
+        const boxH = stage.h * frameFill;
         const boxW = boxH * Math.max(0.35, size.x / Math.max(size.y, 0.0001));
         setBox({
           left: (stage.w - boxW) / 2,
-          top: (stage.h - boxH) / 2 - baseY * stage.h,
+          top: (stage.h - boxH) / 2 - baseY * pxPerUnit,
           width: boxW,
           height: boxH,
         });
@@ -236,10 +257,17 @@ export default function RobotModelStage({ onFailed }: { onFailed?: () => void })
 
       const currentAccent = new THREE.Color(ACCENT_HEX.arc);
       const nextAccent = new THREE.Color();
-      const eyeVec = new THREE.Vector3();
-      const beamRefs = [beamL, beamR];
       let easedProgress = 0;
-      let beamIntro = 0;
+      let overlayIntro = 0;
+      /* Announced after a real render, not after the load resolves: the model
+         is only genuinely there once a frame carrying it has been painted. */
+      let announced = false;
+      const announce = () => {
+        if (announced) return;
+        announced = true;
+        readyRef.current?.();
+      };
+
       let raf = 0;
       let running = true;
       let started = performance.now();
@@ -249,23 +277,10 @@ export default function RobotModelStage({ onFailed }: { onFailed?: () => void })
       const placeOverlays = (turn: number) => {
         const facing = Math.cos(turn);
         const visible = Math.max(0, Math.min(1, (facing - 0.12) / 0.88));
-        const frontOpacity = String(visible * beamIntro);
-        if (frontRef.current) frontRef.current.style.opacity = frontOpacity;
-        if (tagsRef.current) tagsRef.current.style.opacity = frontOpacity;
-
-        for (const [i, local] of localEyes.slice(0, 2).entries()) {
-          const node = beamRefs[i].current;
-          if (!node) continue;
-          if (visible <= 0.001) {
-            node.style.opacity = "0";
-            continue;
-          }
-          eyeVec.copy(local).applyMatrix4(root.matrixWorld).project(camera);
-          const px = (eyeVec.x * 0.5 + 0.5) * stage.w;
-          const py = (-eyeVec.y * 0.5 + 0.5) * stage.h;
-          node.style.opacity = String(visible * beamIntro);
-          node.style.transform = `translate3d(${px.toFixed(1)}px, ${py.toFixed(1)}px, 0)`;
+        if (frontRef.current) {
+          frontRef.current.style.opacity = String(visible * overlayIntro);
         }
+
       };
 
       const frame = () => {
@@ -277,7 +292,7 @@ export default function RobotModelStage({ onFailed }: { onFailed?: () => void })
 
         mixer?.update(delta);
 
-        nextAccent.set(target.current.accent);
+        nextAccent.set(targetAccent.current);
         currentAccent.lerp(nextAccent, 0.045);
         rim.color.copy(currentAccent);
         for (const mesh of emissiveMeshes) {
@@ -290,26 +305,29 @@ export default function RobotModelStage({ onFailed }: { onFailed?: () => void })
           }
         }
 
-        easedProgress += (target.current.progress - easedProgress) * 0.07;
+        easedProgress += (progressRef.current - easedProgress) * 0.07;
         eased.x += (pointer.x - eased.x) * 0.05;
         eased.y += (pointer.y - eased.y) * 0.05;
 
         const ignite = Math.max(0, Math.min(1, (elapsed - 0.25) / 0.4));
         renderer.toneMappingExposure = 0.45 + 0.7 * (ignite * ignite * (3 - 2 * ignite));
-        beamIntro = Math.max(0, Math.min(1, (elapsed - 0.62) / 0.45));
+        overlayIntro = Math.max(0, Math.min(1, (elapsed - 0.62) / 0.45));
 
-        // A real model can turn all the way; the brief asked for a half turn
-        // down the page, so that is what the scroll drives.
-        const turn = easedProgress * Math.PI + Math.sin(elapsed * 0.24) * 0.08 + eased.x * 0.22;
+        /* He turns to face the copy as the page goes down — negative Y swings
+           his front toward screen-left, which is where the words are. A real
+           model holds a three-quarter view without thinning out, so he takes
+           more of it than the flat cut-out does. */
+        const turn = -easedProgress * 0.7 + Math.sin(elapsed * 0.24) * 0.05 + eased.x * 0.1;
         root.rotation.y = turn;
-        root.rotation.x = eased.y * 0.04;
+        root.rotation.x = eased.y * 0.025;
         root.position.y =
           baseY + Math.sin(elapsed * 0.55) * 0.008 - eased.y * 0.02 - easedProgress * 0.05;
-        root.scale.setScalar(modelHeight * (1 - easedProgress * 0.09));
+        root.scale.setScalar(1 - easedProgress * 0.09);
 
         root.updateMatrixWorld();
         placeOverlays(turn);
         renderer.render(scene, camera);
+        announce();
       };
 
       const start = () => {
@@ -328,13 +346,14 @@ export default function RobotModelStage({ onFailed }: { onFailed?: () => void })
 
       if (reduced) {
         renderer.toneMappingExposure = 1.15;
-        beamIntro = 1;
-        root.rotation.y = 0.25;
-        root.scale.setScalar(modelHeight);
+        overlayIntro = 1;
+        root.rotation.y = 0.06;
+        root.scale.setScalar(1);
         root.position.y = baseY;
         root.updateMatrixWorld();
-        placeOverlays(0.25);
+        placeOverlays(0.06);
         renderer.render(scene, camera);
+        announce();
         running = false;
       } else {
         raf = window.requestAnimationFrame(frame);
@@ -367,6 +386,7 @@ export default function RobotModelStage({ onFailed }: { onFailed?: () => void })
           const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
           for (const material of materials) material?.dispose();
         });
+        glow?.dispose();
         envRT.texture.dispose();
         pmrem.dispose();
         renderer.dispose();
@@ -380,7 +400,7 @@ export default function RobotModelStage({ onFailed }: { onFailed?: () => void })
       disposed = true;
       cleanup();
     };
-  }, [reduced]);
+  }, [reduced, progressRef]);
 
   // Loading or drawing the model failed. Nothing is shown here: the parent is
   // told, and it puts the flat scene back rather than leaving a hole.
@@ -412,19 +432,6 @@ export default function RobotModelStage({ onFailed }: { onFailed?: () => void })
         className="absolute inset-0 z-10 block h-full w-full"
       />
 
-      <div
-        className="pointer-events-none absolute inset-0 z-[15] hidden lg:block"
-        aria-hidden="true"
-      >
-        <EyeBeam ref={beamL} accent={ACCENT_HEX[accent]} />
-        <EyeBeam ref={beamR} accent={ACCENT_HEX[accent]} />
-      </div>
-
-      {box ? (
-        <div ref={tagsRef} className="absolute inset-0 z-20" style={{ opacity: 0 }}>
-          <ConduitLabels box={box} accent={ACCENT_HEX[accent]} />
-        </div>
-      ) : null}
     </div>
   );
 }

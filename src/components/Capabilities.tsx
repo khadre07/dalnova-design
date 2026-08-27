@@ -1,22 +1,32 @@
 "use client";
 
 import { ACCENT_HEX, type Capability } from "@/lib/content";
-import { useAccentZone, useSite } from "@/lib/site-state";
+import { useAccentZone, useRecessZone, useSite } from "@/lib/site-state";
 import Reveal from "./Reveal";
 import SectionHead from "./SectionHead";
 
 export default function Capabilities() {
   const { t } = useSite();
+  // Full-width band: the figure withdraws as this fills the screen.
+  const band = useRecessZone();
 
   return (
-    <section id="capacites" className="scroll-mt-24 py-24 lg:py-32">
+    <section
+      ref={band as React.RefObject<HTMLElement>}
+      id="capacites"
+      className="scroll-mt-24 py-24 lg:py-32"
+    >
       <SectionHead
+        conduit={0}
         eyebrow={t.capabilities.eyebrow}
         title={t.capabilities.title}
         lede={t.capabilities.lede}
       />
 
-      <div className="mt-14 flex flex-col gap-px" style={{ background: "rgba(42, 50, 56, 0.55)" }}>
+      <div
+        className="mt-14 grid gap-px lg:grid-cols-2"
+        style={{ background: "rgba(42, 50, 56, 0.55)" }}
+      >
         {t.capabilities.items.map((item, i) => (
           <Module key={item.id} item={item} index={i} />
         ))}
@@ -34,7 +44,8 @@ function Module({ item, index }: { item: Capability; index: number }) {
   return (
     <article
       ref={ref as React.RefObject<HTMLElement>}
-      className="module group relative bg-[#080d12] px-6 py-9 sm:px-8 lg:py-11"
+      id={item.id}
+      className="module group relative scroll-mt-24 bg-[#080d12] px-6 py-9 sm:px-8 lg:py-11"
     >
       <span
         className="module-rail"

@@ -10,6 +10,11 @@ import { MODEL_URL } from "./RobotModelStage";
    model. */
 const RobotModelStage = dynamic(() => import("./RobotModelStage"), { ssr: false });
 
+/* A reduced copy of the cut-out, not the full one. It is on screen for about a
+   second, behind a scrim, at roughly 800px tall — paying full resolution for
+   that would give back a good part of what the slimmer model just saved. */
+const POSTER_URL = "/robot-poster.webp";
+
 type Mode = "probing" | "model" | "flat";
 
 /**
@@ -19,17 +24,32 @@ type Mode = "probing" | "model" | "flat";
  */
 export default function Stage() {
   const [mode, setMode] = useState<Mode>("probing");
+  const [modelDrawn, setModelDrawn] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
 
-    fetch(MODEL_URL, { method: "HEAD" })
-      .then((response) => {
-        if (cancelled) return;
-        // A dev server can answer 200 with an HTML error page; check the type.
-        const type = response.headers.get("content-type") ?? "";
-        const looksLikeModel = !type.startsWith("text/");
-        setMode(response.ok && looksLikeModel ? "model" : "flat");
+    /* Phones get the flat scene whatever is in public/, and are never asked to
+       download the model to find that out. There the figure sits *behind* the
+       copy at a fifth of its opacity — four megabytes, over mobile data, for
+       something nobody can make out. The 270 KB cut-out looks the same at that
+       opacity.
+
+       Resolved through a promise even when the answer is already known, so the
+       decision always arrives as an update from outside React rather than as a
+       setState in the effect body, which would cascade a second render. */
+    const probe: Promise<Mode> = window.matchMedia("(min-width: 1024px)").matches
+      ? fetch(MODEL_URL, { method: "HEAD" }).then((response) => {
+          // A dev server can answer 200 with an HTML error page; check the type.
+          const type = response.headers.get("content-type") ?? "";
+          const looksLikeModel = !type.startsWith("text/");
+          return response.ok && looksLikeModel ? "model" : "flat";
+        })
+      : Promise.resolve("flat");
+
+    probe
+      .then((next) => {
+        if (!cancelled) setMode(next);
       })
       .catch(() => {
         if (!cancelled) setMode("flat");
@@ -40,13 +60,34 @@ export default function Stage() {
     };
   }, []);
 
-  // Held blank for one probe rather than starting the flat scene and tearing a
-  // whole WebGL context down a moment later.
-  if (mode === "probing") return null;
+  if (mode === "flat") return <RobotStage />;
 
-  if (mode === "model") {
-    return <RobotModelStage onFailed={() => setMode("flat")} />;
-  }
+  /* While the model is on its way, the cut-out stands in for it. The hero used
+     to be an empty right half until several megabytes had arrived, which is
+     most of what made the page feel slow — the figure is the page's whole
+     first impression. A plain <img>, not the flat WebGL scene: standing a
+     second context up and tearing it down again a moment later costs more than
+     it saves. */
+  return (
+    <>
+      {mode === "model" ? (
+        <RobotModelStage
+          onFailed={() => setMode("flat")}
+          onReady={() => setModelDrawn(true)}
+        />
+      ) : null}
 
-  return <RobotStage />;
+      {/* Kept mounted at zero opacity rather than unmounted, so the hand-off
+          is a fade and not a cut. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={POSTER_URL}
+        alt=""
+        aria-hidden="true"
+        fetchPriority="high"
+        className="stage-poster"
+        data-gone={modelDrawn}
+      />
+    </>
+  );
 }

@@ -16,7 +16,7 @@ export default function Contact() {
       id="contact"
       className="scroll-mt-24 py-24 lg:py-32"
     >
-      <SectionHead eyebrow={t.contact.eyebrow} title={t.contact.title} lede={t.contact.lede} />
+      <SectionHead conduit={3} eyebrow={t.contact.eyebrow} title={t.contact.title} lede={t.contact.lede} />
 
       <div className="mt-12 flex flex-col gap-px bg-[#2a3238]">
         {t.contact.channels.map((channel, i) => (

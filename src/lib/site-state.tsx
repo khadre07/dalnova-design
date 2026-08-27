@@ -12,6 +12,7 @@ import {
   type ReactNode,
 } from "react";
 import { CONTENT, type Accent, type Content, type Lang } from "./content";
+import { presenceNow, registerRecess } from "./stage";
 
 type SiteState = {
   lang: Lang;
@@ -20,8 +21,12 @@ type SiteState = {
   /** Drives the robot's rim light. Cyan for machine work, amber for human work. */
   accent: Accent;
   setAccent: (accent: Accent) => void;
-  /** 0 at the top of the page, 1 at the bottom. Feeds the WebGL timeline. */
-  progress: number;
+  /* 0 at the top of the page, 1 at the bottom. Deliberately a ref and not
+     state: the only readers are the WebGL loops, which sample it once a frame
+     anyway. Held as state it changed the context value on every scroll frame
+     and re-rendered the whole page — nav, hero, every module — sixty times a
+     second for a number React never draws. */
+  progressRef: React.RefObject<number>;
 };
 
 const SiteContext = createContext<SiteState | null>(null);
@@ -58,25 +63,42 @@ function readLangOnServer(): Lang {
 function writeLang(next: Lang) {
   cachedLang = next;
   window.localStorage.setItem(STORAGE_KEY, next);
-  document.documentElement.lang = next;
   listeners.forEach((l) => l());
 }
 
 export function SiteProvider({ children }: { children: ReactNode }) {
   const lang = useSyncExternalStore(subscribeLang, readLang, readLangOnServer);
   const [accent, setAccent] = useState<Accent>("arc");
-  const [progress, setProgress] = useState(0);
+  const progressRef = useRef(0);
 
   const setLang = useCallback((next: Lang) => writeLang(next), []);
+
+  /* The server always renders lang="fr"; a visitor who chose English gets it
+     back from localStorage during hydration. Mirroring it onto <html> here
+     rather than inside the setter means a restored preference is announced to
+     screen readers too, not only a preference changed in this session. */
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   // Scroll position is read once per frame rather than on every scroll event,
   // so a trackpad flick cannot queue up hundreds of state updates.
   const frame = useRef(0);
   useEffect(() => {
+    let lastPresence = -1;
     const read = () => {
       frame.current = 0;
       const max = document.documentElement.scrollHeight - window.innerHeight;
-      setProgress(max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0);
+      progressRef.current = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+
+      /* Written straight onto <html> as a custom property. No state, so no
+         render: the figure's withdrawal is a paint, on the same frame as the
+         scroll that caused it. */
+      const presence = presenceNow(window.innerHeight);
+      if (Math.abs(presence - lastPresence) > 0.004) {
+        lastPresence = presence;
+        document.documentElement.style.setProperty("--presence", presence.toFixed(3));
+      }
     };
     const onScroll = () => {
       if (frame.current) return;
@@ -93,8 +115,8 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ lang, setLang, t: CONTENT[lang], accent, setAccent, progress }),
-    [lang, setLang, accent, progress],
+    () => ({ lang, setLang, t: CONTENT[lang], accent, setAccent, progressRef }),
+    [lang, setLang, accent],
   );
 
   return <SiteContext.Provider value={value}>{children}</SiteContext.Provider>;
@@ -124,5 +146,16 @@ export function useAccentZone(accent: Accent) {
     return () => observer.disconnect();
   }, [accent, setAccent]);
 
+  return ref;
+}
+
+/** Marks a full-width band: the figure withdraws in proportion to how much of
+ *  the screen it is taking. Attach alongside the accent ref on the same node. */
+export function useRecessZone() {
+  const ref = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const node = ref.current;
+    return node ? registerRecess(node) : undefined;
+  }, []);
   return ref;
 }

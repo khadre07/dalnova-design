@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAccentZone, useSite } from "@/lib/site-state";
+import Readout from "./Readout";
 
 export default function Hero() {
   const { t } = useSite();
@@ -46,8 +47,8 @@ export default function Hero() {
 
       <h1 className="t-display t-display-xl mt-6">
         {t.hero.title.map((row, i) => (
-          <span key={row} className="block overflow-hidden">
-            <span className="block hero-in" style={line(i + 1)}>
+          <span key={row} className="line-clip block">
+            <span className="hero-line hero-in block" style={line(i + 1)}>
               {row}
             </span>
           </span>
@@ -68,19 +69,64 @@ export default function Hero() {
         </a>
       </div>
 
-      {/* The readings are the same ones the contract commits to, so the HUD is
-          reporting something true rather than decorating the hero. */}
-      <dl
-        className="hairline ticks hero-in relative mt-14 max-w-[27rem] px-5 py-2"
-        style={{ ...line(6), borderRadius: 2, background: "rgba(11, 17, 23, 0.72)" }}
-      >
-        {t.telemetry.map((row) => (
-          <div key={row.label} className="hud-row">
-            <dt className="t-mono">{row.label}</dt>
-            <dd className="font-mono text-[0.8125rem] tracking-tight text-[#dcebee]">{row.value}</dd>
-          </div>
-        ))}
-      </dl>
+      {/* The commitment read as an instrument rather than as a list: the figure
+          at display size with its unit, a gauge placing it against the floor
+          the contract guarantees, and the two secondary readings beside it.
+          Every number here is one the page already states — the gauge measures
+          something real, it is not a decoration shaped like a gauge. */}
+      <div className="spec hero-in mt-12 max-w-[30rem]" style={line(6)}>
+        <div className="spec-head">
+          <p className="t-mono">{t.spec.label}</p>
+          <a href="#preuves" className="spec-link">
+            {t.spec.link}
+          </a>
+        </div>
+
+        <p className="spec-figure">
+          <Readout className="spec-value" value={t.spec.value} />
+          <span className="spec-slash" aria-hidden="true">
+            /
+          </span>
+          <span className="spec-unit">{t.spec.unit}</span>
+        </p>
+
+        <div
+          className="spec-gauge"
+          role="meter"
+          aria-valuemin={t.spec.min}
+          aria-valuemax={t.spec.max}
+          aria-valuenow={t.spec.now}
+          aria-label={t.spec.label}
+        >
+          {/* Drawn from nothing to its reading. The width lives in a custom
+              property so the fill itself can stay a pure CSS transition, timed
+              to land just after the block it belongs to has arrived. */}
+          <span
+            className="spec-gauge-fill"
+            style={
+              {
+                "--fill": `${((t.spec.now - t.spec.min) / (t.spec.max - t.spec.min)) * 100}%`,
+              } as React.CSSProperties
+            }
+          />
+        </div>
+
+        <div className="spec-scale" aria-hidden="true">
+          <span>{t.spec.floor}</span>
+          <span>{t.spec.ceiling}</span>
+        </div>
+
+        <dl className="spec-chips">
+          {t.spec.chips.map((chip) => (
+            <div key={chip.label} className="spec-chip">
+              <dt className="t-mono">{chip.label}</dt>
+              <dd>
+                <Readout className="spec-chip-value" value={chip.value} />
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
 
       <p className="t-mono hero-in mt-12 hidden items-center gap-3 lg:flex" style={line(7)}>
         <span className="scroll-tick" aria-hidden="true" />

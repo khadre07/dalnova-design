@@ -23,6 +23,7 @@
   --font-display: var(--font-archivo), "Arial Narrow", system-ui, sans-serif;
   --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
+  --font-spec: var(--font-martian), var(--font-geist-mono), ui-monospace, monospace;
 }
 
 :root {
@@ -31,6 +32,16 @@
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 
   --rail: 1px;
+  /* How deep the 45° corner cut goes. Machined panels, not pill-shaped cards
+     — the site's own token comments have said so from the start; a 2px radius
+     was never actually saying it.
+
+     Two values, because a cut is only ever right relative to what it is cutting.
+     12px on a 400px panel is a chamfer; the same 12px on a 42px button removes
+     a third of its height and the thing stops reading as a button and starts
+     reading as a banner. */
+  --cut: 12px;
+  --cut-control: 7px;
   --shell-x: clamp(1.25rem, 4vw, 4.5rem);
 
   color-scheme: dark;
@@ -115,8 +126,10 @@
     font-size: clamp(2rem, 4.2vw, 3.4rem);
   }
 
+  /* Was a fifth of a rem larger than the body copy, which is not a hierarchy.
+     Widened cells give it room to actually be a heading. */
   .t-display-sm {
-    font-size: clamp(1.1rem, 1.7vw, 1.45rem);
+    font-size: clamp(1.3rem, 2.1vw, 1.8rem);
     font-variation-settings: "wdth" 104;
     letter-spacing: 0.005em;
     line-height: 1.05;
@@ -130,6 +143,17 @@
     text-transform: uppercase;
     color: var(--color-chrome-dim);
     font-weight: 500;
+  }
+
+  /* Every number the site commits to. The slashed zero comes from the face
+     itself rather than from font-variant-numeric — a readout that can be
+     misread is a readout that is wrong, and it is the convention on terminals,
+     instruments and flight decks. The face is already extended, so it wants no
+     added tracking. */
+  .t-spec {
+    font-family: var(--font-spec);
+    font-weight: 700;
+    letter-spacing: 0;
   }
 
   .t-lede {
@@ -149,6 +173,27 @@
      machined panels, not pill-shaped cards.
   ------------------------------------------------------------------- */
 
+  /* A full-width band sits on its own ground, edge to edge. The pseudo-element
+     breaks out of the measure rather than the element doing it, so the band's
+     own padding and max-width are left alone. body carries overflow-x: hidden,
+     which is what keeps 100vw from opening a scrollbar. */
+  .band-wide {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .band-wide::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset-block: 0;
+    left: 50%;
+    width: 100vw;
+    transform: translateX(-50%);
+    background: #070b10;
+    border-block: 1px solid color-mix(in oklab, var(--color-steel) 45%, transparent);
+  }
+
   .grid-field {
     background-image: radial-gradient(
       circle at center,
@@ -156,6 +201,51 @@
       transparent 1px
     );
     background-size: 30px 30px;
+  }
+
+  /* ------------------------------------------------------------------
+     Chamfered surfaces
+
+     Two opposite corners cut at 45°, drawn as background layers rather
+     than by clipping the element itself. clip-path would take the focus
+     ring with it — an outline is painted outside the border box, so a
+     clipped control is a control a keyboard user cannot see.
+
+     ::before is the edge, ::after is the fill inset by a hairline. An
+     element with no --cut-edge simply gets a solid face.
+  ------------------------------------------------------------------- */
+
+  .cut {
+    position: relative;
+    isolation: isolate;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .cut::before,
+  .cut::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    clip-path: polygon(
+      var(--cut) 0%,
+      100% 0%,
+      100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%,
+      0% 100%,
+      0% var(--cut)
+    );
+  }
+
+  .cut::before {
+    inset: 0;
+    background: var(--cut-edge, transparent);
+  }
+
+  .cut::after {
+    inset: var(--cut-inset, 0px);
+    background: var(--cut-fill, transparent);
   }
 
   .hairline {
@@ -202,11 +292,16 @@
   ------------------------------------------------------------------- */
 
   .btn {
+    --cut: var(--cut-control);
+    position: relative;
+    isolation: isolate;
     display: inline-flex;
     align-items: center;
     gap: 0.6rem;
     padding: 0.85rem 1.4rem;
-    border-radius: 2px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     font-family: var(--font-mono);
     font-size: 0.6875rem;
     letter-spacing: 0.16em;
@@ -215,36 +310,62 @@
     cursor: pointer;
     transition:
       transform 160ms var(--ease-out),
-      background-color 200ms ease,
-      border-color 200ms ease,
       color 200ms ease,
-      box-shadow 260ms var(--ease-out);
+      filter 260ms var(--ease-out);
   }
 
   .btn:active {
     transform: scale(0.975);
   }
 
+  .btn::before,
+  .btn::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    clip-path: polygon(
+      var(--cut) 0%,
+      100% 0%,
+      100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%,
+      0% 100%,
+      0% var(--cut)
+    );
+  }
+
+  .btn::before {
+    inset: 0;
+    background: var(--cut-edge, transparent);
+  }
+
+  .btn::after {
+    inset: var(--cut-inset, 0px);
+    background: var(--cut-fill, transparent);
+  }
+
   .btn-primary {
-    background: var(--color-arc);
+    --cut-edge: var(--color-arc);
+    --cut-fill: var(--color-arc);
     color: #02171f;
-    border: 1px solid var(--color-arc);
-    box-shadow: 0 0 0 0 rgba(53, 210, 255, 0.45);
   }
 
   .btn-ghost {
-    background: transparent;
+    --cut-edge: color-mix(in oklab, var(--color-steel-hi) 85%, transparent);
+    --cut-fill: var(--color-void);
+    --cut-inset: 1px;
     color: #cfdcdf;
-    border: 1px solid color-mix(in oklab, var(--color-steel-hi) 85%, transparent);
   }
 
   @media (hover: hover) and (pointer: fine) {
+    /* drop-shadow, not box-shadow: box-shadow is drawn from the border box and
+       would glow square around a cut corner. drop-shadow follows what is
+       actually painted, chamfer included. */
     .btn-primary:hover {
-      box-shadow: 0 0 28px -4px rgba(53, 210, 255, 0.55);
+      filter: drop-shadow(0 0 16px rgba(53, 210, 255, 0.5));
     }
 
     .btn-ghost:hover {
-      border-color: var(--color-arc);
+      --cut-edge: var(--color-arc);
       color: #eaf3f5;
     }
   }
@@ -260,6 +381,25 @@
     opacity: 0.2;
   }
 
+  /* Stands in for the model while it streams, then steps aside. Sized to match
+     the framing the model scene uses, so the swap is not a jump. */
+  .stage-poster {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    margin: auto;
+    height: 86%;
+    width: auto;
+    max-width: none;
+    object-fit: contain;
+    pointer-events: none;
+    transition: opacity 420ms var(--ease-out);
+  }
+
+  .stage-poster[data-gone="true"] {
+    opacity: 0;
+  }
+
   .stage-scrim {
     background: linear-gradient(
       180deg,
@@ -269,11 +409,40 @@
   }
 
   @media (min-width: 1024px) {
+    /* --presence is a continuous function of the scroll, written every frame,
+       so this transition has one job: bridge the gap between scroll events.
+       A long one here would lag behind the reader's own hand. Anchored right,
+       so the figure retreats toward its own edge rather than drifting inward
+       across the copy. */
     .stage-slot {
-      opacity: 1;
+      opacity: calc(0.13 + 0.87 * var(--presence, 1));
+      transform: scale(calc(0.88 + 0.12 * var(--presence, 1)));
+      transform-origin: 78% 50%;
+      transition:
+        opacity 180ms linear,
+        transform 180ms linear;
     }
 
-    .stage-scrim {
+    /* Stands in for the model while it streams, then steps aside. Sized to match
+     the framing the model scene uses, so the swap is not a jump. */
+  .stage-poster {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    margin: auto;
+    height: 86%;
+    width: auto;
+    max-width: none;
+    object-fit: contain;
+    pointer-events: none;
+    transition: opacity 420ms var(--ease-out);
+  }
+
+  .stage-poster[data-gone="true"] {
+    opacity: 0;
+  }
+
+  .stage-scrim {
       background: linear-gradient(
         100deg,
         var(--color-void) 0%,
@@ -315,9 +484,12 @@
     transition: color 200ms ease, background-color 200ms ease;
   }
 
+  /* Was #b2c4c3 — a near-white block sitting beside the wordmark and out-
+     shouting it. A dark chip with bright type says "selected" just as clearly
+     without becoming the loudest thing on the page. */
   .lang-btn[data-active="true"] {
-    color: var(--color-void);
-    background: var(--color-chrome);
+    color: #eaf3f5;
+    background: color-mix(in oklab, var(--color-steel-hi) 85%, transparent);
   }
 
   @media (hover: hover) and (pointer: fine) {
@@ -349,6 +521,8 @@
   }
 
   .menu-btn {
+    position: relative;
+    isolation: isolate;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -356,11 +530,41 @@
     width: 40px;
     height: 40px;
     padding: 0 9px;
+    /* Smaller face again, so shallower still, or the chamfer eats the bars. */
+    --cut: 6px;
+    --cut-edge: color-mix(in oklab, var(--color-steel-hi) 85%, transparent);
+    --cut-fill: var(--color-void);
+    --cut-inset: 1px;
     background: transparent;
-    border: 1px solid color-mix(in oklab, var(--color-steel-hi) 85%, transparent);
-    border-radius: 2px;
+    border: 0;
+    border-radius: 0;
     cursor: pointer;
     transition: transform 160ms var(--ease-out), border-color 200ms ease;
+  }
+
+  .menu-btn::before,
+  .menu-btn::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    clip-path: polygon(
+      var(--cut) 0%,
+      100% 0%,
+      100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%,
+      0% 100%,
+      0% var(--cut)
+    );
+  }
+
+  .menu-btn::before {
+    inset: 0;
+    background: var(--cut-edge);
+  }
+
+  .menu-btn::after {
+    inset: var(--cut-inset);
+    background: var(--cut-fill);
   }
 
   .menu-btn:active {
@@ -424,6 +628,11 @@
     text-transform: uppercase;
     letter-spacing: 0.01em;
     color: #eaf3f5;
+    transition: transform 160ms var(--ease-out);
+  }
+
+  .mobile-link:active {
+    transform: scale(0.98);
   }
 
   /* ------------------------------------------------------------------
@@ -441,7 +650,17 @@
     bottom: 0;
     width: 2px;
     opacity: 0.55;
-    transition: opacity 300ms ease;
+    transform: scaleY(0);
+    transform-origin: top;
+    transition:
+      transform 620ms var(--ease-out),
+      opacity 300ms ease;
+  }
+
+  /* Drawn as the module's charge lands, ahead of its copy: the light arrives
+     first, the words follow it. */
+  .module:has(.reveal[data-shown="true"]) .module-rail {
+    transform: scaleY(1);
   }
 
   @media (hover: hover) and (pointer: fine) {
@@ -474,13 +693,12 @@
   ------------------------------------------------------------------- */
 
   .stat-value {
-    font-family: var(--font-display);
-    font-variation-settings: "wdth" 108;
-    font-weight: 600;
-    font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+    font-family: var(--font-spec);
+    font-weight: 700;
+    font-size: clamp(1.8rem, 3vw, 2.5rem);
     line-height: 1;
     color: #eaf3f5;
-    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
   }
 
   .stat-unit {
@@ -499,7 +717,14 @@
     align-items: center;
     gap: 1rem;
     padding: 1.15rem 1.25rem;
-    transition: background-color 220ms ease;
+    transition:
+      background-color 220ms ease,
+      transform 160ms var(--ease-out);
+  }
+
+  /* A row this wide only needs a hair of scale to register as pressed. */
+  .channel:active {
+    transform: scale(0.99);
   }
 
   .channel-value {
@@ -542,8 +767,16 @@
     transition: color 200ms ease;
   }
 
+  /* Labels whose page does not exist yet. They keep their place in the column
+     so the footer still reads as a map of the company, but they do not offer a
+     hover or a pointer they cannot honour. */
+  .footer-link.is-static {
+    color: #5d686d;
+    cursor: default;
+  }
+
   @media (hover: hover) and (pointer: fine) {
-    .footer-link:hover {
+    .footer-link:not(.is-static):hover {
       color: #eaf3f5;
     }
   }
@@ -584,9 +817,11 @@
   [data-js="on"] .reveal {
     opacity: 0;
     transform: translateY(14px);
+    /* 460, not 620: this now sits behind a 620ms charge flight, and the two
+       together were most of a second and a half before a paragraph existed. */
     transition:
-      opacity 620ms var(--ease-out),
-      transform 620ms var(--ease-out);
+      opacity 460ms var(--ease-out),
+      transform 460ms var(--ease-out);
     transition-delay: var(--reveal-delay, 0ms);
   }
 
@@ -595,47 +830,126 @@
     transform: translateY(0);
   }
 
-  /* Hero entrance, same bargain: visible by default, animated when we can. */
+  /* ------------------------------------------------------------------
+     Smoke-written copy
+
+     With the smoke layer running, a block does not fade in on a timer —
+     --ink is how much smoke has rolled over it, written every frame, and
+     the copy exists in proportion. Both selectors are spelled out so this
+     wins against the plain reveal above at equal specificity rather than
+     losing to it on source order.
+
+     The blur is scoped to [data-inking], set only while a block is still
+     being written: a finished paragraph carries no filter at all.
+  ------------------------------------------------------------------- */
+
+  .veil-canvas {
+    mix-blend-mode: screen;
+  }
+
+  [data-veil="on"] .reveal,
+  [data-veil="on"] .reveal[data-shown="true"] {
+    opacity: var(--ink, 0);
+    transform: none;
+    /* The rise is eased in JS, frame-rate independently. A CSS transition on
+       top would be a second easing fighting the first. */
+    transition: none;
+  }
+
+  [data-veil="on"] .reveal[data-inking] {
+    filter: blur(calc((1 - var(--ink, 0)) * 5px));
+  }
+
+  /* ------------------------------------------------------------------
+     Left column — one idea: a line is uncovered, not slid about. The mask
+     does the work and the fade only supports it.
+  ------------------------------------------------------------------- */
+
+  /* Hero entrance. The copy used to sit out 940ms waiting for the eye beams to
+     cross to the left of the frame. Those beams are gone, so it now waits only
+     for the ignition flash at 0.52s in the render loop — the delay had been
+     holding the fold blank for a second and a half in service of nothing. */
   [data-js="on"] .hero-in {
     opacity: 0;
     transform: translateY(18px);
   }
 
-  /* The copy starts after the eyes have caught and the beams have reached the
-     left of the frame, so it reads as written by him. The 0.25s / 0.52s / 0.62s
-     ignition timings live in RobotStage's render loop. */
   [data-js="on"] .hero[data-ready="true"] .hero-in {
     opacity: 1;
     transform: translateY(0);
     transition:
-      opacity 620ms var(--ease-out),
-      transform 620ms var(--ease-out);
-    transition-delay: calc(940ms + var(--i, 0) * 85ms);
+      opacity 560ms var(--ease-out),
+      transform 560ms var(--ease-out);
+    transition-delay: calc(520ms + var(--i, 0) * 70ms);
+  }
+
+  /* A line rises out of a mask instead of nudging upward inside its own box.
+     The headroom matters: without it, overflow clips the accents off capitals
+     — È and Ê both sit above the cap height. */
+  .line-clip {
+    display: block;
+    overflow: hidden;
+    padding-top: 0.14em;
+    margin-top: -0.14em;
+  }
+
+  [data-js="on"] .hero-line {
+    transform: translateY(105%);
+  }
+
+  /* Section titles, same device, driven by the block's own charge delay. */
+  [data-js="on"] .reveal .line-rise {
+    transform: translateY(105%);
+    transition: transform 620ms var(--ease-out);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+
+  [data-js="on"] .reveal[data-shown="true"] .line-rise {
+    transform: translateY(0);
+  }
+
+  [data-js="on"] .reveal.reveal-flat,
+  [data-js="on"] .reveal.reveal-flat[data-shown="true"] {
+    transform: none;
   }
 
   /* ------------------------------------------------------------------
-     Conduits — a charge leaving the reactor and running out to the
-     disciplines. CSS rather than JS so it keeps its rhythm while the
-     main thread is busy hydrating.
+     Conduits — a charge leaving the reactor and running out to the copy.
+     CSS rather than JS so it keeps its rhythm while the main thread is
+     busy, and one-shot rather than looping: a charge runs only because a
+     section asked for one, so light on a conduit always means something
+     is arriving.
   ------------------------------------------------------------------- */
 
+  /* Dark wire at rest. The path carries pathLength="200", so one full dash
+     offset is exactly one traversal whatever the curve's real length — the
+     same timing on every conduit, at every window size. */
   .conduit-pulse {
-    stroke-dasharray: 5 195;
+    stroke-dasharray: 7 193;
     stroke-dashoffset: 200;
     opacity: 0;
-    animation: conduit-run 5.4s linear infinite;
   }
 
-  @keyframes conduit-run {
+  /* The standing flow. Thinner, dimmer and slower than a charge, and offset
+     per conduit so the four never travel abreast — the wire is always carrying
+     something, and a charge still reads as an event against it. */
+  .conduit-flow {
+    stroke-dasharray: 3 197;
+    stroke-dashoffset: 200;
+    opacity: 0;
+    animation: conduit-flow 6.8s linear infinite;
+  }
+
+  @keyframes conduit-flow {
     0% {
       stroke-dashoffset: 200;
       opacity: 0;
     }
-    8% {
-      opacity: 0.9;
+    14% {
+      opacity: 0.45;
     }
-    70% {
-      opacity: 0.55;
+    82% {
+      opacity: 0.3;
     }
     100% {
       stroke-dashoffset: 0;
@@ -643,132 +957,37 @@
     }
   }
 
-  /* ------------------------------------------------------------------
-     Project tags riding the conduits
-  ------------------------------------------------------------------- */
-
-  .conduit-tag {
-    position: absolute;
-    display: flex;
-    align-items: flex-start;
-    gap: 0.5rem;
-    /* The anchor sits on the curve at t ~ 0.83, which is past his silhouette
-       in the empty band between the copy and the figure. Anything earlier put
-       the names on his chest, where nobody could read them. */
-    transform: translate(0.7rem, -0.55rem);
-    white-space: nowrap;
-    opacity: 0;
-    animation:
-      conduit-tag-in 620ms var(--ease-out) forwards,
-      conduit-tag-charge 5.4s var(--ease-out) infinite;
+  /* The reactor breathes, so the source of all this is never quite still. */
+  .conduit-core {
+    animation: conduit-core 3.4s var(--ease-in-out) infinite;
   }
 
-  @keyframes conduit-tag-in {
-    from {
-      opacity: 0;
-      transform: translate(-0.6rem, -0.55rem);
-    }
-    to {
-      opacity: 0.42;
-      transform: translate(0.7rem, -0.55rem);
-    }
-  }
-
-  .conduit-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-  }
-
-  .conduit-dot {
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    transform: translateY(0.25rem);
-    flex: none;
-  }
-
-  .conduit-name {
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    letter-spacing: 0.13em;
-    text-transform: uppercase;
-    font-weight: 500;
-  }
-
-  .conduit-meta {
-    font-family: var(--font-mono);
-    font-size: 0.5625rem;
-    letter-spacing: 0.11em;
-    text-transform: uppercase;
-    color: #66757b;
-  }
-
-  /* The tag brightens as its own charge passes, then settles back. Same 5.4s
-     cycle and the same per-conduit delay as .conduit-pulse. */
-  @keyframes conduit-tag-charge {
+  @keyframes conduit-core {
     0%,
     100% {
-      opacity: 0.42;
+      opacity: 0.4;
+      r: 1.4;
+    }
+    50% {
+      opacity: 0.75;
+      r: 1.9;
+    }
+  }
+
+  @keyframes conduit-fire {
+    0% {
+      stroke-dashoffset: 200;
+      opacity: 0;
     }
     12% {
       opacity: 1;
     }
-    45% {
-      opacity: 0.6;
+    88% {
+      opacity: 0.85;
     }
-  }
-
-  /* ------------------------------------------------------------------
-     Eye beams — a data stream leaving the eyes, in ones and zeroes
-  ------------------------------------------------------------------- */
-
-  .eye-beam {
-    position: absolute;
-    left: 0;
-    top: 0;
-    /* The element's origin is the eye itself; JS only translates it, so the
-       binary never ends up rotated onto its head and unreadable. */
-    transform-origin: 0 50%;
-    will-change: transform, opacity;
-  }
-
-  .eye-beam-ray {
-    position: absolute;
-    left: -270px;
-    top: -5px;
-    width: 270px;
-    height: 10px;
-    /* A wedge, wide at the eye and tapering away, rather than a flat bar */
-    clip-path: polygon(0% 42%, 100% 0%, 100% 100%, 0% 58%);
-    filter: blur(1.5px);
-    opacity: 0.75;
-  }
-
-  .eye-beam-code {
-    position: absolute;
-    left: -252px;
-    top: -16px;
-    width: 236px;
-    overflow: hidden;
-    white-space: nowrap;
-    font-family: var(--font-mono);
-    font-size: 0.5rem;
-    letter-spacing: 0.22em;
-    font-weight: 500;
-    /* Fades out as it travels away, so the stream has no hard end */
-    mask-image: linear-gradient(90deg, transparent 0%, #000 38%, #000 88%, transparent 100%);
-    animation: eye-stream 2.6s linear infinite;
-  }
-
-  /* Travels toward the eye, as if being read in rather than spat out. One
-     character cell is 1em plus its tracking, so the loop is seamless. */
-  @keyframes eye-stream {
-    from {
-      transform: translateX(-1.22em);
-    }
-    to {
-      transform: translateX(0);
+    100% {
+      stroke-dashoffset: 0;
+      opacity: 0;
     }
   }
 
@@ -778,26 +997,61 @@
 
   .preview-notice {
     position: fixed;
+    isolation: isolate;
     left: 50%;
     bottom: 1rem;
     z-index: 60;
     transform: translateX(-50%);
     display: flex;
-    align-items: center;
-    gap: 0.6rem;
+    align-items: stretch;
+    gap: 0.8rem;
     max-width: calc(100vw - 2rem);
-    padding: 0.6rem 1rem;
-    border: 1px solid color-mix(in oklab, var(--color-ember) 45%, transparent);
-    border-radius: 2px;
-    background: rgba(9, 12, 16, 0.92);
-    backdrop-filter: blur(10px);
+    /* No left padding: the hazard strip runs the full height of the panel. */
+    padding: 0.6rem 1rem 0.6rem 0;
+    --cut: 9px;
+    --cut-edge: color-mix(in oklab, var(--color-ember) 45%, transparent);
+    --cut-fill: rgba(9, 12, 16, 0.94);
+    --cut-inset: 1px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     font-family: var(--font-mono);
     font-size: 0.625rem;
     letter-spacing: 0.09em;
     text-transform: uppercase;
     color: #b6a58f;
-    text-align: center;
+    text-align: left;
     line-height: 1.5;
+  }
+
+  .preview-notice > span:not(.preview-hazard) {
+    align-self: center;
+  }
+
+  .preview-notice::before,
+  .preview-notice::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    clip-path: polygon(
+      var(--cut) 0%,
+      100% 0%,
+      100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%,
+      0% 100%,
+      0% var(--cut)
+    );
+  }
+
+  .preview-notice::before {
+    inset: 0;
+    background: var(--cut-edge);
+  }
+
+  .preview-notice::after {
+    inset: var(--cut-inset);
+    background: var(--cut-fill);
+    backdrop-filter: blur(10px);
   }
 
   .preview-notice strong {
@@ -805,30 +1059,197 @@
     font-weight: 600;
   }
 
-  .preview-dot {
+  /* Hazard hatching. Diagonal stripes already mean "unfinished, do not rely on
+     this" on every barrier and floor marking there is — a far more direct way
+     to say it than a glowing dot. */
+  .preview-hazard {
     flex: none;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--color-ember);
-    box-shadow: 0 0 8px var(--color-ember);
+    width: 20px;
+    align-self: stretch;
+    margin-block: -0.6rem;
+    background: repeating-linear-gradient(
+      -45deg,
+      var(--color-ember) 0 3px,
+      transparent 3px 8px
+    );
+    opacity: 0.7;
   }
 
   /* ------------------------------------------------------------------
-     Instrument HUD
+     Spec block — the commitment read as an instrument
+
+     One figure at display size with its unit, a gauge placing it against
+     the floor the contract guarantees, and the two secondary readings
+     under it. The hatching is the point: a solid bar reads as a fill
+     level, hatching reads as a machined scale.
   ------------------------------------------------------------------- */
 
-  .hud-row {
+  .spec-head {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     gap: 1.5rem;
-    padding: 0.55rem 0;
-    border-bottom: 1px solid color-mix(in oklab, var(--color-steel) 55%, transparent);
   }
 
-  .hud-row:last-child {
-    border-bottom: 0;
+  .spec-link {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 500;
+    color: var(--color-arc);
+    white-space: nowrap;
+    transition: color 200ms ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .spec-link:hover {
+      color: #eaf3f5;
+    }
+  }
+
+  .spec-figure {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .spec-value {
+    font-family: var(--font-spec);
+    font-weight: 700;
+    font-size: clamp(2.1rem, 4.4vw, 3.1rem);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: #eaf3f5;
+  }
+
+  /* The separator is structure, not content — it should not compete with the
+     figure it separates. */
+  .spec-slash {
+    font-family: var(--font-spec);
+    font-weight: 600;
+    font-size: clamp(1.4rem, 2.8vw, 2rem);
+    line-height: 1;
+    color: var(--color-steel-hi);
+  }
+
+  .spec-unit {
+    font-family: var(--font-spec);
+    font-weight: 600;
+    font-size: clamp(1.1rem, 2vw, 1.5rem);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--color-arc);
+  }
+
+  /* Hatched, both halves: the empty part of a scale still exists. */
+  .spec-gauge {
+    --cut: 4px;
+    position: relative;
+    isolation: isolate;
+    height: 15px;
+    margin-top: 0.9rem;
+    overflow: hidden;
+    background: repeating-linear-gradient(
+      -45deg,
+      color-mix(in oklab, var(--color-steel-hi) 60%, transparent) 0 2px,
+      transparent 2px 6px
+    );
+    clip-path: polygon(
+      var(--cut) 0%,
+      100% 0%,
+      100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%,
+      0% 100%,
+      0% var(--cut)
+    );
+  }
+
+  .spec-gauge-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 0;
+    background: repeating-linear-gradient(
+      -45deg,
+      var(--color-arc) 0 2px,
+      transparent 2px 6px
+    );
+    /* Delayed past the block's own entrance at 520 + 6 x 70ms, so the scale is
+       on screen before anything is drawn onto it. */
+    transition: width 1150ms var(--ease-out);
+    transition-delay: 1080ms;
+  }
+
+  [data-js="on"] .hero[data-ready="true"] .spec-gauge-fill {
+    width: var(--fill, 0%);
+  }
+
+  /* Without scripting the reveal gate never opens, so the gauge is simply
+     drawn at its reading. */
+  html:not([data-js="on"]) .spec-gauge-fill {
+    width: var(--fill, 0%);
+    transition: none;
+  }
+
+  /* The scale ends carry the spec face, not the label face: they are readings,
+     and they are the only place on the page a zero actually occurs — which is
+     where the slashed zero earns the extra font in the first place. */
+  .spec-scale {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.45rem;
+    font-family: var(--font-spec);
+    font-size: 0.625rem;
+    letter-spacing: -0.01em;
+    text-transform: none;
+  }
+
+  /* Two readings, one frame, split down the middle — the divider is the frame's
+     own background showing through a 1px gap. */
+  .spec-chips {
+    --cut: 8px;
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    margin-top: 1.4rem;
+    padding: 1px;
+    background: color-mix(in oklab, var(--color-steel) 72%, transparent);
+    clip-path: polygon(
+      var(--cut) 0%,
+      100% 0%,
+      100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%,
+      0% 100%,
+      0% var(--cut)
+    );
+  }
+
+  .spec-chip {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.7rem 0.9rem;
+    background: rgba(11, 17, 23, 0.9);
+  }
+
+  .spec-chip-value {
+    font-family: var(--font-spec);
+    font-weight: 600;
+    font-size: 0.8125rem;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: #dcebee;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 420px) {
+    .spec-chips {
+      grid-template-columns: 1fr;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -836,28 +1257,22 @@
       scroll-behavior: auto;
     }
 
-    .conduit-pulse {
-      animation: none;
-      opacity: 0.35;
-      stroke-dashoffset: 0;
-      stroke-dasharray: none;
-    }
-
-    /* The project names stay readable; only their pulsing stops. */
-    .conduit-tag {
-      animation: none;
-      opacity: 0.9;
-    }
-
-    .eye-beam-code {
-      animation: none;
-    }
-
     /* Reduced motion means gentler, not broken: keep the fade, drop the travel */
     [data-js="on"] .reveal,
-    [data-js="on"] .hero-in {
+    [data-js="on"] .hero-in,
+    [data-js="on"] .hero-line,
+    [data-js="on"] .reveal .line-rise {
       transform: none;
       transition-duration: 240ms;
+    }
+
+    .module-rail {
+      transform: scaleY(1);
+    }
+
+    .channel:active,
+    .mobile-link:active {
+      transform: none;
     }
 
     .btn:active {
@@ -867,6 +1282,230 @@
     .scroll-tick {
       animation: none;
       opacity: 0.6;
+    }
+
+    /* The gauge lands at its reading without being drawn there. */
+    .spec-gauge-fill {
+      transition: none;
+    }
+  }
+}
+
+@layer components {
+  /* ------------------------------------------------------------------
+     Gallery — scrolled, never self-scrolling
+  ------------------------------------------------------------------- */
+
+  .gallery-controls {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .gallery-arrow {
+    --cut: 6px;
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #cfdcdf;
+    cursor: pointer;
+    --cut-edge: color-mix(in oklab, var(--color-steel-hi) 85%, transparent);
+    --cut-fill: var(--color-void);
+    --cut-inset: 1px;
+    transition: transform 160ms var(--ease-out), color 200ms ease;
+  }
+
+  .gallery-arrow::before,
+  .gallery-arrow::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    clip-path: polygon(
+      var(--cut) 0%,
+      100% 0%,
+      100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%,
+      0% 100%,
+      0% var(--cut)
+    );
+  }
+
+  .gallery-arrow::before {
+    inset: 0;
+    background: var(--cut-edge);
+  }
+
+  .gallery-arrow::after {
+    inset: var(--cut-inset);
+    background: var(--cut-fill);
+  }
+
+  .gallery-arrow:active {
+    transform: scale(0.96);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .gallery-arrow:hover {
+      --cut-edge: var(--color-arc);
+      color: #eaf3f5;
+    }
+  }
+
+  /* Native overflow does the work: trackpad, touch, keyboard and screen
+     readers all come free, and the buttons only nudge the same container. */
+  .gallery-track {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 0;
+    scrollbar-width: none;
+    padding-bottom: 0.5rem;
+  }
+
+  .gallery-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gallery-slide {
+    flex: 0 0 min(78vw, 420px);
+    scroll-snap-align: start;
+    margin: 0;
+  }
+
+  .gallery-frame {
+    --cut: 12px;
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: #0b1117;
+    clip-path: polygon(
+      var(--cut) 0%,
+      100% 0%,
+      100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%,
+      0% 100%,
+      0% var(--cut)
+    );
+  }
+
+  .gallery-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Hatched, like the prototype notice: diagonal stripes read as "nothing here
+     yet" without pretending to be a photograph. */
+  .gallery-empty {
+    display: grid;
+    /* align-content, not place-items: the two lines must be centred as a pair.
+       place-items alone centres each inside its own stretched row, which pushed
+       them to the thirds of the frame with a hole between them. */
+    align-content: center;
+    justify-items: center;
+    gap: 0.4rem;
+    width: 100%;
+    height: 100%;
+    color: #55636a;
+    background: repeating-linear-gradient(
+      -45deg,
+      rgba(64, 69, 75, 0.35) 0 2px,
+      transparent 2px 9px
+    );
+  }
+
+  .gallery-empty b {
+    font-size: 1.4rem;
+    font-family: var(--font-spec);
+    font-weight: 700;
+    color: #6f7a7f;
+  }
+
+  .gallery-caption {
+    margin-top: 0.85rem;
+  }
+
+  /* ------------------------------------------------------------------
+     Partners — a ticker, stopped by a pointer and by a preference
+  ------------------------------------------------------------------- */
+
+  .partners {
+    padding-block: 3.5rem 1rem;
+    border-top: 1px solid color-mix(in oklab, var(--color-steel) 55%, transparent);
+  }
+
+  .partners-label {
+    margin-bottom: 1.5rem;
+  }
+
+  .partners-rail {
+    display: flex;
+    gap: 2.5rem;
+    overflow: hidden;
+    /* Fades at both ends so items enter and leave rather than being cut. */
+    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  }
+
+  .partners-row {
+    display: flex;
+    flex: none;
+    gap: 2.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    animation: partners-run 34s linear infinite;
+  }
+
+  .partners-rail:hover .partners-row {
+    animation-play-state: paused;
+  }
+
+  @keyframes partners-run {
+    to {
+      /* The gap between the two copies has to travel with them, or the loop
+         jumps by exactly one gap every cycle. */
+      transform: translateX(calc(-100% - 2.5rem));
+    }
+  }
+
+  .partners-slot {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 148px;
+    height: 56px;
+    color: #55636a;
+    border: 1px dashed color-mix(in oklab, var(--color-steel-hi) 70%, transparent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .partners-rail {
+      overflow: visible;
+      flex-wrap: wrap;
+      mask-image: none;
+    }
+
+    .partners-row {
+      flex-wrap: wrap;
+      animation: none;
+    }
+
+    .partners-rail > .partners-row + .partners-row {
+      display: none;
+    }
+
+    .gallery-track {
+      scroll-snap-type: none;
     }
   }
 }

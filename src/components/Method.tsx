@@ -14,7 +14,7 @@ export default function Method() {
       id="methode"
       className="scroll-mt-24 py-24 lg:py-32"
     >
-      <SectionHead eyebrow={t.method.eyebrow} title={t.method.title} lede={t.method.lede} />
+      <SectionHead conduit={1} eyebrow={t.method.eyebrow} title={t.method.title} lede={t.method.lede} />
 
       {/* Numbered because these steps genuinely run in order — the audit produces
           the figures the handover is planned against. */}
