@@ -8,6 +8,14 @@ import { Conduits, type Box } from "./RobotStage";
 
 export const MODEL_URL = "/robot.glb";
 
+/** Seconds before he starts to come up, and how long the rise takes. */
+const RISE_DELAY = 0.12;
+const RISE_TIME = 1.35;
+/** How far under he starts, in the normalised space where he is one unit tall
+ *  and his feet rest at -0.5. Deep enough that the clip leaves nothing of him
+ *  showing at the first frame. */
+const RISE_FROM = -1.4;
+
 /* The glow map that came with the model: black everywhere except the eyes,
    the reactor and the seams. Kept out of the .glb on purpose — held apart it
    can be multiplied by whichever accent the current section owns, which is
@@ -45,6 +53,10 @@ const WATER_FRAG = /* glsl */ `
   uniform float uTime;
   uniform vec3 uAccent;
   uniform float uIgnite;
+  /* How disturbed the surface is. Peaks as he breaks it, then settles. */
+  uniform float uWake;
+  /* Seconds since he broke the surface, for the ring that leaves it. */
+  uniform float uWakeAge;
   varying vec2 vUv;
 
   void main() {
@@ -60,6 +72,14 @@ const WATER_FRAG = /* glsl */ `
     // Rings leaving his feet, dying out as they widen.
     float rings = sin(r * 22.0 - uTime * 1.5);
     rings = smoothstep(0.55, 1.0, rings) * exp(-r * 2.6);
+    // Choppier while he is coming up through it.
+    rings *= 1.0 + uWake * 2.6;
+
+    /* The one big ring that leaves the surface when he breaks it. It travels
+       outward, widens, and thins as it goes — a single event, not a loop. */
+    float front = uWakeAge * 0.85;
+    float wave = exp(-pow((r - front) * 5.5, 2.0));
+    wave *= exp(-uWakeAge * 1.1) * smoothstep(0.0, 0.15, uWakeAge);
 
     /* The dot field, seen through the water. The lookup is displaced by the
        swell, which is what breaks the grid up instead of sliding it. */
@@ -82,7 +102,7 @@ const WATER_FRAG = /* glsl */ `
     // The pool of light he stands in, brightest just beyond his feet.
     float pool = exp(-r * 3.2) * (1.0 - exp(-r * 9.0));
 
-    float a = rings * 0.30 + grid * 0.16 + smear * 0.42 + pool * 0.40;
+    float a = rings * 0.30 + grid * 0.16 + smear * 0.42 + pool * 0.40 + wave * 0.55;
     // Nothing survives to the edge, so the plane needs no horizon.
     a *= smoothstep(1.0, 0.22, r) * uIgnite;
 
@@ -197,6 +217,8 @@ export default function RobotModelStage({
         uTime: { value: 0 },
         uAccent: { value: new THREE.Color(ACCENT_HEX.arc) },
         uIgnite: { value: 0 },
+        uWake: { value: 0 },
+        uWakeAge: { value: 0 },
       };
       const waterMaterial = new THREE.ShaderMaterial({
         uniforms: waterUniforms,
@@ -213,7 +235,17 @@ export default function RobotModelStage({
       const water = new THREE.Mesh(new THREE.PlaneGeometry(1, 1, 24, 24), waterMaterial);
       water.rotation.x = -Math.PI / 2;
       water.renderOrder = -1;
-      root.add(water);
+      /* In the scene, not in `root`. As his child the surface would rise with
+         him, so he could never come out of it — and it would turn when he
+         turns, which water does not. */
+      scene.add(water);
+
+      /* Everything below the surface is cut away. Without this a submerged
+         figure still draws over the water — the plane is additive and writes
+         no depth — so he would look like he was standing on it rather than in
+         it. The plane's height is kept level with the surface every layout. */
+      renderer.localClippingEnabled = true;
+      const surface = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0.502);
 
       // Started together: the glow map is small and there is no reason to pay
       // for it in series behind a four-megabyte model.
@@ -264,7 +296,6 @@ export default function RobotModelStage({
          below, or the surface fights the soles for the same pixels. */
       const spread = Math.max(3.2, (size.x / Math.max(size.y, 0.0001)) * 5.5);
       water.scale.set(spread, spread, 1);
-      water.position.y = -0.502;
 
       const emissiveMeshes: import("three").Object3D[] = [];
       model.traverse((child) => {
@@ -277,6 +308,7 @@ export default function RobotModelStage({
         for (const raw of materials) {
           const material = raw as import("three").MeshStandardMaterial;
           if (!material) continue;
+          material.clippingPlanes = [surface];
           /* Two ways in. If a glow map came with the model it is the mask and
              every material takes it — this one arrives as a single mesh called
              "model", so a name-matching pass would have found nothing. Failing
@@ -312,6 +344,10 @@ export default function RobotModelStage({
          shot, an object scaling down reads as a product configurator. */
       let baseDistance = 2;
       let unitPx = 1;
+      /* Where the surface sits, and when he first came through it. Negative
+         until he has. */
+      let waterline = -0.502;
+      let brokeAt = -1;
 
       const layout = () => {
         const rect = host.getBoundingClientRect();
@@ -333,6 +369,10 @@ export default function RobotModelStage({
         camera.lookAt(0, 0, 0);
 
         baseY = narrow ? 0 : -0.03;
+        // The surface sits just under where his feet come to rest.
+        waterline = baseY - 0.502;
+        water.position.y = waterline;
+        surface.constant = -waterline;
         baseDistance = distance;
         unitPx = stage.h * frameFill;
 
@@ -442,6 +482,18 @@ export default function RobotModelStage({
 
         waterUniforms.uTime.value = elapsed;
 
+        /* He comes up out of the water. Eased at both ends rather than out of
+           the start: something heavy leaving water is slow to move, quickest as
+           it breaks the surface, and slow again as it clears. Eased purely out,
+           the fast part is spent before he is anywhere near the surface and he
+           is through it in the first few frames.
+
+           Under a second and a half start to finish. It is the first thing
+           anyone sees, and an entrance long enough to notice waiting for is an
+           entrance that has failed. */
+        const rise = Math.max(0, Math.min(1, (elapsed - RISE_DELAY) / RISE_TIME));
+        const risen = rise * rise * (3 - 2 * rise);
+
         const ignite = Math.max(0, Math.min(1, (elapsed - 0.25) / 0.4));
         // The water comes up with him: he is what is lighting it.
         waterUniforms.uIgnite.value = ignite * ignite * (3 - 2 * ignite);
@@ -455,7 +507,18 @@ export default function RobotModelStage({
         const turn = -easedProgress * 0.7 + Math.sin(elapsed * 0.24) * 0.05 + eased.x * 0.1;
         root.rotation.y = turn;
         root.rotation.x = eased.y * 0.025;
-        root.position.y = baseY + Math.sin(elapsed * 0.55) * 0.008 - eased.y * 0.02;
+        root.position.y =
+          baseY + RISE_FROM * (1 - risen) + Math.sin(elapsed * 0.55) * 0.008 - eased.y * 0.02;
+
+        /* What the surface answers, taken from where his crown actually is
+           rather than from a moment worked out in advance: the crown sits half
+           a unit above his origin, and the disturbance peaks as it passes the
+           waterline. Derived this way it stays right if the timing, the depth
+           or the easing ever change. */
+        const crown = root.position.y + 0.5 - waterline;
+        waterUniforms.uWake.value = Math.exp(-Math.pow(crown / 0.34, 2));
+        if (crown > 0 && brokeAt < 0) brokeAt = elapsed;
+        waterUniforms.uWakeAge.value = brokeAt < 0 ? 0 : elapsed - brokeAt;
 
         /* The shot, not the subject. The camera pulls back and lifts as the
            page goes down, so we end up looking slightly down on him from

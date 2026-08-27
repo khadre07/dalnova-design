@@ -393,7 +393,10 @@
     max-width: none;
     object-fit: contain;
     pointer-events: none;
-    transition: opacity 420ms var(--ease-out);
+    /* Quick, because what follows it is the water lighting up and him coming
+       out of it. A long dissolve would have a standing figure fading over a
+       surface he has not broken yet. */
+    transition: opacity 220ms var(--ease-out);
   }
 
   .stage-poster[data-gone="true"] {
@@ -435,7 +438,10 @@
     max-width: none;
     object-fit: contain;
     pointer-events: none;
-    transition: opacity 420ms var(--ease-out);
+    /* Quick, because what follows it is the water lighting up and him coming
+       out of it. A long dissolve would have a standing figure fading over a
+       surface he has not broken yet. */
+    transition: opacity 220ms var(--ease-out);
   }
 
   .stage-poster[data-gone="true"] {
