@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ACCENT_HEX } from "@/lib/content";
 import { useSite } from "@/lib/site-state";
+import { presenceValue } from "@/lib/stage";
 import { Conduits, type Box } from "./RobotStage";
 
 export const MODEL_URL = "/robot.glb";
@@ -17,6 +18,37 @@ const EMISSIVE_URL = "/robot-emissive.png";
  *  their emissive channel, so the eyes and reactor follow the section colour
  *  the same way the flat version does. */
 const EMISSIVE_NAME = /eye|iris|core|reactor|glow|emis|led|light|lamp/i;
+
+/* The floor he stands on.
+
+   A black shadow on a near-black page is nothing, so what grounds him is not a
+   shadow but a pool of light with a darker core: the reactor lighting the
+   ground around his feet, and the feet themselves taking that light away. One
+   texture does both — the falloff peaks a little out from the centre and dies
+   at the edge, so there is no horizon line to explain. */
+function makeGroundTexture() {
+  const size = 256;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return canvas;
+
+  const half = size / 2;
+  /* Built white and tinted by the material, not baked with a colour — the
+     accent changes with the section, and a baked hex would be multiplied by it
+     a second time. */
+  const gradient = ctx.createRadialGradient(half, half, 0, half, half, half);
+  // Darker where he meets the ground, brightest just beyond his stance.
+  gradient.addColorStop(0, "rgba(255,255,255,0.13)");
+  gradient.addColorStop(0.16, "rgba(255,255,255,0.37)");
+  gradient.addColorStop(0.34, "rgba(255,255,255,0.23)");
+  gradient.addColorStop(0.62, "rgba(255,255,255,0.07)");
+  gradient.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, size, size);
+  return canvas;
+}
 
 export default function RobotModelStage({
   onFailed,
@@ -115,6 +147,28 @@ export default function RobotModelStage({
       const root = new THREE.Group();
       scene.add(root);
 
+      /* Depth. Everything past him falls away into the page's own colour, so
+         the scene has a behind rather than ending at a hard edge. Exponential
+         rather than linear: it thickens with distance the way air does. */
+      scene.fog = new THREE.FogExp2(0x05070a, 0.34);
+
+      const groundCanvas = makeGroundTexture();
+      const groundTexture = new THREE.CanvasTexture(groundCanvas);
+      groundTexture.colorSpace = THREE.SRGBColorSpace;
+      const groundMaterial = new THREE.MeshBasicMaterial({
+        map: groundTexture,
+        transparent: true,
+        depthWrite: false,
+        // Added rather than painted on: there is nothing underneath to cover.
+        blending: THREE.AdditiveBlending,
+        fog: false,
+        toneMapped: false,
+      });
+      const ground = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), groundMaterial);
+      ground.rotation.x = -Math.PI / 2;
+      ground.renderOrder = -1;
+      root.add(ground);
+
       // Started together: the glow map is small and there is no reason to pay
       // for it in series behind a four-megabyte model.
       const glowPromise = new THREE.TextureLoader()
@@ -157,6 +211,12 @@ export default function RobotModelStage({
       model.position.set(-centre.x * unit, -centre.y * unit, -centre.z * unit);
       model.scale.setScalar(unit);
 
+      /* Normalised space puts his feet at -0.5. A hair below, or the plane
+         fights the soles for the same pixels. */
+      const spread = Math.max(1.5, (size.x / Math.max(size.y, 0.0001)) * 2.6);
+      ground.scale.set(spread, spread, 1);
+      ground.position.y = -0.502;
+
       const emissiveMeshes: import("three").Object3D[] = [];
       model.traverse((child) => {
         const mesh = child as import("three").Mesh;
@@ -198,6 +258,11 @@ export default function RobotModelStage({
 
       let stage = { w: 1, h: 1 };
       let baseY = 0;
+      /* Where the camera sits with the page at the top. The scroll dollies out
+         from here rather than shrinking him: a camera pulling back reads as a
+         shot, an object scaling down reads as a product configurator. */
+      let baseDistance = 2;
+      let unitPx = 1;
 
       const layout = () => {
         const rect = host.getBoundingClientRect();
@@ -219,6 +284,8 @@ export default function RobotModelStage({
         camera.lookAt(0, 0, 0);
 
         baseY = narrow ? 0 : -0.03;
+        baseDistance = distance;
+        unitPx = stage.h * frameFill;
 
         /* Capped at 1.5 rather than 2. A PBR figure lit by an environment map
            costs fragments, and ratio 2 is four times the pixels of ratio 1 for
@@ -274,6 +341,15 @@ export default function RobotModelStage({
       let paused = 0;
       let last = performance.now();
 
+      /* The conduits are positioned from a box measured once per layout. The
+         camera dolly changes the figure's projected size after that, so the
+         overlay is corrected by the same factor rather than being re-measured
+         every frame — re-measuring would mean a React state write per frame. */
+      const trackDolly = (dolly: number, lift: number) => {
+        const correction = `scale(${(1 / dolly).toFixed(4)}) translateY(${(lift * unitPx).toFixed(1)}px)`;
+        if (frontRef.current) frontRef.current.style.transform = correction;
+      };
+
       const placeOverlays = (turn: number) => {
         const facing = Math.cos(turn);
         const visible = Math.max(0, Math.min(1, (facing - 0.12) / 0.88));
@@ -285,6 +361,11 @@ export default function RobotModelStage({
 
       const frame = () => {
         raf = window.requestAnimationFrame(frame);
+
+        /* Withdrawn behind a full-width band, there is nothing to see and
+           another WebGL scene may well be drawing further down the page. Keep
+           the loop alive so the clock stays honest, skip the draw. */
+        if (presenceValue() < 0.02) return;
         const now = performance.now();
         const elapsed = (now - started) / 1000;
         const delta = Math.min(0.05, (now - last) / 1000);
@@ -295,6 +376,7 @@ export default function RobotModelStage({
         nextAccent.set(targetAccent.current);
         currentAccent.lerp(nextAccent, 0.045);
         rim.color.copy(currentAccent);
+        groundMaterial.color.copy(currentAccent);
         for (const mesh of emissiveMeshes) {
           const materials = Array.isArray((mesh as import("three").Mesh).material)
             ? ((mesh as import("three").Mesh).material as import("three").Material[])
@@ -320,12 +402,18 @@ export default function RobotModelStage({
         const turn = -easedProgress * 0.7 + Math.sin(elapsed * 0.24) * 0.05 + eased.x * 0.1;
         root.rotation.y = turn;
         root.rotation.x = eased.y * 0.025;
-        root.position.y =
-          baseY + Math.sin(elapsed * 0.55) * 0.008 - eased.y * 0.02 - easedProgress * 0.05;
-        root.scale.setScalar(1 - easedProgress * 0.09);
+        root.position.y = baseY + Math.sin(elapsed * 0.55) * 0.008 - eased.y * 0.02;
+
+        /* The shot, not the subject. The camera pulls back and lifts as the
+           page goes down, so we end up looking slightly down on him from
+           further away — the recession that used to be done by scaling him. */
+        const dolly = 1 + easedProgress * 0.22;
+        camera.position.set(0, easedProgress * 0.26, baseDistance * dolly);
+        camera.lookAt(0, -easedProgress * 0.06, 0);
 
         root.updateMatrixWorld();
         placeOverlays(turn);
+        trackDolly(dolly, easedProgress * 0.26);
         renderer.render(scene, camera);
         announce();
       };
@@ -348,7 +436,6 @@ export default function RobotModelStage({
         renderer.toneMappingExposure = 1.15;
         overlayIntro = 1;
         root.rotation.y = 0.06;
-        root.scale.setScalar(1);
         root.position.y = baseY;
         root.updateMatrixWorld();
         placeOverlays(0.06);
@@ -387,6 +474,9 @@ export default function RobotModelStage({
           for (const material of materials) material?.dispose();
         });
         glow?.dispose();
+        groundTexture.dispose();
+        groundMaterial.dispose();
+        ground.geometry.dispose();
         envRT.texture.dispose();
         pmrem.dispose();
         renderer.dispose();

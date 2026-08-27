@@ -1509,3 +1509,19 @@
     }
   }
 }
+
+@layer components {
+  /* The 3D ribbon's room. Sized in viewport units so the panels keep their
+     proportion as the band widens, capped so it never eats a whole screen. */
+  .ribbon {
+    position: relative;
+    margin-top: 3rem;
+    height: clamp(320px, 34vw, 520px);
+  }
+
+  .ribbon-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+}

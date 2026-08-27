@@ -1,31 +1,63 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAccentZone, useRecessZone, useSite } from "@/lib/site-state";
+import GalleryRibbon, { type RibbonControls } from "./GalleryRibbon";
 import Reveal from "./Reveal";
 import SectionHead from "./SectionHead";
 
-/* A gallery you scroll, not one that scrolls itself.
+/* Two galleries, one at a time.
 
-   Native overflow with scroll snapping, so a trackpad, a touch screen, a
-   keyboard and a screen reader all work without a line of code from us. The
-   buttons only nudge the same scroll container. No autoplay: a carousel that
-   moves on its own takes the reader's place in the queue and is the single
-   most complained-about pattern on the web. */
+   The ribbon is the showpiece: curved panels turning on a rail. It asks for a
+   second WebGL context and a GPU, so it only appears where both are a fair
+   assumption — a wide screen, motion allowed.
+
+   Everywhere else, and for anyone without scripting, the flat strip runs
+   instead: native scroll snapping, which a trackpad, a touch screen and a
+   keyboard all drive for free. Neither is a degraded version of the other;
+   they are two ways of showing the same five pictures.
+
+   The arrows drive whichever is on. */
+
+type Mode = "probing" | "ribbon" | "flat";
+
 export default function Gallery() {
   const { t } = useSite();
   const accentRef = useAccentZone("arc");
   const bandRef = useRecessZone();
   const trackRef = useRef<HTMLDivElement>(null);
+  const ribbonRef = useRef<RibbonControls>(null);
+  const [mode, setMode] = useState<Mode>("probing");
+
+  useEffect(() => {
+    const wide = window.matchMedia("(min-width: 1024px)");
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => setMode(wide.matches && !still.matches ? "ribbon" : "flat");
+    // Async so the first paint is not a synchronous cascade out of an effect.
+    const id = window.setTimeout(sync, 0);
+    wide.addEventListener("change", sync);
+    still.addEventListener("change", sync);
+    return () => {
+      window.clearTimeout(id);
+      wide.removeEventListener("change", sync);
+      still.removeEventListener("change", sync);
+    };
+  }, []);
 
   const nudge = useCallback((direction: 1 | -1) => {
+    if (ribbonRef.current) {
+      ribbonRef.current.step(direction);
+      return;
+    }
     const track = trackRef.current;
     if (!track) return;
     // One slide plus its gap, measured rather than assumed.
     const slide = track.querySelector<HTMLElement>("[data-slide]");
-    const step = slide ? slide.offsetWidth + 16 : track.clientWidth * 0.8;
-    track.scrollBy({ left: step * direction, behavior: "smooth" });
+    const stride = slide ? slide.offsetWidth + 16 : track.clientWidth * 0.8;
+    track.scrollBy({ left: stride * direction, behavior: "smooth" });
   }, []);
+
+  const sources = t.gallery.items.map((item) => item.src);
 
   return (
     <section
@@ -56,32 +88,45 @@ export default function Gallery() {
         </Reveal>
       </div>
 
-      <div
-        ref={trackRef}
-        className="gallery-track mt-12"
-        tabIndex={0}
-        role="region"
-        aria-label={t.gallery.title}
-      >
-        {t.gallery.items.map((item, i) => (
-          <figure key={item.caption} data-slide className="gallery-slide">
-            <div className="gallery-frame">
-              {item.src ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={item.src} alt={item.alt} loading="lazy" decoding="async" />
-              ) : (
-                /* Nothing has been dropped in yet, and the frame says so
-                   rather than pretending. */
-                <span className="gallery-empty t-mono">
-                  {t.gallery.emptyLabel}
-                  <b>{String(i + 1).padStart(2, "0")}</b>
-                </span>
-              )}
-            </div>
-            <figcaption className="gallery-caption t-mono">{item.caption}</figcaption>
-          </figure>
-        ))}
-      </div>
+      {mode === "ribbon" ? (
+        <>
+          <GalleryRibbon sources={sources} controlsRef={ribbonRef} />
+          {/* The ribbon is a canvas, so it announces nothing. The list of what
+              it is showing stays in the page for anyone reading it aloud. */}
+          <ul className="sr-only">
+            {t.gallery.items.map((item) => (
+              <li key={item.caption}>{item.alt || item.caption}</li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <div
+          ref={trackRef}
+          className="gallery-track mt-12"
+          tabIndex={0}
+          role="region"
+          aria-label={t.gallery.title}
+        >
+          {t.gallery.items.map((item, i) => (
+            <figure key={item.caption} data-slide className="gallery-slide">
+              <div className="gallery-frame">
+                {item.src ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={item.src} alt={item.alt} loading="lazy" decoding="async" />
+                ) : (
+                  /* Nothing has been dropped in yet, and the frame says so
+                     rather than pretending. */
+                  <span className="gallery-empty t-mono">
+                    {t.gallery.emptyLabel}
+                    <b>{String(i + 1).padStart(2, "0")}</b>
+                  </span>
+                )}
+              </div>
+              <figcaption className="gallery-caption t-mono">{item.caption}</figcaption>
+            </figure>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

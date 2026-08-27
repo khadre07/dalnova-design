@@ -28,6 +28,13 @@ export function registerRecess(el: HTMLElement) {
  * is fully back before such a band has to fill the screen, so the withdrawal
  * finishes rather than still being underway when the reader arrives.
  */
+/** Last computed presence, for anything that needs to know without measuring. */
+let current = 1;
+
+export function presenceValue() {
+  return current;
+}
+
 export function presenceNow(viewport: number) {
   if (viewport <= 0) return 1;
   let covered = 0;
@@ -36,5 +43,6 @@ export function presenceNow(viewport: number) {
     const overlap = Math.min(viewport, rect.bottom) - Math.max(0, rect.top);
     if (overlap > 0) covered = Math.max(covered, overlap / viewport);
   }
-  return Math.max(0, 1 - Math.min(1, covered * 1.4));
+  current = Math.max(0, 1 - Math.min(1, covered * 1.4));
+  return current;
 }

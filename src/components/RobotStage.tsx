@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { CHARGE_MS, onCharge, replay } from "@/lib/charge";
 import { ACCENT_HEX } from "@/lib/content";
 import { useSite } from "@/lib/site-state";
+import { presenceValue } from "@/lib/stage";
 
 const TEXTURE = "/robot.webp";
 
@@ -373,6 +374,11 @@ export default function RobotStage() {
 
       const frame = () => {
         raf = window.requestAnimationFrame(frame);
+
+        /* Withdrawn behind a full-width band, there is nothing to see and
+           another WebGL scene may well be drawing further down the page. Keep
+           the loop alive so the clock stays honest, skip the draw. */
+        if (presenceValue() < 0.02) return;
         const elapsed = (performance.now() - started) / 1000;
 
         nextAccent.set(targetAccent.current);
