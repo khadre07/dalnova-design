@@ -1513,10 +1513,27 @@
 @layer components {
   /* The 3D ribbon's room. Sized in viewport units so the panels keep their
      proportion as the band widens, capped so it never eats a whole screen. */
+  /* The authored composition is a vertical helix spanning far more height than
+     it is ever shown in — a hero background, seen as a slice. The band is tall
+     enough that the slice reads as a ribbon passing through rather than as a
+     row of panels, and capped so it never takes a whole screen. */
+  /* The authored composition is a vertical helix spanning far more height than
+     it is ever shown in — a hero background, seen as a slice. Inside the page
+     measure it read as three panels adrift in a box; at full bleed it reads as
+     a ribbon passing behind the section, which is what it is.
+
+     Breaking out with 100vw rather than widening the section: body carries
+     overflow-x: hidden, which is what keeps that from opening a scrollbar. */
   .ribbon {
     position: relative;
+    left: 50%;
+    width: 100vw;
+    transform: translateX(-50%);
     margin-top: 3rem;
-    height: clamp(320px, 34vw, 520px);
+    height: clamp(420px, 46vw, 640px);
+    overflow: hidden;
+    /* Fades at both edges, so panels leave the frame rather than being cut. */
+    mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
   }
 
   .ribbon-canvas {

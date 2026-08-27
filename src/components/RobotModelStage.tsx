@@ -169,6 +169,45 @@ export default function RobotModelStage({
       ground.renderOrder = -1;
       root.add(ground);
 
+      /* The floor, as the page's own dot field laid flat and run into the
+         distance. The grid behind the copy is #78a5b4 at 1px every 30px; this
+         is the same field with a third dimension, so the flat page and the
+         scene are one idea rather than two backgrounds that happen to share a
+         screen.
+
+         Points, not lines: one draw call, no assets, and it costs a rounding
+         error next to the figure. The fog does the receding — every dot past a
+         few units has already dissolved into the page colour, so there is no
+         edge to hide and no far plane to explain. */
+      const STRIDE = 0.26;
+      const HALF = 26;
+      const dots: number[] = [];
+      for (let i = -HALF; i <= HALF; i += 1) {
+        for (let j = -HALF; j <= HALF; j += 1) {
+          const x = i * STRIDE;
+          const z = j * STRIDE;
+          // Leave the ground under him clear, or the dots read as a rash on
+          // his feet rather than as a floor he is standing on.
+          if (Math.hypot(x, z) < 0.42) continue;
+          dots.push(x, -0.5, z);
+        }
+      }
+      const floorGeometry = new THREE.BufferGeometry();
+      floorGeometry.setAttribute("position", new THREE.Float32BufferAttribute(dots, 3));
+      const floorMaterial = new THREE.PointsMaterial({
+        color: 0x78a5b4,
+        size: 0.02,
+        sizeAttenuation: true,
+        transparent: true,
+        opacity: 0.55,
+        depthWrite: false,
+        fog: true,
+        toneMapped: false,
+      });
+      const floor = new THREE.Points(floorGeometry, floorMaterial);
+      floor.renderOrder = -2;
+      root.add(floor);
+
       // Started together: the glow map is small and there is no reason to pay
       // for it in series behind a four-megabyte model.
       const glowPromise = new THREE.TextureLoader()
@@ -474,6 +513,8 @@ export default function RobotModelStage({
           for (const material of materials) material?.dispose();
         });
         glow?.dispose();
+        floorGeometry.dispose();
+        floorMaterial.dispose();
         groundTexture.dispose();
         groundMaterial.dispose();
         ground.geometry.dispose();

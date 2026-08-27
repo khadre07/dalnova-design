@@ -4,33 +4,49 @@ import { useEffect, useRef } from "react";
 import { ACCENT_HEX } from "@/lib/content";
 import { useSite } from "@/lib/site-state";
 
-/* A ribbon of curved panels turning on a vertical rail.
+/* The Vantrix hero ribbon: sixteen curved panels on a vertical rail.
 
-   Adapted from the ThreeUI Gallery, with three changes that were not optional:
+   The authored composition is kept exactly — sixteen panels, a 35° camera at
+   z 18, the four-turn placement that makes the stack a helix rather than a
+   ring, the 0.18 rotation and the ±1.5 vertical drift. Three things could not
+   be carried over literally, and each is a fact about this project rather than
+   a preference:
 
-   - The reference is written against three r149 and uses `outputEncoding` and
-     `texture.encoding` with `sRGBEncoding`. Both were removed from three; this
-     project is on 0.185, where the equivalent is `outputColorSpace` and
-     `texture.colorSpace`. Copied verbatim it would have rendered washed out.
+   1. Runtime. The source is written for three r149 and uses `outputEncoding`
+      and `texture.encoding` with `sRGBEncoding`. Both were removed from three;
+      this project is on 0.185, where the equivalents are `outputColorSpace`
+      and `texture.colorSpace`. Copied verbatim the ribbon renders washed out.
+      Installing r149 beside it would mean two copies of three.js in the
+      bundle — and the published package carries two more of its own.
 
-   - The reference stacks sixteen panels vertically, which suits a tall hero.
-     This band is wide and short, so the panels sit around the cylinder instead
-     of up it — the same device, turned ninety degrees to fit the room it is in.
+   2. Assets. The five authored WebP textures are Vantrix's own photography.
+      This ribbon shows the gallery slots declared in content.ts, cycled across
+      the sixteen panels the same way the source cycles its five.
 
-   - It rotates on its own, but it also answers the section's arrows. A gallery
-     you cannot stop on the picture you want is a screensaver.
+   3. Pixel ratio, capped at 1.5 rather than 2. The page already runs a second
+      WebGL scene for the figure, and the cap is what made that affordable.
 
-   The panels themselves are decoration: the real list stays in the DOM behind
-   this, which is what a screen reader, a search engine, and anyone without
-   WebGL actually get. */
+   Everything the ribbon shows is decoration: the real list stays in the DOM
+   beside it, which is what a screen reader and a search engine read. */
 
-const PANELS = 10;
-/** Radians between panel centres. */
-const STEP = (Math.PI * 2) / PANELS;
+const PANELS = 16;
 
 export type RibbonControls = { step: (direction: 1 | -1) => void } | null;
 
-function placeholderTexture(index: number, hex: string) {
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+/* A slot with nothing dropped into it yet.
+
+   Deliberately symmetrical, with no numeral. The authored ribbon is
+   double-sided — the far half of the rail shows through the near half, which
+   is what gives it depth — so every panel is also seen reversed. A photograph
+   reads fine that way; a slot number does not, it reads as a fault. Drawing
+   only marks that survive being mirrored keeps the authored material and loses
+   nothing: the slots are ordered in content.ts, which is where they are
+   filled in. */
+function placeholderTexture(hex: string) {
   const w = 512;
   const h = 384;
   const canvas = document.createElement("canvas");
@@ -42,8 +58,7 @@ function placeholderTexture(index: number, hex: string) {
   ctx.fillStyle = "#121b24";
   ctx.fillRect(0, 0, w, h);
 
-  // The same hatching the flat frames use: this is an empty slot, and it says so.
-  ctx.strokeStyle = "rgba(94, 104, 112, 0.55)";
+  ctx.strokeStyle = "rgba(94, 104, 112, 0.5)";
   ctx.lineWidth = 3;
   for (let x = -h; x < w; x += 26) {
     ctx.beginPath();
@@ -53,15 +68,24 @@ function placeholderTexture(index: number, hex: string) {
   }
 
   ctx.strokeStyle = hex;
-  ctx.globalAlpha = 0.55;
+  ctx.globalAlpha = 0.5;
   ctx.lineWidth = 3;
   ctx.strokeRect(14, 14, w - 28, h - 28);
   ctx.globalAlpha = 1;
 
-  ctx.fillStyle = "#c3d2d8";
-  ctx.textAlign = "center";
-  ctx.font = "700 108px ui-monospace, monospace";
-  ctx.fillText(String(index + 1).padStart(2, "0"), w / 2, h / 2 + 38);
+  // A centred aperture: a ring and a cross, both unchanged by mirroring.
+  ctx.strokeStyle = "#8ea0a8";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(w / 2, h / 2, 52, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(w / 2 - 26, h / 2);
+  ctx.lineTo(w / 2 + 26, h / 2);
+  ctx.moveTo(w / 2, h / 2 - 26);
+  ctx.lineTo(w / 2, h / 2 + 26);
+  ctx.stroke();
 
   return canvas;
 }
@@ -69,19 +93,25 @@ function placeholderTexture(index: number, hex: string) {
 export default function GalleryRibbon({
   sources,
   controlsRef,
+  speed = 1,
+  scale = 1,
 }: {
   /** One entry per slot. An empty string means nothing has been dropped in. */
   sources: string[];
   controlsRef: React.RefObject<RibbonControls>;
+  speed?: number;
+  scale?: number;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { accent } = useSite();
 
   const accentRef = useRef(ACCENT_HEX.arc);
+  const settingsRef = useRef({ speed, scale });
   useEffect(() => {
     accentRef.current = ACCENT_HEX[accent];
-  }, [accent]);
+    settingsRef.current = { speed, scale };
+  }, [accent, speed, scale]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -101,127 +131,127 @@ export default function GalleryRibbon({
       } catch {
         return;
       }
-      renderer.setClearAlpha(0);
+      renderer.setClearColor(0x000000, 0);
       renderer.outputColorSpace = THREE.SRGBColorSpace;
 
       const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
-      camera.position.set(0, 0, 8.4);
+      const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+      camera.position.z = 18;
 
       const ribbon = new THREE.Group();
       scene.add(ribbon);
 
-      const radius = 5;
-      // A gap between panels, so the ribbon reads as separate pictures rather
-      // than as one wrapped image.
-      const arc = STEP * 0.82;
-      const geometry = new THREE.CylinderGeometry(radius, radius, 2.2, 48, 1, true, 0, arc);
-
+      const geometry = new THREE.CylinderGeometry(5, 5, 1.8, 64, 1, true, 0, Math.PI * 0.4);
       const loader = new THREE.TextureLoader();
       const textures: import("three").Texture[] = [];
       const materials: import("three").MeshBasicMaterial[] = [];
 
-      for (let i = 0; i < PANELS; i += 1) {
-        const src = sources[i % Math.max(1, sources.length)] ?? "";
-        let texture: import("three").Texture;
-        if (src) {
-          texture = loader.load(src);
-        } else {
-          texture = new THREE.CanvasTexture(
-            placeholderTexture(i % Math.max(1, sources.length), accentRef.current),
-          );
-        }
+      const slots = Math.max(1, sources.length);
+      for (let i = 0; i < slots; i += 1) {
+        const src = sources[i];
+        const texture = src
+          ? loader.load(src)
+          : new THREE.CanvasTexture(placeholderTexture(accentRef.current));
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
         textures.push(texture);
+      }
 
+      for (let i = 0; i < PANELS; i += 1) {
         const material = new THREE.MeshBasicMaterial({
-          map: texture,
-          /* FrontSide, not BackSide. Looking at the inside of the cylinder
-             showed every panel mirrored — the numbers came out backwards — and
-             curved them the wrong way, away from the viewer instead of toward.
-             The far half culls itself, which is also one less thing to draw. */
-          side: THREE.FrontSide,
-          transparent: true,
-          opacity: 0.92,
+          map: textures[i % slots],
+          opacity: 0.85,
+          side: THREE.DoubleSide,
           toneMapped: false,
+          transparent: true,
         });
         materials.push(material);
 
         const panel = new THREE.Mesh(geometry, material);
-        // Centre each panel's arc on its own slot around the rail.
-        panel.rotation.y = i * STEP - arc / 2;
+        panel.position.y = (i - PANELS / 2) * 2.4;
+        // Four turns across sixteen panels: the stack is a helix, not a ring.
+        panel.rotation.y = (i / PANELS) * Math.PI * 4;
         ribbon.add(panel);
       }
 
-      const resize = () => {
-        const rect = host.getBoundingClientRect();
-        const w = Math.max(1, Math.round(rect.width));
-        const h = Math.max(1, Math.round(rect.height));
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
-        renderer.setSize(w, h, false);
-        camera.aspect = w / h;
-        camera.updateProjectionMatrix();
-      };
-      resize();
-      const resizeObserver = new ResizeObserver(resize);
-      resizeObserver.observe(host);
-
-      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-      let angle = 0;
-      let target = 0;
+      let elapsed = 0;
+      let nudged = 0;
       let raf = 0;
       let running = false;
-      let last = performance.now();
+      let previous = 0;
       let onScreen = false;
       let visible = !document.hidden;
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-      controlsRef.current = {
-        step: (direction) => {
-          // Snap to the next whole slot, so a press always lands on a picture.
-          target = Math.round(target / STEP) * STEP + direction * STEP;
-        },
-      };
-
-      const draw = () => {
-        ribbon.rotation.y = angle;
-        ribbon.position.y = Math.sin(angle * 0.7) * 0.12;
+      const render = (time = performance.now()) => {
+        const safeSpeed = clamp(settingsRef.current.speed, 0, 3);
+        const safeScale = clamp(settingsRef.current.scale, 0.7, 1.35);
+        if (previous) elapsed += Math.min((time - previous) / 1000, 0.05) * safeSpeed;
+        previous = time;
+        // The arrows ease onto the drift rather than replacing it.
+        nudged += (0 - nudged) * 0.06;
+        ribbon.rotation.y = elapsed * 0.18 + nudged;
+        ribbon.position.y = Math.sin(elapsed) * 1.5;
+        ribbon.scale.setScalar(safeScale);
         renderer.render(scene, camera);
       };
 
-      const frame = () => {
-        raf = window.requestAnimationFrame(frame);
-        const now = performance.now();
-        const delta = Math.min(0.05, (now - last) / 1000);
-        last = now;
-
-        // Drifts on its own, and eases onto whatever the arrows asked for.
-        target += delta * 0.16;
-        angle += (target - angle) * (1 - Math.exp(-4 * delta));
-        draw();
+      const tick = (time: number) => {
+        if (disposed || !onScreen || !visible) {
+          raf = 0;
+          previous = 0;
+          return;
+        }
+        render(time);
+        raf = window.requestAnimationFrame(tick);
       };
 
       const start = () => {
-        if (running || reduced || !onScreen || !visible) return;
-        running = true;
-        last = performance.now();
-        raf = window.requestAnimationFrame(frame);
+        if (reduced) {
+          render(0);
+          return;
+        }
+        if (!raf && onScreen && visible) {
+          running = true;
+          raf = window.requestAnimationFrame(tick);
+        }
       };
       const stop = () => {
-        if (!running) return;
+        if (raf) window.cancelAnimationFrame(raf);
+        raf = 0;
         running = false;
-        window.cancelAnimationFrame(raf);
+        previous = 0;
       };
 
-      const inView = new IntersectionObserver(
-        ([entry]) => {
-          onScreen = entry.isIntersecting;
-          if (onScreen) start();
-          else stop();
+      controlsRef.current = {
+        // A quarter of the ring per press: enough to move the composition on,
+        // short of throwing it somewhere the reader did not ask for.
+        step: (direction) => {
+          nudged += direction * Math.PI * 0.25;
+          if (!running) render();
         },
-        { threshold: 0 },
-      );
+      };
+
+      const resize = () => {
+        const bounds = host.getBoundingClientRect();
+        const width = Math.max(1, Math.round(bounds.width));
+        const height = Math.max(1, Math.round(bounds.height));
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+        renderer.setSize(width, height, false);
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        render();
+      };
+      resize();
+
+      const resizeObserver = new ResizeObserver(resize);
+      resizeObserver.observe(host);
+
+      const inView = new IntersectionObserver(([entry]) => {
+        onScreen = entry?.isIntersecting ?? true;
+        if (onScreen) start();
+        else stop();
+      });
       inView.observe(host);
 
       const onVisibility = () => {
@@ -231,18 +261,33 @@ export default function GalleryRibbon({
       };
       document.addEventListener("visibilitychange", onVisibility);
 
-      // A still frame for reduced motion: the ribbon exists, it just holds.
-      draw();
+      /* A context loss is not an error to log and walk away from: the ribbon is
+         decoration, and losing it must not take the section with it. */
+      const onLost = (event: Event) => {
+        event.preventDefault();
+        stop();
+      };
+      const onRestored = () => {
+        resize();
+        start();
+      };
+      canvas.addEventListener("webglcontextlost", onLost);
+      canvas.addEventListener("webglcontextrestored", onRestored);
+
+      start();
 
       cleanup = () => {
         stop();
         controlsRef.current = null;
-        inView.disconnect();
         resizeObserver.disconnect();
+        inView.disconnect();
         document.removeEventListener("visibilitychange", onVisibility);
+        canvas.removeEventListener("webglcontextlost", onLost);
+        canvas.removeEventListener("webglcontextrestored", onRestored);
+        ribbon.clear();
         geometry.dispose();
-        for (const m of materials) m.dispose();
-        for (const t of textures) t.dispose();
+        for (const material of materials) material.dispose();
+        for (const texture of textures) texture.dispose();
         renderer.dispose();
       };
     })().catch((error) => {
@@ -256,8 +301,8 @@ export default function GalleryRibbon({
   }, [sources, controlsRef]);
 
   return (
-    <div ref={hostRef} className="ribbon" aria-hidden="true">
-      <canvas ref={canvasRef} className="ribbon-canvas" />
+    <div ref={hostRef} className="ribbon" role="img" aria-label="Galerie">
+      <canvas ref={canvasRef} className="ribbon-canvas" aria-hidden="true" />
     </div>
   );
 }
