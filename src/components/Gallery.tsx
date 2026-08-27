@@ -9,13 +9,14 @@ import SectionHead from "./SectionHead";
 /* Two galleries, one at a time.
 
    The ribbon is the showpiece: curved panels turning on a rail. It asks for a
-   second WebGL context and a GPU, so it only appears where both are a fair
-   assumption — a wide screen, motion allowed.
+   second WebGL context and a GPU, so it appears where both are a fair
+   assumption — a wide screen. Under reduced motion it holds on a still frame
+   rather than being replaced.
 
-   Everywhere else, and for anyone without scripting, the flat strip runs
+   On narrow screens, and for anyone without scripting, the flat strip runs
    instead: native scroll snapping, which a trackpad, a touch screen and a
    keyboard all drive for free. Neither is a degraded version of the other;
-   they are two ways of showing the same five pictures.
+   they are two ways of showing the same pictures.
 
    The arrows drive whichever is on. */
 
@@ -29,18 +30,20 @@ export default function Gallery() {
   const ribbonRef = useRef<RibbonControls>(null);
   const [mode, setMode] = useState<Mode>("probing");
 
+  /* Width decides, not motion preference. Someone who has asked for less
+     movement is asking for a calmer page, not a smaller one — the ribbon holds
+     on a still frame for them and the arrows still step it, which is the
+     authored contract. Falling back to a different gallery entirely would have
+     given them less of the site for having a preference set. */
   useEffect(() => {
     const wide = window.matchMedia("(min-width: 1024px)");
-    const still = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => setMode(wide.matches && !still.matches ? "ribbon" : "flat");
+    const sync = () => setMode(wide.matches ? "ribbon" : "flat");
     // Async so the first paint is not a synchronous cascade out of an effect.
     const id = window.setTimeout(sync, 0);
     wide.addEventListener("change", sync);
-    still.addEventListener("change", sync);
     return () => {
       window.clearTimeout(id);
       wide.removeEventListener("change", sync);
-      still.removeEventListener("change", sync);
     };
   }, []);
 

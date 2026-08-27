@@ -19,36 +19,77 @@ const EMISSIVE_URL = "/robot-emissive.png";
  *  the same way the flat version does. */
 const EMISSIVE_NAME = /eye|iris|core|reactor|glow|emis|led|light|lamp/i;
 
-/* The floor he stands on.
+/* The water he is standing in.
 
-   A black shadow on a near-black page is nothing, so what grounds him is not a
-   shadow but a pool of light with a darker core: the reactor lighting the
-   ground around his feet, and the feet themselves taking that light away. One
-   texture does both — the falloff peaks a little out from the centre and dies
-   at the edge, so there is no horizon line to explain. */
-function makeGroundTexture() {
-  const size = 256;
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return canvas;
+   Dark water at night shows three things and almost nothing else: rings
+   spreading from where something meets the surface, a vertical smear of
+   whatever is lit above it, and the room's own pattern broken up on the
+   swell. All three are drawn here in one plane rather than reflected for
+   real — a true reflection means rendering the scene a second time every
+   frame, and this page already runs a second WebGL context for the ribbon.
 
-  const half = size / 2;
-  /* Built white and tinted by the material, not baked with a colour — the
-     accent changes with the section, and a baked hex would be multiplied by it
-     a second time. */
-  const gradient = ctx.createRadialGradient(half, half, 0, half, half, half);
-  // Darker where he meets the ground, brightest just beyond his stance.
-  gradient.addColorStop(0, "rgba(255,255,255,0.13)");
-  gradient.addColorStop(0.16, "rgba(255,255,255,0.37)");
-  gradient.addColorStop(0.34, "rgba(255,255,255,0.23)");
-  gradient.addColorStop(0.62, "rgba(255,255,255,0.07)");
-  gradient.addColorStop(1, "rgba(255,255,255,0)");
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, size, size);
-  return canvas;
-}
+   The pattern being broken up is the page's own dot field. The grid behind
+   the copy is #78a5b4 at 1px every 30px; here it is that same field, seen
+   through moving water, so the flat page and the scene stay one idea. */
+const WATER_VERT = /* glsl */ `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const WATER_FRAG = /* glsl */ `
+  precision highp float;
+
+  uniform float uTime;
+  uniform vec3 uAccent;
+  uniform float uIgnite;
+  varying vec2 vUv;
+
+  void main() {
+    vec2 p = (vUv - 0.5) * 2.0;
+    float r = length(p);
+
+    /* Swell. Two crossing waves rather than one, so the surface never shows a
+       single travelling direction — water in a still room does not. */
+    float swell =
+      sin(p.x * 5.0 + uTime * 0.7) * 0.5 +
+      sin(p.y * 4.1 - uTime * 0.53) * 0.5;
+
+    // Rings leaving his feet, dying out as they widen.
+    float rings = sin(r * 22.0 - uTime * 1.5);
+    rings = smoothstep(0.55, 1.0, rings) * exp(-r * 2.6);
+
+    /* The dot field, seen through the water. The lookup is displaced by the
+       swell, which is what breaks the grid up instead of sliding it. */
+    vec2 q = p;
+    q.x += swell * 0.018;
+    q.y += sin(p.x * 7.0 - uTime * 0.61) * 0.014;
+    vec2 cell = fract(q * 13.0) - 0.5;
+    float grid = smoothstep(0.16, 0.02, length(cell));
+    // Perspective: the far half of the plane is nearly edge-on, so its dots
+    // crowd together and read as haze rather than as points.
+    grid *= smoothstep(1.0, 0.15, r) * (0.35 + 0.65 * (0.5 - p.y * 0.5));
+
+    /* The reflection. Stretched toward the viewer and pinched away from him,
+       the way a bright thing smears down the near face of a swell. */
+    float away = p.y > 0.0 ? p.y * 5.0 : -p.y * 1.1;
+    float smear = exp(-abs(p.x) * 5.5) * exp(-away * 1.5);
+    // Broken along its length, or it reads as a painted stripe.
+    smear *= 0.55 + 0.45 * sin(p.y * 26.0 - uTime * 1.9);
+
+    // The pool of light he stands in, brightest just beyond his feet.
+    float pool = exp(-r * 3.2) * (1.0 - exp(-r * 9.0));
+
+    float a = rings * 0.30 + grid * 0.16 + smear * 0.42 + pool * 0.40;
+    // Nothing survives to the edge, so the plane needs no horizon.
+    a *= smoothstep(1.0, 0.22, r) * uIgnite;
+
+    if (a <= 0.001) discard;
+    gl_FragColor = vec4(uAccent * a, a);
+  }
+`;
 
 export default function RobotModelStage({
   onFailed,
@@ -152,61 +193,27 @@ export default function RobotModelStage({
          rather than linear: it thickens with distance the way air does. */
       scene.fog = new THREE.FogExp2(0x05070a, 0.34);
 
-      const groundCanvas = makeGroundTexture();
-      const groundTexture = new THREE.CanvasTexture(groundCanvas);
-      groundTexture.colorSpace = THREE.SRGBColorSpace;
-      const groundMaterial = new THREE.MeshBasicMaterial({
-        map: groundTexture,
+      const waterUniforms = {
+        uTime: { value: 0 },
+        uAccent: { value: new THREE.Color(ACCENT_HEX.arc) },
+        uIgnite: { value: 0 },
+      };
+      const waterMaterial = new THREE.ShaderMaterial({
+        uniforms: waterUniforms,
+        vertexShader: WATER_VERT,
+        fragmentShader: WATER_FRAG,
         transparent: true,
         depthWrite: false,
         // Added rather than painted on: there is nothing underneath to cover.
         blending: THREE.AdditiveBlending,
-        fog: false,
-        toneMapped: false,
+        side: THREE.DoubleSide,
       });
-      const ground = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), groundMaterial);
-      ground.rotation.x = -Math.PI / 2;
-      ground.renderOrder = -1;
-      root.add(ground);
-
-      /* The floor, as the page's own dot field laid flat and run into the
-         distance. The grid behind the copy is #78a5b4 at 1px every 30px; this
-         is the same field with a third dimension, so the flat page and the
-         scene are one idea rather than two backgrounds that happen to share a
-         screen.
-
-         Points, not lines: one draw call, no assets, and it costs a rounding
-         error next to the figure. The fog does the receding — every dot past a
-         few units has already dissolved into the page colour, so there is no
-         edge to hide and no far plane to explain. */
-      const STRIDE = 0.26;
-      const HALF = 26;
-      const dots: number[] = [];
-      for (let i = -HALF; i <= HALF; i += 1) {
-        for (let j = -HALF; j <= HALF; j += 1) {
-          const x = i * STRIDE;
-          const z = j * STRIDE;
-          // Leave the ground under him clear, or the dots read as a rash on
-          // his feet rather than as a floor he is standing on.
-          if (Math.hypot(x, z) < 0.42) continue;
-          dots.push(x, -0.5, z);
-        }
-      }
-      const floorGeometry = new THREE.BufferGeometry();
-      floorGeometry.setAttribute("position", new THREE.Float32BufferAttribute(dots, 3));
-      const floorMaterial = new THREE.PointsMaterial({
-        color: 0x78a5b4,
-        size: 0.02,
-        sizeAttenuation: true,
-        transparent: true,
-        opacity: 0.55,
-        depthWrite: false,
-        fog: true,
-        toneMapped: false,
-      });
-      const floor = new THREE.Points(floorGeometry, floorMaterial);
-      floor.renderOrder = -2;
-      root.add(floor);
+      // Segmented enough that nothing bands across it; it is one flat quad, so
+      // the segments cost nothing worth measuring.
+      const water = new THREE.Mesh(new THREE.PlaneGeometry(1, 1, 24, 24), waterMaterial);
+      water.rotation.x = -Math.PI / 2;
+      water.renderOrder = -1;
+      root.add(water);
 
       // Started together: the glow map is small and there is no reason to pay
       // for it in series behind a four-megabyte model.
@@ -252,9 +259,12 @@ export default function RobotModelStage({
 
       /* Normalised space puts his feet at -0.5. A hair below, or the plane
          fights the soles for the same pixels. */
-      const spread = Math.max(1.5, (size.x / Math.max(size.y, 0.0001)) * 2.6);
-      ground.scale.set(spread, spread, 1);
-      ground.position.y = -0.502;
+      /* Wider than he is, so the water runs past him on every side rather than
+         ending where he does. Normalised space puts his feet at -0.5; a hair
+         below, or the surface fights the soles for the same pixels. */
+      const spread = Math.max(3.2, (size.x / Math.max(size.y, 0.0001)) * 5.5);
+      water.scale.set(spread, spread, 1);
+      water.position.y = -0.502;
 
       const emissiveMeshes: import("three").Object3D[] = [];
       model.traverse((child) => {
@@ -415,7 +425,7 @@ export default function RobotModelStage({
         nextAccent.set(targetAccent.current);
         currentAccent.lerp(nextAccent, 0.045);
         rim.color.copy(currentAccent);
-        groundMaterial.color.copy(currentAccent);
+        waterUniforms.uAccent.value.copy(currentAccent);
         for (const mesh of emissiveMeshes) {
           const materials = Array.isArray((mesh as import("three").Mesh).material)
             ? ((mesh as import("three").Mesh).material as import("three").Material[])
@@ -430,7 +440,11 @@ export default function RobotModelStage({
         eased.x += (pointer.x - eased.x) * 0.05;
         eased.y += (pointer.y - eased.y) * 0.05;
 
+        waterUniforms.uTime.value = elapsed;
+
         const ignite = Math.max(0, Math.min(1, (elapsed - 0.25) / 0.4));
+        // The water comes up with him: he is what is lighting it.
+        waterUniforms.uIgnite.value = ignite * ignite * (3 - 2 * ignite);
         renderer.toneMappingExposure = 0.45 + 0.7 * (ignite * ignite * (3 - 2 * ignite));
         overlayIntro = Math.max(0, Math.min(1, (elapsed - 0.62) / 0.45));
 
@@ -513,11 +527,8 @@ export default function RobotModelStage({
           for (const material of materials) material?.dispose();
         });
         glow?.dispose();
-        floorGeometry.dispose();
-        floorMaterial.dispose();
-        groundTexture.dispose();
-        groundMaterial.dispose();
-        ground.geometry.dispose();
+        waterMaterial.dispose();
+        water.geometry.dispose();
         envRT.texture.dispose();
         pmrem.dispose();
         renderer.dispose();

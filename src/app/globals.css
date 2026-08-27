@@ -1373,8 +1373,9 @@
     display: none;
   }
 
+  /* Three across the band rather than five, so each is worth stopping on. */
   .gallery-slide {
-    flex: 0 0 min(78vw, 420px);
+    flex: 0 0 min(84vw, 620px);
     scroll-snap-align: start;
     margin: 0;
   }

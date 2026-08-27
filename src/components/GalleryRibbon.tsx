@@ -29,7 +29,11 @@ import { useSite } from "@/lib/site-state";
    Everything the ribbon shows is decoration: the real list stays in the DOM
    beside it, which is what a screen reader and a search engine read. */
 
-const PANELS = 16;
+/* Twelve, not the authored sixteen. With three pictures instead of five, each
+   one already comes round more often; sixteen panels made a wall of repeats.
+   Twelve is a clean four turns of three, so the ribbon repeats on its own
+   rhythm rather than drifting out of step with itself. */
+const PANELS = 12;
 
 export type RibbonControls = { step: (direction: 1 | -1) => void } | null;
 
@@ -136,12 +140,14 @@ export default function GalleryRibbon({
 
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
-      camera.position.z = 18;
+      /* Closer than the authored 18, and the panels below are taller: three
+         pictures should each be worth looking at, not five glimpsed. */
+      camera.position.z = 15;
 
       const ribbon = new THREE.Group();
       scene.add(ribbon);
 
-      const geometry = new THREE.CylinderGeometry(5, 5, 1.8, 64, 1, true, 0, Math.PI * 0.4);
+      const geometry = new THREE.CylinderGeometry(5, 5, 2.8, 64, 1, true, 0, Math.PI * 0.4);
       const loader = new THREE.TextureLoader();
       const textures: import("three").Texture[] = [];
       const materials: import("three").MeshBasicMaterial[] = [];
@@ -168,7 +174,8 @@ export default function GalleryRibbon({
         materials.push(material);
 
         const panel = new THREE.Mesh(geometry, material);
-        panel.position.y = (i - PANELS / 2) * 2.4;
+        // Spacing follows the panel height, or taller panels would overlap.
+        panel.position.y = (i - PANELS / 2) * 3.4;
         // Four turns across sixteen panels: the stack is a helix, not a ring.
         panel.rotation.y = (i / PANELS) * Math.PI * 4;
         ribbon.add(panel);

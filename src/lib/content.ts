@@ -219,9 +219,7 @@ export const CONTENT: Record<Lang, Content> = {
       items: [
         { src: "", alt: "", caption: "Salle serveurs — à remplacer" },
         { src: "", alt: "", caption: "Console de supervision — à remplacer" },
-        { src: "", alt: "", caption: "Baie réseau — à remplacer" },
         { src: "", alt: "", caption: "Intervention sur site — à remplacer" },
-        { src: "", alt: "", caption: "Astreinte de nuit — à remplacer" },
       ],
     },
     partners: {
@@ -404,9 +402,7 @@ export const CONTENT: Record<Lang, Content> = {
       items: [
         { src: "", alt: "", caption: "Server room — to replace" },
         { src: "", alt: "", caption: "Monitoring console — to replace" },
-        { src: "", alt: "", caption: "Network rack — to replace" },
         { src: "", alt: "", caption: "On-site call-out — to replace" },
-        { src: "", alt: "", caption: "Night on-call — to replace" },
       ],
     },
     partners: {
