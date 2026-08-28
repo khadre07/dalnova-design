@@ -81,6 +81,13 @@ const WATER_FRAG = /* glsl */ `
     float wave = exp(-pow((r - front) * 4.2, 2.0));
     wave *= exp(-uWakeAge * 0.6) * smoothstep(0.0, 0.2, uWakeAge);
 
+    /* The rebound. Water that has been pushed aside comes back, and a single
+       ring leaving on its own reads as a graphic rather than as a liquid. This
+       one starts later, travels a little slower and is weaker than the first. */
+    float back = max(0.0, uWakeAge - 0.6) * 0.42;
+    float rebound = exp(-pow((r - back) * 5.2, 2.0));
+    rebound *= exp(-uWakeAge * 0.5) * smoothstep(0.6, 0.85, uWakeAge);
+
     /* The dot field, seen through the water. The lookup is displaced by the
        swell, which is what breaks the grid up instead of sliding it. */
     vec2 q = p;
@@ -108,7 +115,9 @@ const WATER_FRAG = /* glsl */ `
        reveal and a second of empty stage. */
     float bulge = exp(-r * 2.2) * uWake;
 
-    float a = rings * 0.30 + grid * 0.16 + smear * 0.42 + pool * 0.40 + wave * 0.55 + bulge * 0.45;
+    float a =
+      rings * 0.30 + grid * 0.16 + smear * 0.42 + pool * 0.40 +
+      wave * 0.55 + rebound * 0.3 + bulge * 0.45;
     // Nothing survives to the edge, so the plane needs no horizon.
     a *= smoothstep(1.0, 0.22, r) * uIgnite;
 
@@ -354,6 +363,11 @@ export default function RobotModelStage({
          until he has. */
       let waterline = -0.502;
       let brokeAt = -1;
+      /* When the current rise began, and whether he is currently withdrawn.
+         He comes up out of the water every time his turn comes round again —
+         not only on the first load. */
+      let roseAt = RISE_DELAY;
+      let withdrawn = false;
 
       const layout = () => {
         const rect = host.getBoundingClientRect();
@@ -457,14 +471,27 @@ export default function RobotModelStage({
       const frame = () => {
         raf = window.requestAnimationFrame(frame);
 
-        /* Withdrawn behind a full-width band, there is nothing to see and
-           another WebGL scene may well be drawing further down the page. Keep
-           the loop alive so the clock stays honest, skip the draw. */
-        if (presenceValue() < 0.02) return;
         const now = performance.now();
         const elapsed = (now - started) / 1000;
         const delta = Math.min(0.05, (now - last) / 1000);
         last = now;
+
+        /* Withdrawn behind a full-width band there is nothing to see, and
+           another WebGL scene may well be drawing further down the page. Keep
+           the loop alive so the clock stays honest, skip the draw.
+
+           The two thresholds differ on purpose: he counts as gone at 0.06 and
+           as back at 0.24, and the gap between them is what stops a scroll
+           resting on the boundary from restarting the rise over and over. */
+        const presence = presenceValue();
+        if (presence < 0.06) {
+          withdrawn = true;
+        } else if (withdrawn && presence > 0.24) {
+          withdrawn = false;
+          roseAt = elapsed;
+          brokeAt = -1;
+        }
+        if (presence < 0.02) return;
 
         mixer?.update(delta);
 
@@ -497,8 +524,12 @@ export default function RobotModelStage({
            Slow on purpose. He is under for the best part of a second before
            anything of him shows, which is why the surface is made to swell
            over him first — an empty stage that long reads as a page that has
-           not finished loading. */
-        const rise = Math.max(0, Math.min(1, (elapsed - RISE_DELAY) / RISE_TIME));
+           not finished loading.
+
+           This replays. Every time he comes back from behind a full-width
+           band he comes back the same way he arrived, out of the water,
+           rather than simply fading in where he was left. */
+        const rise = Math.max(0, Math.min(1, (elapsed - roseAt) / RISE_TIME));
         /* Quintic rather than cubic. Both start and end at rest, but the cubic
            still has acceleration left at each end and you can see it change;
            this one has none, so there is no moment where the movement is
