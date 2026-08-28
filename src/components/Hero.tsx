@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { onFigure } from "@/lib/cue";
 import { useAccentZone, useSite } from "@/lib/site-state";
 import Readout from "./Readout";
 
@@ -9,11 +10,17 @@ export default function Hero() {
   const ref = useAccentZone("arc");
   const [ready, setReady] = useState(false);
 
-  /* One orchestrated entrance on load. Scroll reveals take over below the fold.
-     The frame callback exists so the browser paints the closed state once and
-     the transition actually runs — but it is raced against a timer, because a
-     busy main thread can starve rAF and that would leave the headline
-     permanently invisible. Whichever fires first wins. */
+  /* One orchestrated entrance, started by the figure rather than by a timer.
+
+     The copy used to open on a fixed delay while the figure ran on its own
+     clock: on a fast machine the left column had finished writing itself
+     before he was out of the water. Now the stage says when he has arrived
+     and the copy follows, whichever scene is running and however long its
+     own opening takes.
+
+     The timer is a ceiling, not the schedule: it only decides how long the
+     copy is willing to wait. If the cue never comes at all, a hero that waits
+     for it forever is a hero with no words in it. */
   useEffect(() => {
     let done = false;
     const open = () => {
@@ -21,10 +28,10 @@ export default function Hero() {
       done = true;
       setReady(true);
     };
-    const frame = window.requestAnimationFrame(open);
-    const timer = window.setTimeout(open, 250);
+    const stop = onFigure(open);
+    const timer = window.setTimeout(open, 1200);
     return () => {
-      window.cancelAnimationFrame(frame);
+      stop();
       window.clearTimeout(timer);
     };
   }, []);

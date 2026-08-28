@@ -914,10 +914,9 @@
      does the work and the fade only supports it.
   ------------------------------------------------------------------- */
 
-  /* Hero entrance. The copy used to sit out 940ms waiting for the eye beams to
-     cross to the left of the frame. Those beams are gone, so it now waits only
-     for the ignition flash at 0.52s in the render loop — the delay had been
-     holding the fold blank for a second and a half in service of nothing. */
+  /* Hero entrance. There is no delay of its own any more: the wait is the
+     figure's own opening, and the copy is released by its cue. What is left
+     here is the stagger between lines. */
   [data-js="on"] .hero-in {
     opacity: 0;
     transform: translateY(18px);
@@ -929,7 +928,7 @@
     transition:
       opacity 560ms var(--ease-out),
       transform 560ms var(--ease-out);
-    transition-delay: calc(520ms + var(--i, 0) * 70ms);
+    transition-delay: calc(var(--i, 0) * 70ms);
   }
 
   /* A line rises out of a mask instead of nudging upward inside its own box.
@@ -1143,7 +1142,9 @@
     /* Delayed past the block's own entrance at 520 + 6 x 70ms, so the scale is
        on screen before anything is drawn onto it. */
     transition: width 1150ms var(--ease-out);
-    transition-delay: 1080ms;
+    /* Measured from the copy's own release, so it draws while the last lines
+       are still landing rather than long after everything has settled. */
+    transition-delay: 620ms;
   }
 
   [data-js="on"] .hero[data-ready="true"] .spec-gauge-fill {

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { CHARGE_MS, onCharge, replay } from "@/lib/charge";
 import { ACCENT_HEX } from "@/lib/content";
 import { useSite } from "@/lib/site-state";
+import { figureIsUp } from "@/lib/cue";
 import { presenceValue } from "@/lib/stage";
 
 const TEXTURE = "/robot.webp";
@@ -222,7 +223,10 @@ export default function RobotStage() {
           powerPreference: "high-performance",
         });
       } catch {
+        /* No context: the still image takes over, and the copy is released at
+           once rather than sitting out a cue that is never coming. */
         setFailed(true);
+        figureIsUp();
         return;
       }
 
@@ -244,7 +248,10 @@ export default function RobotStage() {
 
       if (disposed || !texture) {
         renderer.dispose();
-        if (!disposed) setFailed(true);
+        if (!disposed) {
+          setFailed(true);
+          figureIsUp();
+        }
         return;
       }
 
@@ -396,6 +403,8 @@ export default function RobotStage() {
            figure. Timings are duplicated in globals.css for the text. */
         const ignite = Math.max(0, Math.min(1, (elapsed - 0.25) / 0.4));
         uniforms.uIgnite.value = ignite * ignite * (3 - 2 * ignite);
+        // No water here, so the cue is the eyes catching.
+        if (ignite >= 1) figureIsUp();
         uniforms.uFlash.value = 2.4 * Math.exp(-Math.pow((elapsed - 0.52) / 0.17, 2));
         overlayIntro = Math.max(0, Math.min(1, (elapsed - 0.62) / 0.45));
 
@@ -500,7 +509,10 @@ export default function RobotStage() {
       // Without this the IIFE's rejection is an unhandled promise and the stage
       // just silently stays blank, which is exactly how it failed once.
       console.error("[RobotStage]", error);
-      if (!disposed) setFailed(true);
+      if (!disposed) {
+        setFailed(true);
+        figureIsUp();
+      }
     });
 
     return () => {

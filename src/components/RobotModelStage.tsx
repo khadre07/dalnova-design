@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ACCENT_HEX } from "@/lib/content";
 import { useSite } from "@/lib/site-state";
+import { figureIsUp } from "@/lib/cue";
 import { presenceValue } from "@/lib/stage";
 import { Conduits, type Box } from "./RobotStage";
 
@@ -560,7 +561,11 @@ export default function RobotModelStage({
            or the easing ever change. */
         const crown = root.position.y + 0.5 - waterline;
         waterUniforms.uWake.value = Math.exp(-Math.pow(crown / 0.34, 2));
-        if (crown > 0 && brokeAt < 0) brokeAt = elapsed;
+        if (crown > 0 && brokeAt < 0) {
+          brokeAt = elapsed;
+          // The page starts writing itself the moment he comes through.
+          figureIsUp();
+        }
         waterUniforms.uWakeAge.value = brokeAt < 0 ? 0 : elapsed - brokeAt;
 
         /* The shot, not the subject. The camera pulls back and lifts as the
@@ -600,6 +605,8 @@ export default function RobotModelStage({
         placeOverlays(0.06);
         renderer.render(scene, camera);
         announce();
+        // Reduced motion: he is already standing, so the cue is already due.
+        figureIsUp();
         running = false;
       } else {
         raf = window.requestAnimationFrame(frame);
