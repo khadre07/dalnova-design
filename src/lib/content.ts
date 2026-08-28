@@ -110,7 +110,7 @@ export const CONTENT: Record<Lang, Content> = {
     navCta: "Demander un devis",
     hero: {
       eyebrow: "Services informatiques · Dakar, Sénégal",
-      title: ["Expertise IT.", "Confiance", "durable."],
+      title: ["On gère", "votre IT,", "du câble", "au code."],
       lede: "De l'installation du serveur jusqu'au développement de votre application métier, en passant par l'infrastructure réseau et la sécurité physique de vos locaux — nous accompagnons votre transformation digitale de bout en bout.",
       ctaPrimary: "Demander un devis",
       ctaSecondary: "Découvrir nos services",
@@ -143,10 +143,10 @@ export const CONTENT: Record<Lang, Content> = {
           title: "Développement d'applications",
           lede: "Des solutions logicielles performantes, évolutives et adaptées aux besoins spécifiques de votre entreprise, de la conception à la mise en production.",
           points: [
-            "Analyse fonctionnelle et cahier des charges",
-            "Conception de l'architecture logicielle",
-            "Développement front-end et back-end",
-            "Déploiement, mise en production et formation",
+            "Applications web, mobiles et desktop",
+            "Sites web professionnels",
+            "Solutions métier sur mesure",
+            "De la conception à la mise en production",
           ],
         },
         {
@@ -156,10 +156,10 @@ export const CONTENT: Record<Lang, Content> = {
           title: "Cloud, hébergement et messagerie",
           lede: "Choix, déploiement et gestion de vos solutions d'hébergement, de messagerie et d'infrastructure Cloud, sur les plateformes les mieux adaptées.",
           points: [
-            "Audit de vos besoins d'hébergement",
-            "Configuration serveurs et DNS",
-            "Messagerie professionnelle et migration des données",
-            "Sécurisation et sauvegarde",
+            "Hébergement cloud et hébergement web",
+            "Gestion de noms de domaine",
+            "Messagerie professionnelle",
+            "Migration des données et sauvegarde",
           ],
         },
         {
@@ -169,10 +169,10 @@ export const CONTENT: Record<Lang, Content> = {
           title: "Réseaux et systèmes",
           lede: "Conception, déploiement et administration d'infrastructures réseau et systèmes fiables, sécurisées et adaptées à vos besoins.",
           points: [
-            "Audit, conception et câblage",
-            "Configuration switchs, routeurs et points d'accès",
-            "VPN et liaisons inter-sites",
-            "Active Directory et gestion des utilisateurs",
+            "Infrastructures LAN et WAN, câblage structuré",
+            "Interconnexion de sites : VPN, liaison radio PtP et PtMP",
+            "Administration Windows et Linux, virtualisation",
+            "Active Directory, supervision et sécurisation",
           ],
         },
         {
@@ -182,10 +182,10 @@ export const CONTENT: Record<Lang, Content> = {
           title: "Téléphonie IP",
           lede: "Solutions de téléphonie IP et de communications unifiées pour améliorer la collaboration et réduire les coûts de communication.",
           points: [
-            "Étude de votre installation téléphonique",
-            "Choix de la solution IPBX",
+            "Téléphonie IP sur IPBX",
             "Déploiement VoIP et portabilité des numéros",
-            "Standard, files d'attente et communications unifiées",
+            "Communications unifiées",
+            "Installation, configuration et files d'attente",
           ],
         },
         {
@@ -195,10 +195,10 @@ export const CONTENT: Record<Lang, Content> = {
           title: "Sécurité physique",
           lede: "Des solutions fiables pour protéger vos locaux, vos biens et vos collaborateurs grâce à des systèmes de surveillance et de contrôle d'accès performants.",
           points: [
-            "Étude de sécurité de vos locaux",
-            "Choix et implantation des caméras",
+            "Vidéosurveillance IP (CCTV)",
+            "Contrôle d'accès",
+            "Systèmes de pointage",
             "Enregistreurs NVR et supervision à distance",
-            "Contrôle d'accès et systèmes de pointage",
           ],
         },
         {
@@ -221,10 +221,10 @@ export const CONTENT: Record<Lang, Content> = {
           title: "Support IT et infogérance",
           lede: "Gestion, maintenance et suivi de votre infrastructure informatique pour assurer disponibilité, sécurité et performances — pendant que vous vous concentrez sur votre activité.",
           points: [
-            "Inventaire et audit du parc",
-            "Assistance utilisateurs (helpdesk)",
-            "Intervention sur site et à distance",
-            "Supervision proactive et gestion des sauvegardes",
+            "Maintenance informatique",
+            "Assistance technique sur site et à distance",
+            "Infogérance des serveurs et des postes de travail",
+            "Supervision et gestion du parc informatique",
           ],
         },
         {
@@ -234,10 +234,10 @@ export const CONTENT: Record<Lang, Content> = {
           title: "Équipements et licences",
           lede: "Choix, fourniture, installation et intégration d'équipements informatiques adaptés à votre activité.",
           points: [
-            "Analyse de vos besoins matériels",
-            "Conseil et devis comparatif",
-            "Fourniture des équipements et des licences",
-            "Installation et intégration au réseau existant",
+            "Ordinateurs et stations de travail",
+            "Serveurs et solutions de stockage",
+            "Équipements réseau, imprimantes et périphériques",
+            "Licences logicielles",
           ],
         },
       ],
@@ -436,7 +436,7 @@ export const CONTENT: Record<Lang, Content> = {
     navCta: "Request a quote",
     hero: {
       eyebrow: "IT services · Dakar, Senegal",
-      title: ["IT expertise.", "Trust that", "lasts."],
+      title: ["We run", "your IT,", "from cable", "to code."],
       lede: "From installing the server to building your line-of-business application, by way of the network and the physical security of your premises — we take your digital transformation end to end.",
       ctaPrimary: "Request a quote",
       ctaSecondary: "See our services",
@@ -469,10 +469,10 @@ export const CONTENT: Record<Lang, Content> = {
           title: "Application development",
           lede: "Software that performs, scales, and fits what your business actually does — from the specification to production.",
           points: [
-            "Functional analysis and specification",
-            "Software architecture",
-            "Front-end and back-end development",
-            "Deployment, release and training",
+            "Web, mobile and desktop applications",
+            "Professional websites",
+            "Line-of-business software, built to fit",
+            "From the specification through to production",
           ],
         },
         {
@@ -482,10 +482,10 @@ export const CONTENT: Record<Lang, Content> = {
           title: "Cloud, hosting and email",
           lede: "Choosing, deploying and running your hosting, email and cloud infrastructure on whichever platform suits you.",
           points: [
-            "Audit of your hosting needs",
-            "Server and DNS configuration",
-            "Business email and data migration",
-            "Hardening and backup",
+            "Cloud and web hosting",
+            "Domain name management",
+            "Business email",
+            "Data migration and backup",
           ],
         },
         {
@@ -495,10 +495,10 @@ export const CONTENT: Record<Lang, Content> = {
           title: "Networks and systems",
           lede: "Designing, deploying and administering network and system infrastructure that is reliable, secure and sized for you.",
           points: [
-            "Audit, design and cabling",
-            "Switch, router and access point configuration",
-            "VPN and site-to-site links",
-            "Active Directory and user management",
+            "LAN and WAN infrastructure, structured cabling",
+            "Site interconnection: VPN, PtP and PtMP radio links",
+            "Windows and Linux administration, virtualisation",
+            "Active Directory, monitoring and hardening",
           ],
         },
         {
@@ -508,10 +508,10 @@ export const CONTENT: Record<Lang, Content> = {
           title: "IP telephony",
           lede: "IP telephony and unified communications, to work together better and spend less on calls.",
           points: [
-            "Survey of your existing installation",
-            "Choice of IPBX",
+            "IP telephony on an IPBX",
             "VoIP rollout and number portability",
-            "Switchboard, queues and unified communications",
+            "Unified communications",
+            "Installation, configuration and call queues",
           ],
         },
         {
@@ -521,10 +521,10 @@ export const CONTENT: Record<Lang, Content> = {
           title: "Physical security",
           lede: "Protecting your premises, your assets and your people with surveillance and access control that works.",
           points: [
-            "Security survey of your premises",
-            "Camera selection and placement",
+            "IP video surveillance (CCTV)",
+            "Access control",
+            "Time and attendance systems",
             "NVR recorders and remote monitoring",
-            "Access control and time and attendance",
           ],
         },
         {
@@ -547,10 +547,10 @@ export const CONTENT: Record<Lang, Content> = {
           title: "IT support and managed services",
           lede: "Running, maintaining and watching your IT so it stays available, secure and quick — while you get on with your work.",
           points: [
-            "Inventory and audit of the estate",
-            "User helpdesk",
-            "On-site and remote intervention",
-            "Proactive monitoring and backup management",
+            "IT maintenance",
+            "On-site and remote technical assistance",
+            "Managed servers and workstations",
+            "Monitoring and estate management",
           ],
         },
         {
@@ -560,10 +560,10 @@ export const CONTENT: Record<Lang, Content> = {
           title: "Equipment and licences",
           lede: "Choosing, supplying, installing and integrating the hardware your work actually needs.",
           points: [
-            "Analysis of your hardware needs",
-            "Advice and comparative quotes",
-            "Supply of equipment and licences",
-            "Installation and integration with your network",
+            "Computers and workstations",
+            "Servers and storage",
+            "Network equipment, printers and peripherals",
+            "Software licences",
           ],
         },
       ],

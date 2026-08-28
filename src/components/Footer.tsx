@@ -14,7 +14,7 @@ export default function Footer() {
     <footer className="border-t border-[#2a3238] pt-14 pb-10">
       <div className="grid gap-10 sm:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))]">
         <div>
-          <Wordmark size={24} />
+          <Wordmark height={40} />
           <p className="t-body mt-5 max-w-[34ch] text-[0.8125rem] leading-relaxed">{t.footer.blurb}</p>
         </div>
 
