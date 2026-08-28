@@ -57,6 +57,11 @@ export type Content = {
     emptyLabel: string;
     items: { src: string; alt: string; caption: string }[];
   };
+  /** Named, and linked to their own sites. No logos: they are not ours. */
+  partners: {
+    label: string;
+    items: { name: string; place: string; href: string }[];
+  };
   contact: {
     eyebrow: string;
     title: string;
@@ -288,6 +293,15 @@ export const CONTENT: Record<Lang, Content> = {
           alt: "Schéma de téléphonie IP : arrivée opérateur, IPBX Yeastar S20, switch et quatre postes GrandStream GRP2612W.",
           caption: "Migration vers la téléphonie IP",
         },
+      ],
+    },
+    partners: {
+      label: "Partenaires",
+      items: [
+        { name: "Wikistartup", place: "Tunisie", href: "https://wikistartup.tn" },
+        { name: "ISRA — BAME", place: "Sénégal", href: "https://www.isra-bame.sn" },
+        { name: "Enactus Morocco", place: "Maroc", href: "https://enactus-morocco.org" },
+        { name: "E4Impact", place: "International", href: "https://e4impact.org" },
       ],
     },
     contact: {
@@ -566,6 +580,15 @@ export const CONTENT: Record<Lang, Content> = {
           alt: "IP telephony diagram: carrier line, Yeastar S20 IPBX, switch and four GrandStream GRP2612W handsets.",
           caption: "Migration to IP telephony",
         },
+      ],
+    },
+    partners: {
+      label: "Partners",
+      items: [
+        { name: "Wikistartup", place: "Tunisia", href: "https://wikistartup.tn" },
+        { name: "ISRA — BAME", place: "Senegal", href: "https://www.isra-bame.sn" },
+        { name: "Enactus Morocco", place: "Morocco", href: "https://enactus-morocco.org" },
+        { name: "E4Impact", place: "International", href: "https://e4impact.org" },
       ],
     },
     contact: {

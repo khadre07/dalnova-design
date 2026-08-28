@@ -1373,7 +1373,100 @@
     margin-top: 0.85rem;
   }
 
+  /* ------------------------------------------------------------------
+     Partners — a register that travels, stopped by a pointer and by a
+     preference. Named rather than shown: the logos are not ours.
+  ------------------------------------------------------------------- */
+
+  .partners {
+    padding-block: 3.5rem 1rem;
+    border-top: 1px solid color-mix(in oklab, var(--color-steel) 55%, transparent);
+  }
+
+  .partners-label {
+    margin-bottom: 1.6rem;
+  }
+
+  .partners-rail {
+    display: flex;
+    gap: 3rem;
+    overflow: hidden;
+    /* Fades at both ends, so names enter and leave rather than being cut. */
+    mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  }
+
+  .partners-row {
+    display: flex;
+    flex: none;
+    gap: 3rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    animation: partners-run 38s linear infinite;
+  }
+
+  /* A register that keeps moving while you are trying to read one entry is a
+     register you cannot read — and one you cannot click. */
+  .partners-rail:hover .partners-row,
+  .partners-rail:focus-within .partners-row {
+    animation-play-state: paused;
+  }
+
+  @keyframes partners-run {
+    to {
+      /* The gap between copies has to travel with them, or the loop jumps by
+         exactly one gap every cycle. */
+      transform: translateX(calc(-100% - 3rem));
+    }
+  }
+
+  .partner {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    white-space: nowrap;
+    transition: color 200ms ease;
+  }
+
+  .partner-name {
+    font-family: var(--font-display);
+    font-variation-settings: "wdth" 106;
+    font-weight: 600;
+    font-size: 1.05rem;
+    letter-spacing: 0.01em;
+    color: #b6c6cb;
+    transition: color 200ms ease;
+  }
+
+  .partner-place {
+    color: #66757b;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    a.partner:hover .partner-name {
+      color: var(--color-arc);
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
+    .partners-rail {
+      overflow: visible;
+      flex-wrap: wrap;
+      gap: 2rem 3rem;
+      mask-image: none;
+    }
+
+    .partners-row {
+      flex-wrap: wrap;
+      animation: none;
+    }
+
+    /* The repeats exist only to hide the seam of a loop that is no longer
+       running. */
+    .partners-rail > .partners-row[aria-hidden="true"] {
+      display: none;
+    }
+
     .gallery-track {
       scroll-snap-type: none;
     }
