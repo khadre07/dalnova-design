@@ -63,6 +63,8 @@ export type Content = {
     lede: string;
     previous: string;
     next: string;
+    open: string;
+    close: string;
     emptyLabel: string;
     items: { src: string; alt: string; caption: string }[];
   };
@@ -300,6 +302,8 @@ export const CONTENT: Record<Lang, Content> = {
       lede: "Les architectures que nous livrons, telles qu'elles sont remises aux clients — matériel nommé, adressage et supervision compris.",
       previous: "Réalisation précédente",
       next: "Réalisation suivante",
+      open: "Agrandir le schéma",
+      close: "Fermer",
       emptyLabel: "Emplacement ",
       items: [
         {
@@ -626,6 +630,8 @@ export const CONTENT: Record<Lang, Content> = {
       lede: "The architectures we deliver, as the client receives them — named equipment, addressing and monitoring included.",
       previous: "Previous project",
       next: "Next project",
+      open: "Enlarge the drawing",
+      close: "Close",
       emptyLabel: "Slot ",
       items: [
         {

@@ -20,7 +20,7 @@ export default function Contact() {
 
       <div className="mt-12 flex flex-col gap-px bg-[#2a3238]">
         {t.contact.channels.map((channel, i) => (
-          <div key={channel.label} className="bg-[#080d12]">
+          <div key={channel.href} className="bg-[#080d12]">
             <Reveal delay={i * 55}>
               <a href={channel.href} className="channel">
                 <span className="t-mono" style={{ color: ACCENT_HEX[channel.accent] }}>

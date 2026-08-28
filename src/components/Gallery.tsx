@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAccentZone, useRecessZone, useSite } from "@/lib/site-state";
 import GalleryRibbon, { type RibbonControls } from "./GalleryRibbon";
+import Lightbox from "./Lightbox";
 import Reveal from "./Reveal";
 import SectionHead from "./SectionHead";
 
@@ -29,6 +30,9 @@ export default function Gallery() {
   const trackRef = useRef<HTMLDivElement>(null);
   const ribbonRef = useRef<RibbonControls>(null);
   const [mode, setMode] = useState<Mode>("probing");
+  /* Which drawing is open at full size, if any. The ribbon and the flat strip
+     are two ways of getting here; this is where the work is actually read. */
+  const [picked, setPicked] = useState<number | null>(null);
 
   /* Width decides, not motion preference. Someone who has asked for less
      movement is asking for a calmer page, not a smaller one — the ribbon holds
@@ -97,6 +101,7 @@ export default function Gallery() {
             sources={sources}
             controlsRef={ribbonRef}
             onFailed={() => setMode("flat")}
+            onPick={setPicked}
           />
           {/* The ribbon is a canvas, so it announces nothing. The list of what
               it is showing stays in the page for anyone reading it aloud. */}
@@ -116,7 +121,12 @@ export default function Gallery() {
         >
           {t.gallery.items.map((item, i) => (
             <figure key={item.caption} data-slide className="gallery-slide">
-              <div className="gallery-frame">
+              <button
+                type="button"
+                className="gallery-frame"
+                onClick={() => setPicked(i)}
+                aria-label={`${t.gallery.open} — ${item.caption}`}
+              >
                 {item.src ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={item.src} alt={item.alt} loading="lazy" decoding="async" />
@@ -128,12 +138,21 @@ export default function Gallery() {
                     <b>{String(i + 1).padStart(2, "0")}</b>
                   </span>
                 )}
-              </div>
+              </button>
               <figcaption className="gallery-caption t-mono">{item.caption}</figcaption>
             </figure>
           ))}
         </div>
       )}
+      {picked !== null && t.gallery.items[picked] ? (
+        <Lightbox
+          src={t.gallery.items[picked].src}
+          alt={t.gallery.items[picked].alt}
+          caption={t.gallery.items[picked].caption}
+          closeLabel={t.gallery.close}
+          onClose={() => setPicked(null)}
+        />
+      ) : null}
     </section>
   );
 }

@@ -1351,9 +1351,14 @@
     isolation: isolate;
     display: grid;
     place-items: center;
+    width: 100%;
     aspect-ratio: 4 / 3;
     overflow: hidden;
+    padding: 0;
+    border: 0;
+    cursor: zoom-in;
     background: #0b1117;
+    transition: transform 200ms var(--ease-out);
     clip-path: polygon(
       var(--cut) 0%,
       100% 0%,
@@ -1404,8 +1409,122 @@
     color: #6f7a7f;
   }
 
+  .gallery-frame:active {
+    transform: scale(0.99);
+  }
+
   .gallery-caption {
     margin-top: 0.85rem;
+  }
+
+  /* The panels can be opened, so the cursor has to say so. */
+  .ribbon-canvas {
+    cursor: zoom-in;
+  }
+
+  /* ------------------------------------------------------------------
+     Lightbox — the drawing at a size where it can be read
+  ------------------------------------------------------------------- */
+
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: grid;
+    place-items: center;
+    padding: clamp(1rem, 4vw, 3rem);
+    background: rgba(3, 5, 7, 0.9);
+    backdrop-filter: blur(8px);
+    animation: lightbox-in 200ms var(--ease-out);
+  }
+
+  @keyframes lightbox-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  .lightbox-panel {
+    --cut: 12px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    max-width: min(1400px, 100%);
+    max-height: 100%;
+    background: #eef3f6;
+    clip-path: polygon(
+      var(--cut) 0%,
+      100% 0%,
+      100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%,
+      0% 100%,
+      0% var(--cut)
+    );
+    animation: lightbox-panel-in 240ms var(--ease-out);
+  }
+
+  @keyframes lightbox-panel-in {
+    from {
+      /* Never from nothing: it comes up from close to its own size. */
+      transform: scale(0.97);
+      opacity: 0;
+    }
+  }
+
+  .lightbox-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 0.85rem 1rem 0.85rem 1.35rem;
+    background: #dde6ea;
+  }
+
+  .lightbox-caption {
+    color: #45525a;
+  }
+
+  .lightbox-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex: none;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #45525a;
+    cursor: pointer;
+    transition: color 200ms ease, transform 160ms var(--ease-out);
+  }
+
+  .lightbox-close:active {
+    transform: scale(0.94);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .lightbox-close:hover {
+      color: #0b1117;
+    }
+  }
+
+  .lightbox-panel img {
+    display: block;
+    /* The bar is about 60px; leaving it out would let a tall drawing push the
+       header off the top of the screen. */
+    max-height: calc(100vh - 8rem);
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lightbox,
+    .lightbox-panel {
+      animation: none;
+    }
   }
 
   /* ------------------------------------------------------------------

@@ -98,6 +98,7 @@ export default function GalleryRibbon({
   sources,
   controlsRef,
   onFailed,
+  onPick,
   speed = 1,
   scale = 1,
 }: {
@@ -106,6 +107,9 @@ export default function GalleryRibbon({
   controlsRef: React.RefObject<RibbonControls>;
   /** No WebGL, or the scene threw: the section falls back to the flat strip. */
   onFailed?: () => void;
+  /** A panel was clicked. Its slot index, so the caller can open the drawing
+   *  at a size where the equipment labels can actually be read. */
+  onPick?: (slot: number) => void;
   speed?: number;
   scale?: number;
 }) {
@@ -117,9 +121,11 @@ export default function GalleryRibbon({
      effect, because a ref write during render is unsafe under concurrent
      rendering. */
   const failedRef = useRef(onFailed);
+  const pickRef = useRef(onPick);
   useEffect(() => {
     failedRef.current = onFailed;
-  }, [onFailed]);
+    pickRef.current = onPick;
+  }, [onFailed, onPick]);
 
   const accentRef = useRef(ACCENT_HEX.arc);
   const settingsRef = useRef({ speed, scale });
@@ -254,6 +260,30 @@ export default function GalleryRibbon({
         },
       };
 
+      /* Clicking a panel opens its drawing. Without this the ribbon is the
+         only way a wide screen ever sees the work, and a technical drawing
+         wrapped round a cylinder is a drawing you cannot read — which is most
+         of what these are for. */
+      const raycaster = new THREE.Raycaster();
+      const pointer = new THREE.Vector2();
+      let downAt = { x: 0, y: 0 };
+
+      const onDown = (event: PointerEvent) => {
+        downAt = { x: event.clientX, y: event.clientY };
+      };
+      const onUp = (event: PointerEvent) => {
+        // A drag over the canvas is a scroll, not a click.
+        if (Math.hypot(event.clientX - downAt.x, event.clientY - downAt.y) > 6) return;
+        const rect = canvas.getBoundingClientRect();
+        pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(pointer, camera);
+        const hit = raycaster.intersectObjects(ribbon.children, false)[0];
+        if (hit) pickRef.current?.(hit.object.userData.slot as number);
+      };
+      canvas.addEventListener("pointerdown", onDown);
+      canvas.addEventListener("pointerup", onUp);
+
       const resize = () => {
         const bounds = host.getBoundingClientRect();
         const width = Math.max(1, Math.round(bounds.width));
@@ -306,6 +336,8 @@ export default function GalleryRibbon({
         document.removeEventListener("visibilitychange", onVisibility);
         canvas.removeEventListener("webglcontextlost", onLost);
         canvas.removeEventListener("webglcontextrestored", onRestored);
+        canvas.removeEventListener("pointerdown", onDown);
+        canvas.removeEventListener("pointerup", onUp);
         ribbon.clear();
         geometry.dispose();
         for (const material of materials) material.dispose();
