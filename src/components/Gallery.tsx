@@ -93,7 +93,11 @@ export default function Gallery() {
 
       {mode === "ribbon" ? (
         <>
-          <GalleryRibbon sources={sources} controlsRef={ribbonRef} />
+          <GalleryRibbon
+            sources={sources}
+            controlsRef={ribbonRef}
+            onFailed={() => setMode("flat")}
+          />
           {/* The ribbon is a canvas, so it announces nothing. The list of what
               it is showing stays in the page for anyone reading it aloud. */}
           <ul className="sr-only">

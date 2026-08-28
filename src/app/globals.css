@@ -679,6 +679,41 @@
     }
   }
 
+  /* Research, not a service. Same slab as a module so it belongs to the
+     section, but the rail is hatched: the same diagonal stripes that mark
+     anything on this site as not finished. */
+  .research {
+    position: relative;
+    background: #080d12;
+    padding: 2.25rem 1.5rem 2.25rem;
+    padding-inline-start: 1.5rem;
+  }
+
+  @media (min-width: 640px) {
+    .research {
+      padding-inline: 2rem;
+    }
+  }
+
+  .research-rail {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: repeating-linear-gradient(
+      -45deg,
+      var(--color-ember) 0 3px,
+      transparent 3px 7px
+    );
+    opacity: 0.75;
+  }
+
+  .research-label {
+    color: var(--color-ember);
+    letter-spacing: 0.2em;
+  }
+
   /* ------------------------------------------------------------------
      Method timeline
   ------------------------------------------------------------------- */
@@ -1423,19 +1458,43 @@
   .partner {
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
+    align-items: center;
+    gap: 0.7rem;
     white-space: nowrap;
-    transition: color 200ms ease;
   }
 
-  .partner-name {
-    font-family: var(--font-display);
-    font-variation-settings: "wdth" 106;
-    font-weight: 600;
-    font-size: 1.05rem;
-    letter-spacing: 0.01em;
-    color: #b6c6cb;
-    transition: color 200ms ease;
+  /* Chamfered like every other panel on the page, so a foreign mark is still
+     mounted the way this site mounts things. */
+  .partner-plate {
+    --cut: 7px;
+    display: grid;
+    place-items: center;
+    width: 200px;
+    height: 88px;
+    padding: 0.95rem 1.2rem;
+    background: #eef3f6;
+    clip-path: polygon(
+      var(--cut) 0%,
+      100% 0%,
+      100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%,
+      0% 100%,
+      0% var(--cut)
+    );
+    /* Held slightly back so the row does not out-shout the page, and brought
+       fully up on hover. */
+    opacity: 0.82;
+    transition: opacity 220ms ease;
+  }
+
+  /* The box is fixed and the image is fitted inside it, rather than the image
+     being left to size itself: the Enactus mark is an SVG with a viewBox and
+     no width or height, so a percentage max-height has nothing to resolve
+     against and it overflowed the plate. */
+  .partner-plate img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
   }
 
   .partner-place {
@@ -1443,8 +1502,12 @@
   }
 
   @media (hover: hover) and (pointer: fine) {
-    a.partner:hover .partner-name {
-      color: var(--color-arc);
+    a.partner:hover .partner-plate {
+      opacity: 1;
+    }
+
+    a.partner:hover .partner-place {
+      color: #b6c6cb;
     }
   }
 

@@ -31,6 +31,23 @@ export default function Capabilities() {
           <Module key={item.id} item={item} index={i} />
         ))}
       </div>
+
+      {/* Apart from the grid, and marked differently: the rail is hatched
+          rather than solid, and it carries a word instead of a service code.
+          A prospect has to be able to tell at a glance what can be bought
+          today from what is still being worked on. */}
+      <Reveal delay={120}>
+        <article className="research mt-px">
+          <span className="research-rail" aria-hidden="true" />
+          <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+            <span className="t-mono research-label">{t.capabilities.research.label}</span>
+            <h3 className="t-display t-display-sm">{t.capabilities.research.title}</h3>
+          </div>
+          <p className="t-body mt-4 max-w-[62ch] text-[0.9375rem]">
+            {t.capabilities.research.body}
+          </p>
+        </article>
+      </Reveal>
     </section>
   );
 }

@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     template: "%s · Dalnova Technologies",
   },
   description:
-    "Développement, réseaux, téléphonie IP, sécurité physique, infogérance et équipements. Une équipe unique, un interlocuteur unique, une facture unique. Dakar, Sénégal.",
+    "Développement, réseaux, téléphonie IP, sécurité physique, IA appliquée, infogérance et équipements. Une équipe unique, un interlocuteur unique, une facture unique. Dakar, Sénégal.",
   keywords: [
     "services informatiques Dakar",
     "infogérance Sénégal",
@@ -57,6 +57,8 @@ export const metadata: Metadata = {
     "téléphonie IP",
     "vidéosurveillance",
     "développement d'applications",
+    "IA appliquée en entreprise",
+    "serveur MCP",
   ],
   openGraph: {
     type: "website",

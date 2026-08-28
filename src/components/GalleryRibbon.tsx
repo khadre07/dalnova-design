@@ -97,18 +97,29 @@ function placeholderTexture(hex: string) {
 export default function GalleryRibbon({
   sources,
   controlsRef,
+  onFailed,
   speed = 1,
   scale = 1,
 }: {
   /** One entry per slot. An empty string means nothing has been dropped in. */
   sources: string[];
   controlsRef: React.RefObject<RibbonControls>;
+  /** No WebGL, or the scene threw: the section falls back to the flat strip. */
+  onFailed?: () => void;
   speed?: number;
   scale?: number;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { accent } = useSite();
+
+  /* Held in a ref so the scene effect never re-runs, and written from an
+     effect, because a ref write during render is unsafe under concurrent
+     rendering. */
+  const failedRef = useRef(onFailed);
+  useEffect(() => {
+    failedRef.current = onFailed;
+  }, [onFailed]);
 
   const accentRef = useRef(ACCENT_HEX.arc);
   const settingsRef = useRef({ speed, scale });
@@ -133,6 +144,10 @@ export default function GalleryRibbon({
       try {
         renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
       } catch {
+        /* No context. Said out loud rather than swallowed: the section has a
+           flat strip that works without one, and a gallery that silently shows
+           nothing is worse than no gallery at all. */
+        failedRef.current?.();
         return;
       }
       renderer.setClearColor(0x000000, 0);
@@ -299,6 +314,7 @@ export default function GalleryRibbon({
       };
     })().catch((error) => {
       console.error("[GalleryRibbon]", error);
+      if (!disposed) failedRef.current?.();
     });
 
     return () => {

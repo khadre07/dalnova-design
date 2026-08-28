@@ -39,7 +39,16 @@ export type Content = {
     now: number;
     chips: { label: string; value: string }[];
   };
-  capabilities: { eyebrow: string; title: string; lede: string; items: Capability[] };
+  capabilities: {
+    eyebrow: string;
+    title: string;
+    lede: string;
+    items: Capability[];
+    /* Work under way rather than work for sale. Kept out of the service list
+       on purpose: a prospect must be able to tell what can be bought today
+       from what is still being explored. */
+    research: { label: string; title: string; body: string };
+  };
   method: {
     eyebrow: string;
     title: string;
@@ -57,10 +66,12 @@ export type Content = {
     emptyLabel: string;
     items: { src: string; alt: string; caption: string }[];
   };
-  /** Named, and linked to their own sites. No logos: they are not ours. */
+  /* Linked to their own sites, and shown as their own marks. `logo` is the
+     file; `name` still travels with it as the alt text and as what a reader
+     without images gets. */
   partners: {
     label: string;
-    items: { name: string; place: string; href: string }[];
+    items: { name: string; place: string; href: string; logo: string }[];
   };
   contact: {
     eyebrow: string;
@@ -108,13 +119,13 @@ export const CONTENT: Record<Lang, Content> = {
     spec: {
       label: "Périmètre couvert",
       link: "Voir nos services",
-      value: "7",
+      value: "8",
       unit: "domaines",
       floor: "Développement",
-      ceiling: "Sécurité physique",
+      ceiling: "Équipements",
       min: 0,
-      max: 7,
-      now: 7,
+      max: 8,
+      now: 8,
       chips: [
         { label: "Interlocuteur", value: "Unique" },
         { label: "Facture", value: "Unique" },
@@ -122,7 +133,7 @@ export const CONTENT: Record<Lang, Content> = {
     },
     capabilities: {
       eyebrow: "Services",
-      title: "Sept domaines, un seul prestataire",
+      title: "Huit domaines, un seul prestataire",
       lede: "Vous perdez du temps à jongler entre trois prestataires — un pour les caméras, un pour le réseau, un autre pour les logiciels. Une équipe unique, un interlocuteur unique, une facture unique.",
       items: [
         {
@@ -191,6 +202,19 @@ export const CONTENT: Record<Lang, Content> = {
           ],
         },
         {
+          id: "ia",
+          code: "IA",
+          accent: "arc",
+          title: "IA appliquée",
+          lede: "Des modèles branchés sur vos données et vos outils, au service de vos processus réels. Une démonstration en bac à sable ne traite aucun dossier.",
+          points: [
+            "Serveurs MCP : relier vos outils et vos données aux modèles",
+            "Assistants métier calés sur vos procédures internes",
+            "Intégration à vos applications et à votre SI existant",
+            "Mise en production, supervision et formation des utilisateurs",
+          ],
+        },
+        {
           id: "support",
           code: "SUP",
           accent: "ember",
@@ -217,6 +241,11 @@ export const CONTENT: Record<Lang, Content> = {
           ],
         },
       ],
+      research: {
+        label: "Recherche",
+        title: "Blockchain appliquée à la finance",
+        body: "Nous explorons l'usage des registres distribués pour la traçabilité des transactions, la réduction des intermédiaires et les contrats programmables. C'est un travail de recherche — pas encore une prestation que vous pouvez commander.",
+      },
     },
     method: {
       eyebrow: "Méthode",
@@ -298,10 +327,30 @@ export const CONTENT: Record<Lang, Content> = {
     partners: {
       label: "Partenaires",
       items: [
-        { name: "Wikistartup", place: "Tunisie", href: "https://wikistartup.tn" },
-        { name: "ISRA — BAME", place: "Sénégal", href: "https://www.isra-bame.sn" },
-        { name: "Enactus Morocco", place: "Maroc", href: "https://enactus-morocco.org" },
-        { name: "E4Impact", place: "International", href: "https://e4impact.org" },
+        {
+          name: "Wikistartup",
+          place: "Tunisie",
+          href: "https://wikistartup.tn",
+          logo: "/partners/wikistartup.webp",
+        },
+        {
+          name: "ISRA — BAME",
+          place: "Sénégal",
+          href: "https://www.isra-bame.sn",
+          logo: "/partners/isra-bame.webp",
+        },
+        {
+          name: "Enactus Morocco",
+          place: "Maroc",
+          href: "https://enactus-morocco.org",
+          logo: "/partners/enactus-morocco.svg",
+        },
+        {
+          name: "E4Impact",
+          place: "International",
+          href: "https://e4impact.org",
+          logo: "/partners/e4impact.webp",
+        },
       ],
     },
     contact: {
@@ -349,6 +398,7 @@ export const CONTENT: Record<Lang, Content> = {
             { label: "Réseaux et systèmes", href: "#reseaux" },
             { label: "Téléphonie IP", href: "#telephonie" },
             { label: "Sécurité physique", href: "#securite" },
+            { label: "IA appliquée", href: "#ia" },
             { label: "Support et infogérance", href: "#support" },
             { label: "Équipements et licences", href: "#equipements" },
           ],
@@ -395,13 +445,13 @@ export const CONTENT: Record<Lang, Content> = {
     spec: {
       label: "Ground covered",
       link: "See our services",
-      value: "7",
+      value: "8",
       unit: "fields",
       floor: "Development",
-      ceiling: "Physical security",
+      ceiling: "Equipment",
       min: 0,
-      max: 7,
-      now: 7,
+      max: 8,
+      now: 8,
       chips: [
         { label: "Point of contact", value: "One" },
         { label: "Invoice", value: "One" },
@@ -409,7 +459,7 @@ export const CONTENT: Record<Lang, Content> = {
     },
     capabilities: {
       eyebrow: "Services",
-      title: "Seven fields, one supplier",
+      title: "Eight fields, one supplier",
       lede: "You lose time juggling three suppliers — one for the cameras, one for the network, another for the software. One team, one point of contact, one invoice.",
       items: [
         {
@@ -478,6 +528,19 @@ export const CONTENT: Record<Lang, Content> = {
           ],
         },
         {
+          id: "ia",
+          code: "AI",
+          accent: "arc",
+          title: "Applied AI",
+          lede: "Models wired into your own data and tools, working on your actual processes. A demo in a sandbox settles no case.",
+          points: [
+            "MCP servers: connecting your tools and data to the models",
+            "Line-of-business assistants built around your procedures",
+            "Integration with your applications and existing systems",
+            "Release, monitoring and user training",
+          ],
+        },
+        {
           id: "support",
           code: "SUP",
           accent: "ember",
@@ -504,6 +567,11 @@ export const CONTENT: Record<Lang, Content> = {
           ],
         },
       ],
+      research: {
+        label: "Research",
+        title: "Blockchain for finance",
+        body: "We are looking at distributed ledgers for transaction traceability, fewer intermediaries and programmable contracts. This is research — not yet something you can commission.",
+      },
     },
     method: {
       eyebrow: "Method",
@@ -585,10 +653,30 @@ export const CONTENT: Record<Lang, Content> = {
     partners: {
       label: "Partners",
       items: [
-        { name: "Wikistartup", place: "Tunisia", href: "https://wikistartup.tn" },
-        { name: "ISRA — BAME", place: "Senegal", href: "https://www.isra-bame.sn" },
-        { name: "Enactus Morocco", place: "Morocco", href: "https://enactus-morocco.org" },
-        { name: "E4Impact", place: "International", href: "https://e4impact.org" },
+        {
+          name: "Wikistartup",
+          place: "Tunisia",
+          href: "https://wikistartup.tn",
+          logo: "/partners/wikistartup.webp",
+        },
+        {
+          name: "ISRA — BAME",
+          place: "Senegal",
+          href: "https://www.isra-bame.sn",
+          logo: "/partners/isra-bame.webp",
+        },
+        {
+          name: "Enactus Morocco",
+          place: "Morocco",
+          href: "https://enactus-morocco.org",
+          logo: "/partners/enactus-morocco.svg",
+        },
+        {
+          name: "E4Impact",
+          place: "International",
+          href: "https://e4impact.org",
+          logo: "/partners/e4impact.webp",
+        },
       ],
     },
     contact: {
@@ -636,6 +724,7 @@ export const CONTENT: Record<Lang, Content> = {
             { label: "Networks and systems", href: "#reseaux" },
             { label: "IP telephony", href: "#telephonie" },
             { label: "Physical security", href: "#securite" },
+            { label: "Applied AI", href: "#ia" },
             { label: "Support and managed IT", href: "#support" },
             { label: "Equipment and licences", href: "#equipements" },
           ],
