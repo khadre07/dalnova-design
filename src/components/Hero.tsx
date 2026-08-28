@@ -64,7 +64,7 @@ export default function Hero() {
           {t.hero.ctaPrimary}
           <Arrow />
         </a>
-        <a href="#preuves" className="btn btn-ghost">
+        <a href="#services" className="btn btn-ghost">
           {t.hero.ctaSecondary}
         </a>
       </div>
@@ -77,7 +77,7 @@ export default function Hero() {
       <div className="spec hero-in mt-12 max-w-[30rem]" style={line(6)}>
         <div className="spec-head">
           <p className="t-mono">{t.spec.label}</p>
-          <a href="#preuves" className="spec-link">
+          <a href="#services" className="spec-link">
             {t.spec.link}
           </a>
         </div>

@@ -68,7 +68,7 @@ export default function Gallery() {
         accentRef.current = node;
         bandRef.current = node;
       }}
-      id="galerie"
+      id="realisations"
       className="scroll-mt-24 py-24 lg:py-32"
     >
       <div className="flex flex-wrap items-end justify-between gap-6">

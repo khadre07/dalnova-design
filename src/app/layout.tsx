@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, Geist, Geist_Mono, Martian_Mono } from "next/font/google";
-import PreviewNotice from "@/components/PreviewNotice";
 import { SiteProvider } from "@/lib/site-state";
 import "./globals.css";
 
@@ -43,33 +42,28 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
-/* Safe by default: the site is treated as a prototype unless someone sets
-   NEXT_PUBLIC_PREVIEW=0. While it is a prototype it carries invented SLA
-   figures and contact details, and must not be indexed. */
-const IS_PREVIEW = process.env.NEXT_PUBLIC_PREVIEW !== "0";
-
 export const metadata: Metadata = {
-  metadataBase: new URL("https://dalnova.tech"),
+  metadataBase: new URL("https://www.dalnova.com"),
   title: {
-    default: "Dalnova Technologies — Infogérance, IA appliquée et blockchain",
+    default: "Dalnova Technologies — Services informatiques à Dakar",
     template: "%s · Dalnova Technologies",
   },
   description:
-    "Dalnova exploite votre infrastructure, met vos modèles d'IA en production et sécurise vos registres blockchain. Supervision 24/7, prise en charge sous 15 minutes.",
+    "Développement, réseaux, téléphonie IP, sécurité physique, infogérance et équipements. Une équipe unique, un interlocuteur unique, une facture unique. Dakar, Sénégal.",
   keywords: [
-    "infogérance",
-    "support informatique 24/7",
-    "intelligence artificielle en production",
-    "blockchain entreprise",
-    "supervision infrastructure",
+    "services informatiques Dakar",
+    "infogérance Sénégal",
+    "réseaux et systèmes",
+    "téléphonie IP",
+    "vidéosurveillance",
+    "développement d'applications",
   ],
-  robots: IS_PREVIEW ? { index: false, follow: false } : undefined,
   openGraph: {
     type: "website",
     siteName: "Dalnova Technologies",
-    title: "Dalnova Technologies — Infogérance, IA appliquée et blockchain",
+    title: "Dalnova Technologies — Services informatiques à Dakar",
     description:
-      "Une seule équipe pour exploiter votre infrastructure, industrialiser vos modèles et sécuriser vos registres.",
+      "Du serveur à l'application métier, en passant par le réseau et la sécurité de vos locaux. Une équipe unique, un interlocuteur unique, une facture unique.",
   },
 };
 
@@ -100,7 +94,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <SiteProvider>
           {children}
-          {IS_PREVIEW ? <PreviewNotice /> : null}
         </SiteProvider>
       </body>
     </html>

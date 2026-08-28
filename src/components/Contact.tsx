@@ -39,7 +39,9 @@ export default function Contact() {
       </div>
 
       <Reveal delay={200}>
-        <a href="mailto:contact@dalnova.tech" className="btn btn-primary mt-10">
+        {/* Takes the address from the channel list rather than carrying its own
+            copy: a second hardcoded mailto is a second thing to forget. */}
+        <a href={t.contact.channels[0].href} className="btn btn-primary mt-10">
           {t.contact.ctaPrimary}
         </a>
       </Reveal>

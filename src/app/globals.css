@@ -698,6 +698,14 @@
      Statistics
   ------------------------------------------------------------------- */
 
+  .sector-index {
+    font-family: var(--font-spec);
+    font-weight: 700;
+    font-size: 0.75rem;
+    letter-spacing: -0.01em;
+    color: var(--color-arc);
+  }
+
   .stat-value {
     font-family: var(--font-spec);
     font-weight: 700;
@@ -995,90 +1003,6 @@
       stroke-dashoffset: 0;
       opacity: 0;
     }
-  }
-
-  /* ------------------------------------------------------------------
-     Prototype notice — amber, because this is a message from people
-  ------------------------------------------------------------------- */
-
-  .preview-notice {
-    position: fixed;
-    isolation: isolate;
-    left: 50%;
-    bottom: 1rem;
-    z-index: 60;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: stretch;
-    gap: 0.8rem;
-    max-width: calc(100vw - 2rem);
-    /* No left padding: the hazard strip runs the full height of the panel. */
-    padding: 0.6rem 1rem 0.6rem 0;
-    --cut: 9px;
-    --cut-edge: color-mix(in oklab, var(--color-ember) 45%, transparent);
-    --cut-fill: rgba(9, 12, 16, 0.94);
-    --cut-inset: 1px;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    font-family: var(--font-mono);
-    font-size: 0.625rem;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    color: #b6a58f;
-    text-align: left;
-    line-height: 1.5;
-  }
-
-  .preview-notice > span:not(.preview-hazard) {
-    align-self: center;
-  }
-
-  .preview-notice::before,
-  .preview-notice::after {
-    content: "";
-    position: absolute;
-    z-index: -1;
-    clip-path: polygon(
-      var(--cut) 0%,
-      100% 0%,
-      100% calc(100% - var(--cut)),
-      calc(100% - var(--cut)) 100%,
-      0% 100%,
-      0% var(--cut)
-    );
-  }
-
-  .preview-notice::before {
-    inset: 0;
-    background: var(--cut-edge);
-  }
-
-  .preview-notice::after {
-    inset: var(--cut-inset);
-    background: var(--cut-fill);
-    backdrop-filter: blur(10px);
-  }
-
-  .preview-notice strong {
-    color: var(--color-ember);
-    font-weight: 600;
-  }
-
-  /* Hazard hatching. Diagonal stripes already mean "unfinished, do not rely on
-     this" on every barrier and floor marking there is — a far more direct way
-     to say it than a glowing dot. */
-  .preview-hazard {
-    flex: none;
-    width: 20px;
-    align-self: stretch;
-    margin-block: -0.6rem;
-    background: repeating-linear-gradient(
-      -45deg,
-      var(--color-ember) 0 3px,
-      transparent 3px 8px
-    );
-    opacity: 0.7;
   }
 
   /* ------------------------------------------------------------------
@@ -1405,10 +1329,17 @@
     );
   }
 
+  /* contain, not cover: these are drawings, and a cropped drawing has lost the
+     part that mattered. The frame turns pale when it holds one, so the margin
+     round it reads as paper rather than as a gap. */
+  .gallery-frame:has(img) {
+    background: #eef3f6;
+  }
+
   .gallery-frame img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
   }
 
   /* Hatched, like the prototype notice: diagonal stripes read as "nothing here
@@ -1442,75 +1373,7 @@
     margin-top: 0.85rem;
   }
 
-  /* ------------------------------------------------------------------
-     Partners — a ticker, stopped by a pointer and by a preference
-  ------------------------------------------------------------------- */
-
-  .partners {
-    padding-block: 3.5rem 1rem;
-    border-top: 1px solid color-mix(in oklab, var(--color-steel) 55%, transparent);
-  }
-
-  .partners-label {
-    margin-bottom: 1.5rem;
-  }
-
-  .partners-rail {
-    display: flex;
-    gap: 2.5rem;
-    overflow: hidden;
-    /* Fades at both ends so items enter and leave rather than being cut. */
-    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-  }
-
-  .partners-row {
-    display: flex;
-    flex: none;
-    gap: 2.5rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    animation: partners-run 34s linear infinite;
-  }
-
-  .partners-rail:hover .partners-row {
-    animation-play-state: paused;
-  }
-
-  @keyframes partners-run {
-    to {
-      /* The gap between the two copies has to travel with them, or the loop
-         jumps by exactly one gap every cycle. */
-      transform: translateX(calc(-100% - 2.5rem));
-    }
-  }
-
-  .partners-slot {
-    display: grid;
-    place-items: center;
-    flex: none;
-    width: 148px;
-    height: 56px;
-    color: #55636a;
-    border: 1px dashed color-mix(in oklab, var(--color-steel-hi) 70%, transparent);
-  }
-
   @media (prefers-reduced-motion: reduce) {
-    .partners-rail {
-      overflow: visible;
-      flex-wrap: wrap;
-      mask-image: none;
-    }
-
-    .partners-row {
-      flex-wrap: wrap;
-      animation: none;
-    }
-
-    .partners-rail > .partners-row + .partners-row {
-      display: none;
-    }
-
     .gallery-track {
       scroll-snap-type: none;
     }

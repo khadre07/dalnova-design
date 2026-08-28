@@ -13,7 +13,7 @@ export default function Capabilities() {
   return (
     <section
       ref={band as React.RefObject<HTMLElement>}
-      id="capacites"
+      id="services"
       className="scroll-mt-24 py-24 lg:py-32"
     >
       <SectionHead

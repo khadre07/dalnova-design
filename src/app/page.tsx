@@ -5,8 +5,7 @@ import Footer from "@/components/Footer";
 import Gallery from "@/components/Gallery";
 import Hero from "@/components/Hero";
 import Method from "@/components/Method";
-import Partners from "@/components/Partners";
-import Proof from "@/components/Proof";
+import Sectors from "@/components/Sectors";
 import SiteNav from "@/components/SiteNav";
 import SmokeVeil from "@/components/SmokeVeil";
 
@@ -66,7 +65,7 @@ export default function Page() {
         </Shell>
 
         <Shell wide>
-          <Proof />
+          <Sectors />
         </Shell>
 
         <Shell wide>
@@ -77,10 +76,6 @@ export default function Page() {
           <Column>
             <Contact />
           </Column>
-        </Shell>
-
-        <Shell>
-          <Partners />
         </Shell>
 
         {/* The footer is opaque on purpose. Left transparent, its right-hand
