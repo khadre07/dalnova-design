@@ -1,5 +1,6 @@
 "use client";
 
+import ShootingStar from "./ShootingStar";
 import Stage from "./Stage";
 
 /* The fixed layers behind everything: the dot field, the figure, and the scrim
@@ -23,6 +24,9 @@ export default function Backdrop() {
         {/* --presence is written onto <html> by the scroll loop and inherits
             down to here, so the figure never costs a React render. */}
         <div className="stage-slot relative h-full w-full lg:w-[47%]">
+          {/* Behind him: it passes at his back, not across his face. */}
+          <ShootingStar />
+
           <Stage />
 
           {/* Scripting off: <Stage /> renders nothing at all until it has probed
