@@ -1,6 +1,7 @@
 "use client";
 
 import Stage from "./Stage";
+import Stars from "./Stars";
 
 /* The fixed layers behind everything: the dot field, the figure, and the scrim
    that keeps body text readable over it.
@@ -14,7 +15,15 @@ import Stage from "./Stage";
 export default function Backdrop() {
   return (
     <div className="pointer-events-none fixed inset-0 z-0">
-      <div className="grid-field absolute inset-0 opacity-[0.5]" aria-hidden="true" />
+      {/* Night sky over the water. It sits behind everything and fades out
+          toward the waterline, so the two meet rather than being stacked —
+          and it is held well back, because a photograph at full strength
+          behind body copy is a photograph the copy has to fight. */}
+      <div className="sky absolute inset-0" aria-hidden="true" />
+
+      <Stars />
+
+      <div className="grid-field absolute inset-0 opacity-[0.34]" aria-hidden="true" />
 
       {/* Full bleed, not a column. The figure keeps its place on the right —
           it is offset inside the scene rather than confined by a box — and

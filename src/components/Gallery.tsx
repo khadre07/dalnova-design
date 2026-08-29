@@ -2,17 +2,18 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAccentZone, useRecessZone, useSite } from "@/lib/site-state";
-import GalleryRibbon, { type RibbonControls } from "./GalleryRibbon";
+import GalleryRoom, { type RoomControls } from "./GalleryRoom";
 import Lightbox from "./Lightbox";
 import Reveal from "./Reveal";
 import SectionHead from "./SectionHead";
 
 /* Two galleries, one at a time.
 
-   The ribbon is the showpiece: curved panels turning on a rail. It asks for a
-   second WebGL context and a GPU, so it appears where both are a fair
-   assumption — a wide screen. Under reduced motion it holds on a still frame
-   rather than being replaced.
+   The room is the showpiece: the drawings hung in a line, each under its own
+   light and over its own reflection, with the camera tracking along the wall
+   as the section is scrolled through. It asks for a second WebGL context and a
+   GPU, so it appears where both are a fair assumption — a wide screen. Under
+   reduced motion it holds on a still frame rather than being replaced.
 
    On narrow screens, and for anyone without scripting, the flat strip runs
    instead: native scroll snapping, which a trackpad, a touch screen and a
@@ -21,14 +22,14 @@ import SectionHead from "./SectionHead";
 
    The arrows drive whichever is on. */
 
-type Mode = "probing" | "ribbon" | "flat";
+type Mode = "probing" | "room" | "flat";
 
 export default function Gallery() {
   const { t } = useSite();
   const accentRef = useAccentZone("arc");
   const bandRef = useRecessZone();
   const trackRef = useRef<HTMLDivElement>(null);
-  const ribbonRef = useRef<RibbonControls>(null);
+  const roomRef = useRef<RoomControls>(null);
   const [mode, setMode] = useState<Mode>("probing");
   /* Which drawing is open at full size, if any. The ribbon and the flat strip
      are two ways of getting here; this is where the work is actually read. */
@@ -41,7 +42,7 @@ export default function Gallery() {
      given them less of the site for having a preference set. */
   useEffect(() => {
     const wide = window.matchMedia("(min-width: 1024px)");
-    const sync = () => setMode(wide.matches ? "ribbon" : "flat");
+    const sync = () => setMode(wide.matches ? "room" : "flat");
     // Async so the first paint is not a synchronous cascade out of an effect.
     const id = window.setTimeout(sync, 0);
     wide.addEventListener("change", sync);
@@ -52,8 +53,8 @@ export default function Gallery() {
   }, []);
 
   const nudge = useCallback((direction: 1 | -1) => {
-    if (ribbonRef.current) {
-      ribbonRef.current.step(direction);
+    if (roomRef.current) {
+      roomRef.current.step(direction);
       return;
     }
     const track = trackRef.current;
@@ -95,16 +96,31 @@ export default function Gallery() {
         </Reveal>
       </div>
 
-      {mode === "ribbon" ? (
+      {mode === "room" ? (
         <>
-          <GalleryRibbon
+          <GalleryRoom
             sources={sources}
-            controlsRef={ribbonRef}
+            controlsRef={roomRef}
             onFailed={() => setMode("flat")}
             onPick={setPicked}
           />
-          {/* The ribbon is a canvas, so it announces nothing. The list of what
-              it is showing stays in the page for anyone reading it aloud. */}
+
+          {/* The wall labels. Real type rather than something drawn into a
+              texture: it stays selectable, it is read aloud, and it does not
+              soften when the plate it belongs to is far down the room. */}
+          <ol className="room-labels">
+            {t.gallery.items.map((item, i) => (
+              <li key={item.caption}>
+                <button type="button" className="room-label" onClick={() => setPicked(i)}>
+                  <span className="room-label-n t-mono">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="room-label-title">{item.caption}</span>
+                  <span className="room-label-open t-mono">{t.gallery.open}</span>
+                </button>
+              </li>
+            ))}
+          </ol>
+          {/* The canvas announces nothing, so what it is showing stays in the
+              page for anyone reading it aloud. */}
           <ul className="sr-only">
             {t.gallery.items.map((item) => (
               <li key={item.caption}>{item.alt || item.caption}</li>

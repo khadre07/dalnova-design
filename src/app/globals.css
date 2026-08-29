@@ -194,6 +194,53 @@
     border-block: 1px solid color-mix(in oklab, var(--color-steel) 45%, transparent);
   }
 
+  /* The sky. Strongest at the top and gone by the horizon, so the water below
+     is not competing with a picture of clouds. */
+  .sky {
+    background-image: url("/sky.webp");
+    background-size: cover;
+    background-position: 62% 18%;
+    opacity: 0.5;
+    mask-image: linear-gradient(180deg, #000 0%, #000 34%, transparent 76%);
+  }
+
+  @media (min-width: 1024px) {
+    .sky {
+      opacity: 0.62;
+    }
+  }
+
+  .stars {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .star-dot {
+    position: absolute;
+    border-radius: 50%;
+    background: #dbeeff;
+    box-shadow: 0 0 4px rgba(190, 226, 255, 0.8);
+    animation-name: star-twinkle;
+    animation-timing-function: var(--ease-in-out);
+    animation-iteration-count: infinite;
+  }
+
+  /* Never all the way out: a star that disappears reads as a fault in the
+     page rather than as a star. */
+  @keyframes star-twinkle {
+    0%,
+    100% {
+      opacity: 0.2;
+      transform: scale(0.75);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
   .grid-field {
     background-image: radial-gradient(
       circle at center,
@@ -1347,6 +1394,11 @@
       opacity: 0.6;
     }
 
+    /* The field stays; only the catching stops. */
+    .star-dot {
+      animation: none;
+    }
+
     /* The gauge lands at its reading without being drawn there. */
     .spec-gauge-fill {
       transition: none;
@@ -1760,28 +1812,89 @@
      it is ever shown in — a hero background, seen as a slice. The band is tall
      enough that the slice reads as a ribbon passing through rather than as a
      row of panels, and capped so it never takes a whole screen. */
-  /* The authored composition is a vertical helix spanning far more height than
-     it is ever shown in — a hero background, seen as a slice. Inside the page
-     measure it read as three panels adrift in a box; at full bleed it reads as
-     a ribbon passing behind the section, which is what it is.
-
-     Breaking out with 100vw rather than widening the section: body carries
-     overflow-x: hidden, which is what keeps that from opening a scrollbar. */
-  .ribbon {
+  /* The room runs the full width of the screen — a wall of work is a wall,
+     not a card. Breaking out with 100vw rather than widening the section:
+     body carries overflow-x: hidden, which keeps that from opening a
+     scrollbar. */
+  .room {
     position: relative;
     left: 50%;
     width: 100vw;
     transform: translateX(-50%);
     margin-top: 3rem;
-    height: clamp(420px, 46vw, 640px);
+    height: clamp(440px, 48vw, 660px);
     overflow: hidden;
-    /* Fades at both edges, so panels leave the frame rather than being cut. */
-    mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+    /* Fades at both edges, so plates leave the frame rather than being cut. */
+    mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
   }
 
-  .ribbon-canvas {
+  .room-canvas {
     display: block;
     width: 100%;
     height: 100%;
+    cursor: zoom-in;
+  }
+
+  /* The wall labels. One per plate, in the order they hang. */
+  .room-labels {
+    display: grid;
+    gap: 1px;
+    margin: 3rem 0 0;
+    padding: 0;
+    list-style: none;
+    background: color-mix(in oklab, var(--color-steel) 55%, transparent);
+  }
+
+  @media (min-width: 900px) {
+    .room-labels {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .room-label {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: baseline;
+    gap: 1.1rem;
+    width: 100%;
+    padding: 1.05rem 1.25rem;
+    border: 0;
+    background: #080d12;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 220ms ease;
+  }
+
+  .room-label-n {
+    color: var(--color-arc);
+  }
+
+  .room-label-title {
+    font-family: var(--font-display);
+    font-variation-settings: "wdth" 104;
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.005em;
+    text-transform: uppercase;
+    color: #cfdcdf;
+  }
+
+  .room-label-open {
+    opacity: 0;
+    transition: opacity 200ms ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .room-label:hover {
+      background-color: #0b1219;
+    }
+
+    .room-label:hover .room-label-open {
+      opacity: 1;
+    }
+  }
+
+  .room-label:focus-visible .room-label-open {
+    opacity: 1;
   }
 }
