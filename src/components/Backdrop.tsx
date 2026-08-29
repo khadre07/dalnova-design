@@ -16,27 +16,26 @@ export default function Backdrop() {
     <div className="pointer-events-none fixed inset-0 z-0">
       <div className="grid-field absolute inset-0 opacity-[0.5]" aria-hidden="true" />
 
-      <div
-        className="mx-auto flex h-full max-w-[1560px] justify-end"
-        style={{ paddingInline: "var(--shell-x)" }}
-      >
-        {/* --presence is written onto <html> by the scroll loop and inherits
-            down to here, so the figure never costs a React render. */}
-        <div className="stage-slot relative h-full w-full lg:w-[47%]">
-          <Stage />
+      {/* Full bleed, not a column. The figure keeps its place on the right —
+          it is offset inside the scene rather than confined by a box — and
+          what that buys is a water surface that runs the whole width of the
+          screen instead of stopping at the edge of a 47% canvas. */}
+      <div className="stage-slot absolute inset-0">
+        <Stage />
 
-          {/* Scripting off: <Stage /> renders nothing at all until it has probed
-              for a model, so the fallback has to be server markup that is
-              already on the page. */}
-          <noscript>
+        {/* Scripting off: <Stage /> renders nothing at all until it has probed
+            for a model, so the fallback has to be server markup that is
+            already on the page. */}
+        <noscript>
+          <div className="poster-band">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/robot.webp"
               alt=""
               className="absolute inset-0 z-10 m-auto h-[88%] w-auto max-w-none object-contain"
             />
-          </noscript>
-        </div>
+          </div>
+        </noscript>
       </div>
 
       {/* On narrow screens the figure sits behind the copy, so the left edge is

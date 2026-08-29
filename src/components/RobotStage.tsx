@@ -9,6 +9,11 @@ import { presenceValue } from "@/lib/stage";
 
 const TEXTURE = "/robot.webp";
 
+/* Where the figure stands across the screen, now that the scene is full bleed.
+   Centred on a phone, where he sits behind the copy; on the right on a wide
+   screen, where the copy has the left half. */
+const FIGURE_AT = { narrow: 0.5, wide: 0.74 };
+
 /* The arc reactor sits at 53% / 29% of the cut-out. Measured from the render's
    own emissive pixels, not eyeballed — every conduit is anchored to it. */
 export const REACTOR = { x: 53, y: 29 };
@@ -300,6 +305,9 @@ export default function RobotStage() {
       let stage = { w: 1, h: 1 };
       const baseScale = { x: 1, y: 1 };
       let baseY = 0;
+      // Same offset as the model scene: the canvas is full bleed, so the
+      // figure has to be told where on it to stand.
+      let baseX = 0;
 
       const layout = () => {
         const rect = host.getBoundingClientRect();
@@ -327,6 +335,7 @@ export default function RobotStage() {
         baseScale.x = worldW;
         baseScale.y = worldH;
         baseY = narrow ? 0 : -visibleHeight * 0.035;
+        baseX = ((narrow ? FIGURE_AT.narrow : FIGURE_AT.wide) - 0.5) * visibleWidth;
         mesh.scale.set(worldW, worldH, 1);
 
         // Bend depth is tied to his width, so the curvature looks the same
@@ -345,8 +354,9 @@ export default function RobotStage() {
         const pxPerUnit = stage.h / visibleHeight;
         const boxW = worldW * pxPerUnit;
         const boxH = worldH * pxPerUnit;
+        const boxShift = stage.w * ((narrow ? FIGURE_AT.narrow : FIGURE_AT.wide) - 0.5);
         setBox({
-          left: (stage.w - boxW) / 2,
+          left: (stage.w - boxW) / 2 + boxShift,
           top: (stage.h - boxH) / 2 - baseY * pxPerUnit,
           width: boxW,
           height: boxH,
@@ -422,7 +432,7 @@ export default function RobotStage() {
         uniforms.uTurn.value = turn;
 
         const breathe = Math.sin(elapsed * 0.55) * 0.03;
-        mesh.position.x = eased.x * 0.1;
+        mesh.position.x = baseX + eased.x * 0.1;
         mesh.position.y = baseY + breathe - eased.y * 0.07 - easedProgress * 0.16;
 
         // Recession is applied from the stored base each frame. Multiplying the
@@ -547,14 +557,16 @@ export default function RobotStage() {
         // No WebGL: still a lit, composed figure. The site does not lose its hero.
         // Raw <img> on purpose: next/image cannot serve this fallback, which has
         // to render from markup already on the page when WebGL init has failed.
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={TEXTURE}
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 z-10 m-auto h-full w-auto max-w-none object-contain"
-          style={{ filter: `drop-shadow(0 0 60px ${ACCENT_HEX[accent]}55)` }}
-        />
+        <div className="poster-band">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={TEXTURE}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 z-10 m-auto h-[78%] w-auto max-w-none object-contain"
+            style={{ filter: `drop-shadow(0 0 60px ${ACCENT_HEX[accent]}55)` }}
+          />
+        </div>
       ) : (
         <canvas
           ref={canvasRef}

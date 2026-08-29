@@ -77,17 +77,20 @@ export default function Stage() {
         />
       ) : null}
 
-      {/* Kept mounted at zero opacity rather than unmounted, so the hand-off
-          is a fade and not a cut. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={POSTER_URL}
-        alt=""
-        aria-hidden="true"
-        fetchPriority="high"
-        className="stage-poster"
-        data-gone={modelDrawn}
-      />
+      {/* The canvas is full bleed but the still is not: it is a picture of the
+          figure, and the figure stands on the right. Kept mounted at zero
+          opacity rather than unmounted, so the hand-off is a fade, not a cut. */}
+      <div className="poster-band">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={POSTER_URL}
+          alt=""
+          aria-hidden="true"
+          fetchPriority="high"
+          className="stage-poster"
+          data-gone={modelDrawn}
+        />
+      </div>
     </>
   );
 }

@@ -9,6 +9,11 @@ import { Conduits, type Box } from "./RobotStage";
 
 export const MODEL_URL = "/robot.glb";
 
+/* Where the figure stands across the screen, now that the scene is full bleed.
+   Centred on a phone, where he sits behind the copy; on the right on a wide
+   screen, where the copy has the left half. */
+const FIGURE_AT = { narrow: 0.5, wide: 0.74 };
+
 /* The glow map that came with the model: black everywhere except the eyes,
    the reactor and the seams. Kept out of the .glb on purpose — held apart it
    can be multiplied by whichever accent the current section owns, which is
@@ -340,6 +345,8 @@ export default function RobotModelStage({
       let unitPx = 1;
       // Where the surface sits, in the same space the figure is normalised to.
       let waterline = -0.502;
+      // How far the figure sits from the middle of the frame, in world units.
+      let figureX = 0;
 
       const layout = () => {
         const rect = host.getBoundingClientRect();
@@ -373,6 +380,16 @@ export default function RobotModelStage({
         baseDistance = distance;
         unitPx = stage.h * frameFill;
 
+        /* The camera still looks at the origin; the figure is moved instead.
+           The water stays centred on him so its pool of light is at his feet
+           rather than in the middle of the screen, and it is wide enough that
+           its ends are off the frame either way. */
+        const at = narrow ? FIGURE_AT.narrow : FIGURE_AT.wide;
+        const visibleWidth = (1 / frameFill) * camera.aspect;
+        figureX = (at - 0.5) * visibleWidth;
+        root.position.x = figureX;
+        water.position.x = figureX;
+
         /* Capped at 1.5 rather than 2. A PBR figure lit by an environment map
            costs fragments, and ratio 2 is four times the pixels of ratio 1 for
            a difference nobody can see on a figure this size. */
@@ -384,9 +401,12 @@ export default function RobotModelStage({
         // at this distance is 1 / frameFill, so this is the conversion.
         const pxPerUnit = stage.h * frameFill;
         const boxH = stage.h * frameFill;
+        // The overlay rides with him: world units and screen fractions differ,
+        // but the offset is the same fraction of the width either way.
+        const boxShift = stage.w * ((narrow ? FIGURE_AT.narrow : FIGURE_AT.wide) - 0.5);
         const boxW = boxH * Math.max(0.35, size.x / Math.max(size.y, 0.0001));
         setBox({
-          left: (stage.w - boxW) / 2,
+          left: (stage.w - boxW) / 2 + boxShift,
           top: (stage.h - boxH) / 2 - baseY * pxPerUnit,
           width: boxW,
           height: boxH,
