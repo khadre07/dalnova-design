@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { ACCENT_HEX } from "@/lib/content";
 import { useSite } from "@/lib/site-state";
+import { WATER_FRAG, WATER_VERT } from "@/lib/water";
 
 /* The Vantrix hero ribbon: sixteen curved panels on a vertical rail.
 
@@ -168,6 +169,44 @@ export default function GalleryRibbon({
       const ribbon = new THREE.Group();
       scene.add(ribbon);
 
+      /* The same water the figure stands in, so the two scenes are one place
+         rather than two. Its height below the axis is the same fraction of the
+         camera's distance as in the hero — that ratio is what decides how much
+         of the surface is in shot, and matching it is what makes the two read
+         as the same body of water seen from different points.
+
+         uUnit says how big this scene is: the panels are several units where
+         the figure was one, so without it the ripples would be a fine rash
+         instead of swell. */
+      const waterUniforms = {
+        uTime: { value: 0 },
+        uAccent: { value: new THREE.Color(ACCENT_HEX.arc) },
+        uIgnite: { value: 1 },
+        uHalf: { value: new THREE.Vector2(1, 1) },
+        uUnit: { value: 7.5 },
+      };
+      const waterMaterial = new THREE.ShaderMaterial({
+        uniforms: waterUniforms,
+        vertexShader: WATER_VERT,
+        fragmentShader: WATER_FRAG,
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide,
+      });
+      const WATER_W = 260;
+      const WATER_D = 110;
+      const water = new THREE.Mesh(
+        new THREE.PlaneGeometry(1, 1, 24, 24),
+        waterMaterial,
+      );
+      water.scale.set(WATER_W, WATER_D, 1);
+      waterUniforms.uHalf.value.set(WATER_W / 2, WATER_D / 2);
+      water.rotation.x = -Math.PI / 2;
+      water.position.y = -camera.position.z * 0.227;
+      water.renderOrder = -1;
+      scene.add(water);
+
       const geometry = new THREE.CylinderGeometry(5, 5, 2.8, 64, 1, true, 0, Math.PI * 0.4);
       const loader = new THREE.TextureLoader();
       const textures: import("three").Texture[] = [];
@@ -221,6 +260,10 @@ export default function GalleryRibbon({
         ribbon.rotation.y = elapsed * 0.18 + nudged;
         ribbon.position.y = Math.sin(elapsed) * 1.5;
         ribbon.scale.setScalar(safeScale);
+
+        waterUniforms.uTime.value = elapsed;
+        waterUniforms.uAccent.value.set(accentRef.current);
+
         renderer.render(scene, camera);
       };
 
@@ -340,6 +383,8 @@ export default function GalleryRibbon({
         canvas.removeEventListener("pointerup", onUp);
         ribbon.clear();
         geometry.dispose();
+        water.geometry.dispose();
+        waterMaterial.dispose();
         for (const material of materials) material.dispose();
         for (const texture of textures) texture.dispose();
         renderer.dispose();
