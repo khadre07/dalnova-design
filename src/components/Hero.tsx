@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { onFigure } from "@/lib/cue";
 import { useAccentZone, useSite } from "@/lib/site-state";
 import Readout from "./Readout";
+import Uplink from "./Uplink";
 
 export default function Hero() {
   const { t } = useSite();
@@ -97,26 +98,12 @@ export default function Hero() {
           <span className="spec-unit">{t.spec.unit}</span>
         </p>
 
-        <div
-          className="spec-gauge"
-          role="meter"
-          aria-valuemin={t.spec.min}
-          aria-valuemax={t.spec.max}
-          aria-valuenow={t.spec.now}
-          aria-label={t.spec.label}
-        >
-          {/* Drawn from nothing to its reading. The width lives in a custom
-              property so the fill itself can stay a pure CSS transition, timed
-              to land just after the block it belongs to has arrived. */}
-          <span
-            className="spec-gauge-fill"
-            style={
-              {
-                "--fill": `${((t.spec.now - t.spec.min) / (t.spec.max - t.spec.min)) * 100}%`,
-              } as React.CSSProperties
-            }
-          />
-        </div>
+        <Uplink
+          value={t.spec.now}
+          max={t.spec.max}
+          label={t.spec.label}
+          ready={ready}
+        />
 
         <div className="spec-scale" aria-hidden="true">
           <span>{t.spec.floor}</span>
