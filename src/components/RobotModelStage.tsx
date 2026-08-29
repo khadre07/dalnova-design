@@ -58,69 +58,81 @@ const WATER_FRAG = /* glsl */ `
   uniform float uWake;
   /* Seconds since he broke the surface, for the ring that leaves it. */
   uniform float uWakeAge;
+  /* The plane's half-extents in world units. Everything below is measured in
+     those units rather than in the quad's own 0..1, so the surface can be made
+     far wider than it is deep without the ripples turning into ellipses and
+     the reflection smearing sideways with it. */
+  uniform vec2 uHalf;
   varying vec2 vUv;
 
   void main() {
     vec2 p = (vUv - 0.5) * 2.0;
-    float r = length(p);
+    vec2 w = p * uHalf;
+    float r = length(w);
 
     /* Swell. Two crossing waves rather than one, so the surface never shows a
        single travelling direction — water in a still room does not. */
     float swell =
-      sin(p.x * 5.0 + uTime * 0.7) * 0.5 +
-      sin(p.y * 4.1 - uTime * 0.53) * 0.5;
+      sin(w.x * 3.1 + uTime * 0.7) * 0.5 +
+      sin(w.y * 2.6 - uTime * 0.53) * 0.5;
 
     // Rings leaving his feet, dying out as they widen.
-    float rings = sin(r * 22.0 - uTime * 1.5);
-    rings = smoothstep(0.55, 1.0, rings) * exp(-r * 2.6);
+    float rings = sin(r * 13.0 - uTime * 1.5);
+    rings = smoothstep(0.55, 1.0, rings) * exp(-r * 1.6);
     // Choppier while he is coming up through it.
     rings *= 1.0 + uWake * 2.6;
 
     /* The one big ring that leaves the surface when he breaks it. It travels
        outward, widens, and thins as it goes — a single event, not a loop. */
-    float front = uWakeAge * 0.5;
-    float wave = exp(-pow((r - front) * 4.2, 2.0));
+    float front = uWakeAge * 0.8;
+    float wave = exp(-pow((r - front) * 2.6, 2.0));
     wave *= exp(-uWakeAge * 0.6) * smoothstep(0.0, 0.2, uWakeAge);
 
     /* The rebound. Water that has been pushed aside comes back, and a single
        ring leaving on its own reads as a graphic rather than as a liquid. This
        one starts later, travels a little slower and is weaker than the first. */
-    float back = max(0.0, uWakeAge - 0.6) * 0.42;
-    float rebound = exp(-pow((r - back) * 5.2, 2.0));
+    float back = max(0.0, uWakeAge - 0.6) * 0.67;
+    float rebound = exp(-pow((r - back) * 3.2, 2.0));
     rebound *= exp(-uWakeAge * 0.5) * smoothstep(0.6, 0.85, uWakeAge);
 
     /* The dot field, seen through the water. The lookup is displaced by the
        swell, which is what breaks the grid up instead of sliding it. */
-    vec2 q = p;
-    q.x += swell * 0.018;
-    q.y += sin(p.x * 7.0 - uTime * 0.61) * 0.014;
-    vec2 cell = fract(q * 13.0) - 0.5;
+    vec2 q = w;
+    q.x += swell * 0.03;
+    q.y += sin(w.x * 4.4 - uTime * 0.61) * 0.024;
+    vec2 cell = fract(q * 8.0) - 0.5;
     float grid = smoothstep(0.16, 0.02, length(cell));
     // Perspective: the far half of the plane is nearly edge-on, so its dots
     // crowd together and read as haze rather than as points.
-    grid *= smoothstep(1.0, 0.15, r) * (0.35 + 0.65 * (0.5 - p.y * 0.5));
+    grid *= 0.35 + 0.65 * (0.5 - p.y * 0.5);
 
     /* The reflection. Stretched toward the viewer and pinched away from him,
-       the way a bright thing smears down the near face of a swell. */
-    float away = p.y > 0.0 ? p.y * 5.0 : -p.y * 1.1;
-    float smear = exp(-abs(p.x) * 5.5) * exp(-away * 1.5);
+       the way a bright thing smears down the near face of a swell. It stays
+       narrow in world units, so widening the surface does not widen him. */
+    float away = w.y > 0.0 ? w.y * 3.1 : -w.y * 0.7;
+    float smear = exp(-abs(w.x) * 3.4) * exp(-away * 1.5);
     // Broken along its length, or it reads as a painted stripe.
-    smear *= 0.55 + 0.45 * sin(p.y * 26.0 - uTime * 1.9);
+    smear *= 0.55 + 0.45 * sin(w.y * 16.0 - uTime * 1.9);
 
     // The pool of light he stands in, brightest just beyond his feet.
-    float pool = exp(-r * 3.2) * (1.0 - exp(-r * 9.0));
+    float pool = exp(-r * 2.0) * (1.0 - exp(-r * 5.6));
 
     /* The swell over him on his way up. uWake is taken from how near his crown
        is to the surface, so this grows while he is still under it — the water
        lifts before he shows, which is the only thing standing between the
        reveal and a second of empty stage. */
-    float bulge = exp(-r * 2.2) * uWake;
+    float bulge = exp(-r * 1.4) * uWake;
 
     float a =
       rings * 0.30 + grid * 0.16 + smear * 0.42 + pool * 0.40 +
       wave * 0.55 + rebound * 0.3 + bulge * 0.45;
-    // Nothing survives to the edge, so the plane needs no horizon.
-    a *= smoothstep(1.0, 0.22, r) * uIgnite;
+
+    /* Held to the plane's own edges rather than to a circle. A radial cut made
+       the surface a disc that went out well before the sides of the frame; run
+       to the edges, it reads as water the scene is standing in rather than as
+       a puddle. */
+    a *= smoothstep(1.0, 0.86, abs(p.x)) * smoothstep(1.0, 0.55, abs(p.y));
+    a *= uIgnite;
 
     if (a <= 0.001) discard;
     gl_FragColor = vec4(uAccent * a, a);
@@ -235,6 +247,7 @@ export default function RobotModelStage({
         uIgnite: { value: 0 },
         uWake: { value: 0 },
         uWakeAge: { value: 0 },
+        uHalf: { value: new THREE.Vector2(1, 1) },
       };
       const waterMaterial = new THREE.ShaderMaterial({
         uniforms: waterUniforms,
@@ -307,11 +320,14 @@ export default function RobotModelStage({
 
       /* Normalised space puts his feet at -0.5. A hair below, or the plane
          fights the soles for the same pixels. */
-      /* Wider than he is, so the water runs past him on every side rather than
-         ending where he does. Normalised space puts his feet at -0.5; a hair
-         below, or the surface fights the soles for the same pixels. */
-      const spread = Math.max(3.2, (size.x / Math.max(size.y, 0.0001)) * 5.5);
-      water.scale.set(spread, spread, 1);
+      /* Far wider than deep. He stands in it rather than on a pool cut round
+         his feet, and the surface runs out past both sides of the frame
+         instead of ending inside it. Normalised space puts his feet at -0.5;
+         the plane sits a hair below, or it fights the soles for the pixels. */
+      const depth = Math.max(3.2, (size.x / Math.max(size.y, 0.0001)) * 5.5);
+      const width = depth * 4.2;
+      water.scale.set(width, depth, 1);
+      waterUniforms.uHalf.value.set(width / 2, depth / 2);
 
       const emissiveMeshes: import("three").Object3D[] = [];
       model.traverse((child) => {
@@ -378,7 +394,12 @@ export default function RobotModelStage({
         camera.updateProjectionMatrix();
 
         const narrow = window.innerWidth < 1024;
-        const frameFill = narrow ? 0.7 : 0.86;
+        /* He was framed at 0.86 of the height and sat low, which put his feet
+           within forty pixels of the bottom edge — the water is brightest at
+           his feet, so almost all of it was off the frame. Giving it room to
+           run out in front of him is what makes it read as an expanse rather
+           than as a rim of light under his soles. */
+        const frameFill = narrow ? 0.64 : 0.78;
 
         // Frame by distance rather than by scaling him: pull the camera back
         // until a unit-tall figure occupies `frameFill` of the viewport height.
@@ -389,7 +410,8 @@ export default function RobotModelStage({
         camera.position.set(0, 0, distance);
         camera.lookAt(0, 0, 0);
 
-        baseY = narrow ? 0 : -0.03;
+        // Lifted, not lowered: what is gained below him is water.
+        baseY = narrow ? 0.03 : 0.06;
         // The surface sits just under where his feet come to rest.
         waterline = baseY - 0.502;
         water.position.y = waterline;
