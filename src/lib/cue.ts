@@ -15,31 +15,13 @@
 type Listener = () => void;
 
 const listeners = new Set<Listener>();
-const arrivals = new Set<Listener>();
 let fired = false;
 
 /** Called by the stage once the figure is there to be written from. */
 export function figureIsUp() {
-  arrived();
   if (fired) return;
   fired = true;
   for (const listener of listeners) listener();
-}
-
-/* Two signals, not one, because two things want different answers. The copy
-   is written once and stays written; anything that accompanies his arrival —
-   he comes back up out of the water every time his turn comes round — wants
-   to hear about every one of them. */
-export function arrived() {
-  for (const listener of arrivals) listener();
-}
-
-/** Runs every time the figure arrives, including on returns. */
-export function onArrival(listener: Listener) {
-  arrivals.add(listener);
-  return () => {
-    arrivals.delete(listener);
-  };
 }
 
 /**
