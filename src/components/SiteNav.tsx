@@ -5,7 +5,7 @@ import { useSite } from "@/lib/site-state";
 import Wordmark from "./Wordmark";
 
 export default function SiteNav() {
-  const { t, lang, setLang } = useSite();
+  const { t, lang, setLang, sky, setSky } = useSite();
   const [lifted, setLifted] = useState(false);
   const [open, setOpen] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -35,6 +35,32 @@ export default function SiteNav() {
       document.removeEventListener("keydown", onKey);
     };
   }, [open]);
+
+  /* Day or night. Two states, so a switch rather than a pair of buttons: the
+     one you are not in is the one you would press, and a switch says that
+     without needing both to be on screen. */
+  const skyToggle = (
+    <button
+      type="button"
+      className="sky-btn"
+      onClick={() => setSky(sky === "day" ? "night" : "day")}
+      aria-pressed={sky === "day"}
+      title={
+        lang === "fr"
+          ? sky === "day"
+            ? "Passer en nuit"
+            : "Passer en jour"
+          : sky === "day"
+            ? "Switch to night"
+            : "Switch to day"
+      }
+    >
+      <span className="sr-only">
+        {lang === "fr" ? "Ciel : jour ou nuit" : "Sky: day or night"}
+      </span>
+      {sky === "day" ? <SunMark /> : <MoonMark />}
+    </button>
+  );
 
   const langToggle = (
     <div
@@ -88,6 +114,7 @@ export default function SiteNav() {
           </ul>
 
           <div className="flex shrink-0 items-center gap-3">
+            {skyToggle}
             <span className="hidden sm:block">{langToggle}</span>
 
             {/* The full label needs ~19 characters of room. Below lg it wraps
@@ -145,5 +172,35 @@ export default function SiteNav() {
         </div>
       </div>
     </>
+  );
+}
+
+function SunMark() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <circle cx="8" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.3" />
+      <path
+        d="M8 1v1.8M8 13.2V15M1 8h1.8M13.2 8H15M3.1 3.1l1.3 1.3M11.6 11.6l1.3 1.3M12.9 3.1l-1.3 1.3M4.4 11.6l-1.3 1.3"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function MoonMark() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      {/* A crescent cut from a disc, rather than a crescent drawn: the cut edge
+          is the same curve as the outer one, which is what makes it read as a
+          moon and not as a banana. */}
+      <path
+        d="M13 9.6A5.8 5.8 0 0 1 6.4 3a5.8 5.8 0 1 0 6.6 6.6Z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }

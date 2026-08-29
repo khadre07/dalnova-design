@@ -12,6 +12,9 @@ import {
   type ReactNode,
 } from "react";
 import { CONTENT, type Accent, type Content, type Lang } from "./content";
+
+/** Day or night. It decides the sky, and which scene the figure is staged in. */
+export type Sky = "day" | "night";
 import { presenceNow, registerRecess } from "./stage";
 
 type SiteState = {
@@ -21,6 +24,8 @@ type SiteState = {
   /** Drives the robot's rim light. Cyan for machine work, amber for human work. */
   accent: Accent;
   setAccent: (accent: Accent) => void;
+  sky: Sky;
+  setSky: (sky: Sky) => void;
   /* 0 at the top of the page, 1 at the bottom. Deliberately a ref and not
      state: the only readers are the WebGL loops, which sample it once a frame
      anyway. Held as state it changed the context value on every scroll frame
@@ -32,6 +37,7 @@ type SiteState = {
 const SiteContext = createContext<SiteState | null>(null);
 
 const STORAGE_KEY = "dalnova.lang";
+const SKY_KEY = "dalnova.sky";
 
 /* The stored language is an external store, not component state. Reading it in
    an effect and calling setState would work, but it costs a second render on
@@ -60,6 +66,34 @@ function readLangOnServer(): Lang {
   return "fr";
 }
 
+let cachedSky: Sky | null = null;
+let skyListeners: (() => void)[] = [];
+
+function subscribeSky(callback: () => void) {
+  skyListeners.push(callback);
+  return () => {
+    skyListeners = skyListeners.filter((l) => l !== callback);
+  };
+}
+
+function readSky(): Sky {
+  if (cachedSky === null) {
+    const stored = window.localStorage.getItem(SKY_KEY);
+    cachedSky = stored === "day" || stored === "night" ? stored : "night";
+  }
+  return cachedSky;
+}
+
+function readSkyOnServer(): Sky {
+  return "night";
+}
+
+function writeSky(next: Sky) {
+  cachedSky = next;
+  window.localStorage.setItem(SKY_KEY, next);
+  skyListeners.forEach((l) => l());
+}
+
 function writeLang(next: Lang) {
   cachedLang = next;
   window.localStorage.setItem(STORAGE_KEY, next);
@@ -68,10 +102,21 @@ function writeLang(next: Lang) {
 
 export function SiteProvider({ children }: { children: ReactNode }) {
   const lang = useSyncExternalStore(subscribeLang, readLang, readLangOnServer);
+  /* Same shape as the language: an external store rather than state read in an
+     effect, so the server renders night, the client swaps in what was chosen
+     during hydration, and there is no second render and no mismatch. */
+  const sky = useSyncExternalStore(subscribeSky, readSky, readSkyOnServer);
   const [accent, setAccent] = useState<Accent>("arc");
   const progressRef = useRef(0);
 
   const setLang = useCallback((next: Lang) => writeLang(next), []);
+  const setSky = useCallback((next: Sky) => writeSky(next), []);
+
+  /* Written onto the root so the sky layers and every colour that follows it
+     can be chosen in CSS, without a single component re-rendering for it. */
+  useEffect(() => {
+    document.documentElement.dataset.sky = sky;
+  }, [sky]);
 
   /* The server always renders lang="fr"; a visitor who chose English gets it
      back from localStorage during hydration. Mirroring it onto <html> here
@@ -115,8 +160,8 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ lang, setLang, t: CONTENT[lang], accent, setAccent, progressRef }),
-    [lang, setLang, accent],
+    () => ({ lang, setLang, t: CONTENT[lang], accent, setAccent, sky, setSky, progressRef }),
+    [lang, setLang, accent, sky, setSky],
   );
 
   return <SiteContext.Provider value={value}>{children}</SiteContext.Provider>;

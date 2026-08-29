@@ -197,17 +197,79 @@
   /* The sky. Strongest at the top and gone by the horizon, so the water below
      is not competing with a picture of clouds. */
   .sky {
-    background-image: url("/sky.webp");
-    background-size: cover;
-    background-position: 62% 18%;
-    opacity: 0.5;
+    position: absolute;
+    inset: 0;
     mask-image: linear-gradient(180deg, #000 0%, #000 34%, transparent 76%);
   }
 
+  .sky-plate {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: 62% 18%;
+    opacity: 0;
+    /* Long, because this is the largest thing on the screen: a sky that
+       changes quickly reads as a glitch rather than as an hour passing. */
+    transition: opacity 1400ms var(--ease-out);
+  }
+
+  .sky-plate[data-plate="night"] {
+    background-image: url("/sky-night.webp");
+  }
+
+  .sky-plate[data-plate="dusk"] {
+    background-image: url("/sky-dusk.webp");
+  }
+
+  /* Daylight is a photograph of a bright sky behind a dark page. Held further
+     back than the other two, or the copy would be reading against it. */
+  .sky-plate[data-plate="day"] {
+    background-image: url("/sky-day.webp");
+    filter: saturate(0.82);
+  }
+
+  .sky-plate[data-on="true"] {
+    opacity: 0.5;
+  }
+
+  .sky-plate[data-plate="day"][data-on="true"] {
+    opacity: 0.3;
+  }
+
   @media (min-width: 1024px) {
-    .sky {
+    .sky-plate[data-on="true"] {
       opacity: 0.62;
     }
+
+    .sky-plate[data-plate="day"][data-on="true"] {
+      opacity: 0.36;
+    }
+  }
+
+  /* Daylight over the copy needs a heavier veil than night does. */
+  [data-sky="day"] .stage-scrim {
+    background: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--color-void) 90%, transparent) 0%,
+      color-mix(in oklab, var(--color-void) 80%, transparent) 100%
+    );
+  }
+
+  @media (min-width: 1024px) {
+    [data-sky="day"] .stage-scrim {
+      background: linear-gradient(
+        100deg,
+        var(--color-void) 0%,
+        color-mix(in oklab, var(--color-void) 84%, transparent) 30%,
+        color-mix(in oklab, var(--color-void) 40%, transparent) 58%
+      );
+    }
+  }
+
+  /* The stars belong to the night. */
+  [data-sky="day"] .stars {
+    opacity: 0;
+    transition: opacity 800ms var(--ease-out);
   }
 
   .stars {
@@ -428,42 +490,6 @@
     opacity: 0.2;
   }
 
-  /* Where the figure stands. The scene is full bleed, so anything that is a
-     picture of him rather than part of the water has to be told where he is. */
-  .poster-band {
-    position: absolute;
-    inset: 0;
-  }
-
-  @media (min-width: 1024px) {
-    .poster-band {
-      left: auto;
-      width: 52%;
-    }
-  }
-
-  /* Stands in for the model while it streams, then steps aside. Sized to match
-     the framing the model scene uses, so the swap is not a jump. */
-  .stage-poster {
-    position: absolute;
-    inset: 0;
-    z-index: 10;
-    margin: auto;
-    height: 78%;
-    width: auto;
-    max-width: none;
-    object-fit: contain;
-    pointer-events: none;
-    /* Quick, because what follows it is the water lighting up and him coming
-       out of it. A long dissolve would have a standing figure fading over a
-       surface he has not broken yet. */
-    transition: opacity 220ms var(--ease-out);
-  }
-
-  .stage-poster[data-gone="true"] {
-    opacity: 0;
-  }
-
   .stage-scrim {
     background: linear-gradient(
       180deg,
@@ -558,40 +584,6 @@
 
   /* Where the figure stands. The scene is full bleed, so anything that is a
      picture of him rather than part of the water has to be told where he is. */
-  .poster-band {
-    position: absolute;
-    inset: 0;
-  }
-
-  @media (min-width: 1024px) {
-    .poster-band {
-      left: auto;
-      width: 52%;
-    }
-  }
-
-  /* Stands in for the model while it streams, then steps aside. Sized to match
-     the framing the model scene uses, so the swap is not a jump. */
-  .stage-poster {
-    position: absolute;
-    inset: 0;
-    z-index: 10;
-    margin: auto;
-    height: 78%;
-    width: auto;
-    max-width: none;
-    object-fit: contain;
-    pointer-events: none;
-    /* Quick, because what follows it is the water lighting up and him coming
-       out of it. A long dissolve would have a standing figure fading over a
-       surface he has not broken yet. */
-    transition: opacity 220ms var(--ease-out);
-  }
-
-  .stage-poster[data-gone="true"] {
-    opacity: 0;
-  }
-
   .stage-scrim {
       background: linear-gradient(
         100deg,
@@ -623,6 +615,63 @@
     transform-origin: left;
     transform: scaleX(0);
     transition: transform 240ms var(--ease-out);
+  }
+
+  .sky-btn {
+    --cut: 5px;
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex: none;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-chrome-dim);
+    cursor: pointer;
+    --cut-edge: color-mix(in oklab, var(--color-steel-hi) 70%, transparent);
+    --cut-fill: transparent;
+    --cut-inset: 1px;
+    transition: color 200ms ease, transform 160ms var(--ease-out);
+  }
+
+  .sky-btn::before,
+  .sky-btn::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    clip-path: polygon(
+      var(--cut) 0%,
+      100% 0%,
+      100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%,
+      0% 100%,
+      0% var(--cut)
+    );
+  }
+
+  .sky-btn::before {
+    inset: 0;
+    background: var(--cut-edge);
+  }
+
+  .sky-btn::after {
+    inset: var(--cut-inset);
+    background: var(--cut-fill);
+  }
+
+  .sky-btn:active {
+    transform: scale(0.94);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .sky-btn:hover {
+      color: #eaf3f5;
+      --cut-edge: var(--color-arc);
+    }
   }
 
   .lang-btn {

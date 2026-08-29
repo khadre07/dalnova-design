@@ -1,5 +1,6 @@
 "use client";
 
+import Sky from "./Sky";
 import Stage from "./Stage";
 import Stars from "./Stars";
 
@@ -15,11 +16,7 @@ import Stars from "./Stars";
 export default function Backdrop() {
   return (
     <div className="pointer-events-none fixed inset-0 z-0">
-      {/* Night sky over the water. It sits behind everything and fades out
-          toward the waterline, so the two meet rather than being stacked —
-          and it is held well back, because a photograph at full strength
-          behind body copy is a photograph the copy has to fight. */}
-      <div className="sky absolute inset-0" aria-hidden="true" />
+      <Sky />
 
       <Stars />
 
@@ -31,20 +28,6 @@ export default function Backdrop() {
           screen instead of stopping at the edge of a 47% canvas. */}
       <div className="stage-slot absolute inset-0">
         <Stage />
-
-        {/* Scripting off: <Stage /> renders nothing at all until it has probed
-            for a model, so the fallback has to be server markup that is
-            already on the page. */}
-        <noscript>
-          <div className="poster-band">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/robot.webp"
-              alt=""
-              className="absolute inset-0 z-10 m-auto h-[88%] w-auto max-w-none object-contain"
-            />
-          </div>
-        </noscript>
       </div>
 
       {/* On narrow screens the figure sits behind the copy, so the left edge is

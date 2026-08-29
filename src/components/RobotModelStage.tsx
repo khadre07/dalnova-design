@@ -6,7 +6,7 @@ import { useSite } from "@/lib/site-state";
 import { figureIsUp } from "@/lib/cue";
 import { WATER_FRAG, WATER_VERT } from "@/lib/water";
 import { presenceValue } from "@/lib/stage";
-import { Conduits, type Box } from "./RobotStage";
+import { Conduits, type Box } from "./Conduits";
 
 export const MODEL_URL = "/robot.glb";
 
@@ -27,14 +27,7 @@ const EMISSIVE_URL = "/robot-emissive.png";
 const EMISSIVE_NAME = /eye|iris|core|reactor|glow|emis|led|light|lamp/i;
 
 
-export default function RobotModelStage({
-  onFailed,
-  onReady,
-}: {
-  onFailed?: () => void;
-  /** Fired once the first frame is on screen, so the poster can step aside. */
-  onReady?: () => void;
-}) {
+export default function RobotModelStage() {
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frontRef = useRef<HTMLDivElement>(null);
@@ -43,10 +36,7 @@ export default function RobotModelStage({
   /* Held in a ref so the scene effect never re-runs — and written from an
      effect, because a ref write during render is unsafe under concurrent
      rendering, where a render can be thrown away. */
-  const readyRef = useRef(onReady);
-  useEffect(() => {
-    readyRef.current = onReady;
-  }, [onReady]);
+
   const [failed, setFailed] = useState(false);
   const [reduced, setReduced] = useState(false);
   const [box, setBox] = useState<Box | null>(null);
@@ -347,15 +337,6 @@ export default function RobotModelStage({
       const nextAccent = new THREE.Color();
       let easedProgress = 0;
       let overlayIntro = 0;
-      /* Announced after a real render, not after the load resolves: the model
-         is only genuinely there once a frame carrying it has been painted. */
-      let announced = false;
-      const announce = () => {
-        if (announced) return;
-        announced = true;
-        readyRef.current?.();
-      };
-
       let raf = 0;
       let running = true;
       let started = performance.now();
@@ -447,7 +428,6 @@ export default function RobotModelStage({
         placeOverlays(turn);
         trackDolly(dolly, easedProgress * 0.26);
         renderer.render(scene, camera);
-        announce();
       };
 
       const start = () => {
@@ -472,7 +452,6 @@ export default function RobotModelStage({
         root.updateMatrixWorld();
         placeOverlays(0.06);
         renderer.render(scene, camera);
-        announce();
         // Reduced motion: he is already standing, so the cue is already due.
         figureIsUp();
         running = false;
@@ -525,12 +504,9 @@ export default function RobotModelStage({
     };
   }, [reduced, progressRef]);
 
-  // Loading or drawing the model failed. Nothing is shown here: the parent is
-  // told, and it puts the flat scene back rather than leaving a hole.
-  useEffect(() => {
-    if (failed) onFailed?.();
-  }, [failed, onFailed]);
-
+  /* Nothing to show. There is no second figure to fall back to any more, and
+     inventing one here would put back the confusion that removing it was
+     meant to end — the sky and the water carry the frame on their own. */
   if (failed) return null;
 
   return (
