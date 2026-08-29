@@ -1,6 +1,7 @@
 import Backdrop from "@/components/Backdrop";
 import Capabilities from "@/components/Capabilities";
 import Contact from "@/components/Contact";
+import Depths from "@/components/Depths";
 import Footer from "@/components/Footer";
 import Gallery from "@/components/Gallery";
 import Hero from "@/components/Hero";
@@ -41,6 +42,10 @@ export default function Page() {
       {/* Above the copy (z-10), below the header (z-50): the smoke has to be
           able to roll over the text it is writing. */}
       <SmokeVeil />
+
+      {/* Over everything below the header. Past the surface the whole page is
+          under, not only the part of it that happens to be transparent. */}
+      <Depths />
 
       <SiteNav />
 
