@@ -64,9 +64,13 @@ const WATER_FRAG = /* glsl */ `
       sin(w.x * 3.1 + uTime * 0.7) * 0.5 +
       sin(w.y * 2.6 - uTime * 0.53) * 0.5;
 
-    // Rings leaving his feet, dying out as they widen.
+    /* Rings leaving his feet. They thin as they widen, but slowly: the plane
+       was already fifteen times wider than anything in shot, so what made the
+       water read as a pool was never its size — it was these falloffs going to
+       nothing within half a metre of him. Slower, they run out to the sides of
+       the frame and off it. */
     float rings = sin(r * 13.0 - uTime * 1.5);
-    rings = smoothstep(0.55, 1.0, rings) * exp(-r * 1.6);
+    rings = smoothstep(0.55, 1.0, rings) * exp(-r * 0.55);
 
     /* The dot field, seen through the water. The lookup is displaced by the
        swell, which is what breaks the grid up instead of sliding it. */
@@ -77,7 +81,7 @@ const WATER_FRAG = /* glsl */ `
     float grid = smoothstep(0.16, 0.02, length(cell));
     // Perspective: the far half of the plane is nearly edge-on, so its dots
     // crowd together and read as haze rather than as points.
-    grid *= 0.35 + 0.65 * (0.5 - p.y * 0.5);
+    grid *= 0.45 + 0.55 * (0.5 - p.y * 0.5);
 
     /* The reflection. Stretched toward the viewer and pinched away from him,
        the way a bright thing smears down the near face of a swell. It stays
@@ -87,16 +91,17 @@ const WATER_FRAG = /* glsl */ `
     // Broken along its length, or it reads as a painted stripe.
     smear *= 0.55 + 0.45 * sin(w.y * 16.0 - uTime * 1.9);
 
-    // The pool of light he stands in, brightest just beyond his feet.
-    float pool = exp(-r * 2.0) * (1.0 - exp(-r * 5.6));
+    // The light he stands in, brightest just beyond his feet and carrying on
+    // outward rather than stopping at arm's length.
+    float pool = exp(-r * 0.9) * (1.0 - exp(-r * 5.6));
 
-    float a = rings * 0.30 + grid * 0.16 + smear * 0.42 + pool * 0.40;
+    float a = rings * 0.26 + grid * 0.17 + smear * 0.42 + pool * 0.3;
 
     /* Held to the plane's own edges rather than to a circle. A radial cut made
-       the surface a disc that went out well before the sides of the frame; run
-       to the edges, it reads as water the scene is standing in rather than as
-       a puddle. */
-    a *= smoothstep(1.0, 0.86, abs(p.x)) * smoothstep(1.0, 0.55, abs(p.y));
+       the surface a disc that went out well before the sides of the frame. The
+       plane is now far wider than anything that can be in shot, so this fade
+       only ever happens outside it — the water simply runs off both sides. */
+    a *= smoothstep(1.0, 0.94, abs(p.x)) * smoothstep(1.0, 0.55, abs(p.y));
     a *= uIgnite;
 
     if (a <= 0.001) discard;
@@ -282,7 +287,8 @@ export default function RobotModelStage({
          instead of ending inside it. Normalised space puts his feet at -0.5;
          the plane sits a hair below, or it fights the soles for the pixels. */
       const depth = Math.max(3.2, (size.x / Math.max(size.y, 0.0001)) * 5.5);
-      const width = depth * 4.2;
+      // Wide enough that its ends are never in shot at any window shape.
+      const width = depth * 6;
       water.scale.set(width, depth, 1);
       waterUniforms.uHalf.value.set(width / 2, depth / 2);
 
