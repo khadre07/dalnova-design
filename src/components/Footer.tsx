@@ -11,17 +11,17 @@ export default function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-[#2a3238] pt-14 pb-10">
-      <div className="grid gap-10 sm:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))]">
+    <footer className="border-t border-[var(--line)] pt-9 pb-7">
+      <div className="grid gap-x-8 gap-y-7 sm:grid-cols-[minmax(0,1.3fr)_repeat(3,minmax(0,1fr))]">
         <div>
-          <Wordmark height={40} />
-          <p className="t-body mt-5 max-w-[34ch] text-[0.8125rem] leading-relaxed">{t.footer.blurb}</p>
+          <Wordmark height={32} />
+          <p className="t-body mt-4 max-w-[34ch] text-[0.75rem] leading-relaxed">{t.footer.blurb}</p>
         </div>
 
         {t.footer.columns.map((column) => (
           <nav key={column.title} aria-label={column.title}>
             <p className="t-mono">{column.title}</p>
-            <ul className="mt-4 flex flex-col gap-2.5">
+            <ul className="mt-3 flex flex-col gap-1.5">
               {column.links.map((link) => (
                 <li key={link.label}>
                   {link.href ? (
@@ -38,9 +38,9 @@ export default function Footer() {
         ))}
       </div>
 
-      <div className="rule mt-12" />
+      <div className="rule mt-8" />
 
-      <p className="t-mono mt-6" style={{ letterSpacing: "0.13em" }}>
+      <p className="t-mono mt-4" style={{ letterSpacing: "0.13em" }}>
         © {year} Dalnova Technologies. {t.footer.rights}
       </p>
     </footer>

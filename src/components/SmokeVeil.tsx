@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { ACCENT_HEX } from "@/lib/content";
-import { useSite } from "@/lib/site-state";
+import { accentHex, useSite } from "@/lib/site-state";
 import { eachBlock, paintInk, setVeilLive } from "@/lib/veil";
 
 /* Smoke that writes the copy.
@@ -129,12 +129,12 @@ function makeSmokeSprite(hex: string) {
 
 export default function SmokeVeil() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { accent } = useSite();
+  const { accent, sky } = useSite();
 
   const accentRef = useRef(ACCENT_HEX.arc);
   useEffect(() => {
-    accentRef.current = ACCENT_HEX[accent];
-  }, [accent]);
+    accentRef.current = accentHex(accent, sky);
+  }, [accent, sky]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -334,7 +334,11 @@ export default function SmokeVeil() {
     };
 
     const sync = () => {
-      const wanted = wide.matches && !still.matches;
+      /* Not in daylight. The smoke is drawn in added light and the copy it
+         writes is dark on a pale ground: adding light there both fails to show
+         and works against the text it is meant to bring in. Under a bright sky
+         the blocks simply fade in, which is what the plain reveal does. */
+      const wanted = wide.matches && !still.matches && sky !== "day";
       if (wanted && !teardown) run();
       else if (!wanted && teardown) {
         teardown();
@@ -351,7 +355,7 @@ export default function SmokeVeil() {
       still.removeEventListener("change", sync);
       teardown?.();
     };
-  }, []);
+  }, [sky]);
 
   return (
     <canvas

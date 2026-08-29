@@ -44,7 +44,7 @@ export default function SectionHead({
     <header ref={ref}>
       <Reveal>
         <p className="t-mono flex items-center gap-3">
-          <span className="h-px w-8 bg-[#40454b]" aria-hidden="true" />
+          <span className="h-px w-8 bg-[var(--line-2)]" aria-hidden="true" />
           {eyebrow}
         </p>
       </Reveal>

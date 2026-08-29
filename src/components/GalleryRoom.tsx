@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { ACCENT_HEX } from "@/lib/content";
-import { useSite } from "@/lib/site-state";
+import { accentHex, useSite } from "@/lib/site-state";
 import { WATER_FRAG, WATER_VERT } from "@/lib/water";
 
 /* A room, not a carousel.
@@ -37,7 +37,7 @@ function placeholderTexture(hex: string) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return canvas;
 
-  ctx.fillStyle = "#121b24";
+  ctx.fillStyle = "var(--panel-2)";
   ctx.fillRect(0, 0, w, h);
   ctx.strokeStyle = "rgba(94, 104, 112, 0.5)";
   ctx.lineWidth = 3;
@@ -89,16 +89,16 @@ export default function GalleryRoom({
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { accent } = useSite();
+  const { accent, sky } = useSite();
 
   const accentRef = useRef(ACCENT_HEX.arc);
   const failedRef = useRef(onFailed);
   const pickRef = useRef(onPick);
   useEffect(() => {
-    accentRef.current = ACCENT_HEX[accent];
+    accentRef.current = accentHex(accent, sky);
     failedRef.current = onFailed;
     pickRef.current = onPick;
-  }, [accent, onFailed, onPick]);
+  }, [accent, sky, onFailed, onPick]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -139,13 +139,16 @@ export default function GalleryRoom({
         uHalf: { value: new THREE.Vector2(1, 1) },
         uUnit: { value: 6.5 },
       };
+      // Added at night, painted by day: adding light to a pale ground shows
+      // nothing. Same bargain the figure's water makes.
+      const day = sky === "day";
       const waterMaterial = new THREE.ShaderMaterial({
         uniforms: waterUniforms,
         vertexShader: WATER_VERT,
         fragmentShader: WATER_FRAG,
         transparent: true,
         depthWrite: false,
-        blending: THREE.AdditiveBlending,
+        blending: day ? THREE.NormalBlending : THREE.AdditiveBlending,
         side: THREE.DoubleSide,
       });
       const WATER_W = 320;
@@ -217,9 +220,9 @@ export default function GalleryRoom({
           new THREE.MeshBasicMaterial({
             map: halo,
             transparent: true,
-            opacity: 0.5,
+            opacity: day ? 0.22 : 0.5,
             depthWrite: false,
-            blending: THREE.AdditiveBlending,
+            blending: day ? THREE.NormalBlending : THREE.AdditiveBlending,
             toneMapped: false,
           }),
         );
@@ -386,7 +389,7 @@ export default function GalleryRoom({
       disposed = true;
       cleanup();
     };
-  }, [sources, controlsRef]);
+  }, [sources, controlsRef, sky]);
 
   return (
     <div ref={hostRef} className="room" role="img" aria-label="Galerie">

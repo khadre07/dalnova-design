@@ -48,7 +48,7 @@ export default function Hero() {
       className="hero relative flex min-h-[100svh] flex-col justify-center pt-28 pb-16 lg:min-h-screen lg:pb-24"
     >
       <p className="t-mono hero-in" style={line(0)}>
-        <span className="mr-3 inline-block h-px w-8 translate-y-[-4px] bg-[#40454b]" />
+        <span className="mr-3 inline-block h-px w-8 translate-y-[-4px] bg-[var(--line-2)]" />
         {t.hero.eyebrow}
       </p>
 

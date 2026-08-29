@@ -11,7 +11,14 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
-import { CONTENT, type Accent, type Content, type Lang } from "./content";
+import {
+  ACCENT_HEX,
+  ACCENT_HEX_DAY,
+  CONTENT,
+  type Accent,
+  type Content,
+  type Lang,
+} from "./content";
 
 /** Day or night. It decides the sky, and which scene the figure is staged in. */
 export type Sky = "day" | "night";
@@ -165,6 +172,11 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   );
 
   return <SiteContext.Provider value={value}>{children}</SiteContext.Provider>;
+}
+
+/** The hex a scene should paint with, for the accent and the sky in force. */
+export function accentHex(accent: Accent, sky: Sky) {
+  return (sky === "day" ? ACCENT_HEX_DAY : ACCENT_HEX)[accent];
 }
 
 export function useSite() {

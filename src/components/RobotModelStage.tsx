@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ACCENT_HEX } from "@/lib/content";
-import { useSite } from "@/lib/site-state";
+import { accentHex, useSite } from "@/lib/site-state";
 import { figureIsUp } from "@/lib/cue";
 import { WATER_FRAG, WATER_VERT } from "@/lib/water";
 import { presenceValue } from "@/lib/stage";
@@ -32,7 +32,7 @@ export default function RobotModelStage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frontRef = useRef<HTMLDivElement>(null);
 
-  const { accent, progressRef } = useSite();
+  const { accent, sky, progressRef } = useSite();
   /* Held in a ref so the scene effect never re-runs — and written from an
      effect, because a ref write during render is unsafe under concurrent
      rendering, where a render can be thrown away. */
@@ -43,8 +43,8 @@ export default function RobotModelStage() {
 
   const targetAccent = useRef(ACCENT_HEX.arc);
   useEffect(() => {
-    targetAccent.current = ACCENT_HEX[accent];
-  }, [accent]);
+    targetAccent.current = accentHex(accent, sky);
+  }, [accent, sky]);
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -83,12 +83,18 @@ export default function RobotModelStage() {
         return;
       }
 
+      /* Which sky the scene is being built for. Blending, fog and the lights
+         are all chosen here rather than swapped later, because a material's
+         blending mode is fixed once it exists — so the effect lists `sky` as a
+         dependency and the whole scene is rebuilt when it turns. */
+      const day = sky === "day";
+
       renderer.setClearAlpha(0);
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       // Chrome blows out fast under a linear response; ACES holds the highlights
       // on the shoulders and keeps the dark panels from crushing to pure black.
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.15;
+      renderer.toneMappingExposure = day ? 1.0 : 1.15;
 
       const scene = new THREE.Scene();
 
@@ -103,13 +109,14 @@ export default function RobotModelStage() {
 
       // Cool key from the front left, accent rim from behind right. The rim is
       // what draws his silhouette against the dark page.
-      const key = new THREE.DirectionalLight(0xdff2ff, 2.1);
+      const key = new THREE.DirectionalLight(0xdff2ff, day ? 3.1 : 2.1);
       key.position.set(-2.4, 2.6, 3.4);
       const rim = new THREE.DirectionalLight(ACCENT_HEX.arc, 3.4);
       rim.position.set(2.8, 1.4, -2.2);
       const fill = new THREE.DirectionalLight(0xff9a45, 0.55);
       fill.position.set(3.2, -0.6, 1.8);
-      scene.add(key, rim, fill, new THREE.AmbientLight(0x2a3238, 0.7));
+      // Daylight is ambient before it is directional; night is the reverse.
+      scene.add(key, rim, fill, new THREE.AmbientLight(day ? 0xc8d8e4 : 0x2a3238, day ? 2.4 : 0.7));
 
       const root = new THREE.Group();
       scene.add(root);
@@ -117,7 +124,7 @@ export default function RobotModelStage() {
       /* Depth. Everything past him falls away into the page's own colour, so
          the scene has a behind rather than ending at a hard edge. Exponential
          rather than linear: it thickens with distance the way air does. */
-      scene.fog = new THREE.FogExp2(0x05070a, 0.34);
+      scene.fog = new THREE.FogExp2(day ? 0xe9eef2 : 0x05070a, 0.34);
 
       const waterUniforms = {
         uTime: { value: 0 },
@@ -127,14 +134,17 @@ export default function RobotModelStage() {
         // He is one unit tall; the ripples are sized against him.
         uUnit: { value: 1 },
       };
+      /* Added at night, painted by day. Adding light to a pale ground does
+         nothing at all — every additive effect on this page is invisible above
+         a certain lightness — so under a bright sky the water is drawn over
+         what is behind it instead of onto it. */
       const waterMaterial = new THREE.ShaderMaterial({
         uniforms: waterUniforms,
         vertexShader: WATER_VERT,
         fragmentShader: WATER_FRAG,
         transparent: true,
         depthWrite: false,
-        // Added rather than painted on: there is nothing underneath to cover.
-        blending: THREE.AdditiveBlending,
+        blending: day ? THREE.NormalBlending : THREE.AdditiveBlending,
         side: THREE.DoubleSide,
       });
       // Segmented enough that nothing bands across it; it is one flat quad, so
@@ -445,7 +455,7 @@ export default function RobotModelStage() {
       };
 
       if (reduced) {
-        renderer.toneMappingExposure = 1.15;
+        renderer.toneMappingExposure = day ? 1.0 : 1.15;
         overlayIntro = 1;
         root.rotation.y = 0.06;
         root.position.y = baseY;
@@ -502,7 +512,7 @@ export default function RobotModelStage() {
       disposed = true;
       cleanup();
     };
-  }, [reduced, progressRef]);
+  }, [reduced, progressRef, sky]);
 
   /* Nothing to show. There is no second figure to fall back to any more, and
      inventing one here would put back the confusion that removing it was

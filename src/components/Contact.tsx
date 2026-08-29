@@ -18,9 +18,9 @@ export default function Contact() {
     >
       <SectionHead conduit={3} eyebrow={t.contact.eyebrow} title={t.contact.title} lede={t.contact.lede} />
 
-      <div className="mt-12 flex flex-col gap-px bg-[#2a3238]">
+      <div className="mt-12 flex flex-col gap-px bg-[var(--line)]">
         {t.contact.channels.map((channel, i) => (
-          <div key={channel.href} className="bg-[#080d12]">
+          <div key={channel.href} className="bg-[var(--panel)]">
             <Reveal delay={i * 55}>
               <a href={channel.href} className="channel">
                 <span className="t-mono" style={{ color: ACCENT_HEX[channel.accent] }}>

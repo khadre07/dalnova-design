@@ -62,7 +62,7 @@ function Module({ item, index }: { item: Capability; index: number }) {
     <article
       ref={ref as React.RefObject<HTMLElement>}
       id={item.id}
-      className="module group relative scroll-mt-24 bg-[#080d12] px-6 py-9 sm:px-8 lg:py-11"
+      className="module group relative scroll-mt-24 bg-[var(--panel)] px-6 py-9 sm:px-8 lg:py-11"
     >
       <span
         className="module-rail"
@@ -82,7 +82,7 @@ function Module({ item, index }: { item: Capability; index: number }) {
 
         <ul className="mt-6 grid gap-x-8 gap-y-2.5 sm:grid-cols-2">
           {item.points.map((point) => (
-            <li key={point} className="flex gap-3 text-[0.8125rem] leading-relaxed text-[#7d8c92]">
+            <li key={point} className="flex gap-3 text-[0.8125rem] leading-relaxed text-[var(--ink-dim)]">
               <span
                 className="mt-[0.55em] h-px w-3 shrink-0"
                 style={{ background: hex, opacity: 0.7 }}

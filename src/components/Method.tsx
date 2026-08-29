@@ -19,13 +19,13 @@ export default function Method() {
       {/* Numbered because these steps genuinely run in order: nothing is
           deployed before it has been designed, and nothing is designed before
           the need has been understood. */}
-      <ol className="mt-14 border-l border-[#2a3238]">
+      <ol className="mt-14 border-l border-[var(--line)]">
         {t.method.steps.map((step, i) => (
           <li key={step.n} className="relative pl-7 pb-11 last:pb-0 sm:pl-9">
             <span className="step-node" aria-hidden="true" />
             <Reveal delay={i * 70}>
               <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                <span className="t-mono" style={{ color: "#35d2ff" }}>
+                <span className="t-mono" style={{ color: "var(--accent)" }}>
                   {step.n}
                 </span>
                 <h3 className="t-display t-display-sm">{step.title}</h3>

@@ -30,12 +30,12 @@ export default function Sectors() {
         lede={t.sectors.lede}
       />
 
-      <div className="mt-12 grid grid-cols-2 gap-px bg-[#2a3238] lg:grid-cols-4">
+      <div className="mt-12 grid grid-cols-2 gap-px bg-[var(--line)] lg:grid-cols-4">
         {/* The opaque cell sits outside Reveal. Inside it, the hairline grid
             colour shows through while the cell is still fading in and the whole
             block reads as one grey slab. */}
         {t.sectors.items.map((sector, i) => (
-          <div key={sector} className="bg-[#080d12] px-5 py-7">
+          <div key={sector} className="bg-[var(--panel)] px-5 py-7">
             <Reveal delay={i * 45}>
               <p className="sector-index">{String(i + 1).padStart(2, "0")}</p>
               <p className="t-display t-display-sm mt-3">{sector}</p>

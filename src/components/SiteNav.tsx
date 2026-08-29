@@ -86,13 +86,12 @@ export default function SiteNav() {
 
   return (
     <>
+      {/* The ground is a class rather than an inline colour: written inline it
+          was a fixed near-black, and it stayed near-black under a bright sky. */}
       <header
-        className="fixed inset-x-0 top-0 z-50 transition-[background-color,border-color,backdrop-filter] duration-300"
-        style={{
-          backgroundColor: lifted || open ? "rgba(5, 7, 10, 0.82)" : "transparent",
-          borderBottom: `1px solid ${lifted || open ? "rgba(42, 50, 56, 0.7)" : "transparent"}`,
-          backdropFilter: lifted || open ? "blur(14px)" : "none",
-        }}
+        className="fixed inset-x-0 top-0 z-50 border-b border-transparent transition-[background-color,border-color,backdrop-filter] duration-300"
+        data-lifted={lifted || open}
+        style={{ backdropFilter: lifted || open ? "blur(14px)" : "none" }}
       >
         <nav
           className="mx-auto flex h-[68px] max-w-[1560px] items-center justify-between gap-4"

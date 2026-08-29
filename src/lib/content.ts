@@ -758,8 +758,17 @@ export const CONTENT: Record<Lang, Content> = {
   },
 };
 
-/** Hex for each accent, so the WebGL scenes and the DOM agree. */
+/* Hex for each accent, so the WebGL scenes and the DOM agree. Two sets: the
+   night cyan is tuned to glow out of near black and turns to pastel on a pale
+   ground, so daylight takes the same hue down until it can carry weight. The
+   scenes cannot read a CSS variable, which is why these are here rather than
+   only in the stylesheet. */
 export const ACCENT_HEX: Record<Accent, string> = {
   arc: "#35d2ff",
   ember: "#ff9a45",
+};
+
+export const ACCENT_HEX_DAY: Record<Accent, string> = {
+  arc: "#0a7ea8",
+  ember: "#a85200",
 };

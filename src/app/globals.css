@@ -3,22 +3,24 @@
 /* ------------------------------------------------------------------
    Dalnova Technologies — design tokens
    Colours are sampled directly from the robot render, not invented:
-   #05070A / #0B1117 / #40454B / #B2C4C3 are its own values, and
+   #05070A / var(--panel-2) / #40454B / #B2C4C3 are its own values, and
    #35D2FF / #FF9A45 are its arc-reactor cyan and its flank rim-light.
    Semantics: cyan = machine, amber = human.
 ------------------------------------------------------------------- */
 
 @theme {
-  --color-void: #05070a;
-  --color-carbon: #0b1117;
+  /* The old names, kept because half the page is written against them, and
+     pointed at the roles above so the sky reaches everything they touch. */
+  --color-void: var(--ground);
+  --color-carbon: var(--panel-2);
   --color-panel: #101922;
-  --color-steel: #2a3238;
-  --color-steel-hi: #40454b;
-  --color-chrome: #b2c4c3;
-  --color-chrome-dim: #6f7a7f;
-  --color-arc: #35d2ff;
+  --color-steel: var(--line);
+  --color-steel-hi: var(--line-2);
+  --color-chrome: var(--ink-3);
+  --color-chrome-dim: var(--ink-mono);
+  --color-arc: var(--accent);
   --color-arc-deep: #0b7fa8;
-  --color-ember: #ff9a45;
+  --color-ember: var(--ember);
 
   --font-display: var(--font-archivo), "Arial Narrow", system-ui, sans-serif;
   --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
@@ -30,6 +32,43 @@
   /* Emil's curves — the built-ins are too weak to read as intentional */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+
+  /* ------------------------------------------------------------------
+     Surfaces and ink, by role rather than by value.
+
+     The page had thirty-five colours written into it by hand, which is
+     fine while there is one sky and impossible once there are two. Every
+     one of them is now a role; the day sky redefines the roles below and
+     nothing else has to know it happened.
+  ------------------------------------------------------------------- */
+  --ground: #05070a;
+  --ground-2: #070b10;
+  --panel: #080d12;
+  --panel-2: #0b1117;
+  --panel-hover: #0b1219;
+  --plate: #eef3f6;
+  --plate-2: #dde6ea;
+  --plate-ink: #45525a;
+
+  --line: #2a3238;
+  --line-2: #40454b;
+
+  --ink: #eaf3f5;
+  --ink-2: #cfdcdf;
+  --ink-3: #b6c6cb;
+  --ink-body: #8a999f;
+  --ink-lede: #97a6ab;
+  --ink-dim: #7d8c92;
+  --ink-faint: #66757b;
+  --ink-mono: #6f7a7f;
+  --ink-spec: #dcebee;
+  --ink-quiet: #5d686d;
+  --ink-slot: #55636a;
+
+  --accent: #35d2ff;
+  --accent-ink: #02171f;
+  --ember: #ff9a45;
+  --star: #dbeeff;
 
   --rail: 1px;
   /* How deep the 45° corner cut goes. Machined panels, not pill-shaped cards
@@ -45,6 +84,46 @@
   --shell-x: clamp(1.25rem, 4vw, 4.5rem);
 
   color-scheme: dark;
+}
+
+/* ------------------------------------------------------------------
+   Daylight. The same roles, given values that work under a bright sky.
+
+   The accent moves as well: #35d2ff is a cyan tuned to glow out of near
+   black, and on a pale ground it is a pastel with nothing behind it.
+   The daylight cyan is the same hue taken down until it can carry text.
+------------------------------------------------------------------- */
+[data-sky="day"] {
+  --ground: #e9eef2;
+  --ground-2: #dfe6ec;
+  --panel: #f7fafb;
+  --panel-2: #ffffff;
+  --panel-hover: #eef4f7;
+  --plate: #ffffff;
+  --plate-2: #e9eff3;
+  --plate-ink: var(--plate-ink);
+
+  --line: #c3cfd7;
+  --line-2: #93a3ad;
+
+  --ink: #0a1620;
+  --ink-2: #142330;
+  --ink-3: #2b3d49;
+  --ink-body: #46565f;
+  --ink-lede: #3c4c56;
+  --ink-dim: #56666f;
+  --ink-faint: #64747d;
+  --ink-mono: #5a6a73;
+  --ink-spec: #0d1b24;
+  --ink-quiet: #7c8b94;
+  --ink-slot: #8d9ba3;
+
+  --accent: #0a7ea8;
+  --accent-ink: #ffffff;
+  --ember: #a85200;
+  --star: var(--star);
+
+  color-scheme: light;
 }
 
 /* Element defaults live in @layer base and component classes in
@@ -64,8 +143,10 @@
 
   body {
     margin: 0;
-    background: var(--color-void);
-    color: var(--color-chrome);
+    /* Long, because the sky it belongs to takes the same time to turn. */
+    background: var(--ground);
+    color: var(--ink-3);
+    transition: background-color 1400ms var(--ease-out), color 1400ms var(--ease-out);
     font-family: var(--font-sans);
     font-size: 1rem;
     line-height: 1.6;
@@ -106,7 +187,7 @@
     text-transform: uppercase;
     letter-spacing: -0.012em;
     line-height: 0.92;
-    color: #eaf3f5;
+    color: var(--ink);
     text-wrap: balance;
   }
 
@@ -159,12 +240,12 @@
   .t-lede {
     font-size: clamp(1.0625rem, 1.35vw, 1.2rem);
     line-height: 1.62;
-    color: #97a6ab;
+    color: var(--ink-lede);
     text-wrap: pretty;
   }
 
   .t-body {
-    color: #8a999f;
+    color: var(--ink-body);
     text-wrap: pretty;
   }
 
@@ -190,7 +271,7 @@
     left: 50%;
     width: 100vw;
     transform: translateX(-50%);
-    background: #070b10;
+    background: var(--ground-2);
     border-block: 1px solid color-mix(in oklab, var(--color-steel) 45%, transparent);
   }
 
@@ -246,6 +327,26 @@
     }
   }
 
+  /* The header sits on the page's own ground rather than on a fixed near
+     black, so it goes with the sky. */
+  header[data-lifted="true"] {
+    background-color: color-mix(in oklab, var(--ground) 84%, transparent);
+    border-bottom-color: color-mix(in oklab, var(--line) 70%, transparent);
+  }
+
+  /* Daylight puts a photograph of a bright sky directly behind the navigation,
+     and the moon in it is the brightest thing on the page. The header keeps a
+     ground of its own from the first pixel rather than waiting to be scrolled,
+     or its links dissolve wherever the sky happens to be pale. */
+  [data-sky="day"] header {
+    background-color: color-mix(in oklab, var(--ground) 72%, transparent);
+    backdrop-filter: blur(10px);
+  }
+
+  [data-sky="day"] header[data-lifted="true"] {
+    background-color: color-mix(in oklab, var(--ground) 90%, transparent);
+  }
+
   /* Daylight over the copy needs a heavier veil than night does. */
   [data-sky="day"] .stage-scrim {
     background: linear-gradient(
@@ -282,7 +383,7 @@
   .star-dot {
     position: absolute;
     border-radius: 50%;
-    background: #dbeeff;
+    background: var(--star);
     box-shadow: 0 0 4px rgba(190, 226, 255, 0.8);
     animation-name: star-twinkle;
     animation-timing-function: var(--ease-in-out);
@@ -310,6 +411,16 @@
       transparent 1px
     );
     background-size: 30px 30px;
+  }
+
+  /* The field is a light mark. On a pale ground a light mark is nothing, so
+     daylight draws the same grid in shadow instead. */
+  [data-sky="day"] .grid-field {
+    background-image: radial-gradient(
+      circle at center,
+      rgba(40, 70, 90, 0.16) 1px,
+      transparent 1px
+    );
   }
 
   /* ------------------------------------------------------------------
@@ -455,14 +566,14 @@
   .btn-primary {
     --cut-edge: var(--color-arc);
     --cut-fill: var(--color-arc);
-    color: #02171f;
+    color: var(--accent-ink);
   }
 
   .btn-ghost {
     --cut-edge: color-mix(in oklab, var(--color-steel-hi) 85%, transparent);
     --cut-fill: var(--color-void);
     --cut-inset: 1px;
-    color: #cfdcdf;
+    color: var(--ink-2);
   }
 
   @media (hover: hover) and (pointer: fine) {
@@ -470,12 +581,12 @@
        would glow square around a cut corner. drop-shadow follows what is
        actually painted, chamfer included. */
     .btn-primary:hover {
-      filter: drop-shadow(0 0 16px rgba(53, 210, 255, 0.5));
+      filter: drop-shadow(0 0 16px color-mix(in oklab, var(--accent) 50%, transparent));
     }
 
     .btn-ghost:hover {
       --cut-edge: var(--color-arc);
-      color: #eaf3f5;
+      color: var(--ink);
     }
   }
 
@@ -669,7 +780,7 @@
 
   @media (hover: hover) and (pointer: fine) {
     .sky-btn:hover {
-      color: #eaf3f5;
+      color: var(--ink);
       --cut-edge: var(--color-arc);
     }
   }
@@ -687,13 +798,13 @@
      shouting it. A dark chip with bright type says "selected" just as clearly
      without becoming the loudest thing on the page. */
   .lang-btn[data-active="true"] {
-    color: #eaf3f5;
+    color: var(--ink);
     background: color-mix(in oklab, var(--color-steel-hi) 85%, transparent);
   }
 
   @media (hover: hover) and (pointer: fine) {
     .nav-link:hover {
-      color: #eaf3f5;
+      color: var(--ink);
     }
 
     .nav-link:hover::after {
@@ -701,7 +812,7 @@
     }
 
     .lang-btn:not([data-active="true"]):hover {
-      color: #eaf3f5;
+      color: var(--ink);
     }
   }
 
@@ -774,7 +885,7 @@
     display: block;
     height: 1.5px;
     width: 100%;
-    background: #cfdcdf;
+    background: var(--ink-2);
     transition:
       transform 220ms var(--ease-out),
       opacity 180ms ease;
@@ -793,7 +904,7 @@
     inset: 68px 0 0;
     z-index: 45;
     padding: 2.5rem var(--shell-x) 3rem;
-    background: rgba(5, 7, 10, 0.97);
+    background: color-mix(in oklab, var(--ground) 97%, transparent);
     backdrop-filter: blur(18px);
     opacity: 0;
     /* Never from scale(0): the panel should look like it was already there */
@@ -826,7 +937,7 @@
     font-size: 1.4rem;
     text-transform: uppercase;
     letter-spacing: 0.01em;
-    color: #eaf3f5;
+    color: var(--ink);
     transition: transform 160ms var(--ease-out);
   }
 
@@ -864,7 +975,7 @@
 
   @media (hover: hover) and (pointer: fine) {
     .module:hover {
-      background-color: #0b1219;
+      background-color: var(--panel-hover);
     }
 
     .module:hover .module-rail {
@@ -877,7 +988,7 @@
      anything on this site as not finished. */
   .research {
     position: relative;
-    background: #080d12;
+    background: var(--panel);
     padding: 2.25rem 1.5rem 2.25rem;
     padding-inline-start: 1.5rem;
   }
@@ -939,7 +1050,7 @@
     font-weight: 700;
     font-size: clamp(1.8rem, 3vw, 2.5rem);
     line-height: 1;
-    color: #eaf3f5;
+    color: var(--ink);
     letter-spacing: -0.02em;
   }
 
@@ -972,7 +1083,7 @@
   .channel-value {
     font-family: var(--font-mono);
     font-size: 0.9375rem;
-    color: #dcebee;
+    color: var(--ink-spec);
     overflow-wrap: anywhere;
   }
 
@@ -994,18 +1105,18 @@
 
   @media (hover: hover) and (pointer: fine) {
     .channel:hover {
-      background-color: #0b1219;
+      background-color: var(--panel-hover);
     }
 
     .channel:hover .channel-arrow {
       transform: translateX(4px);
-      color: #eaf3f5;
+      color: var(--ink);
     }
   }
 
   .footer-link {
-    font-size: 0.8125rem;
-    color: #7d8c92;
+    font-size: 0.75rem;
+    color: var(--ink-dim);
     transition: color 200ms ease;
   }
 
@@ -1013,13 +1124,13 @@
      so the footer still reads as a map of the company, but they do not offer a
      hover or a pointer they cannot honour. */
   .footer-link.is-static {
-    color: #5d686d;
+    color: var(--ink-quiet);
     cursor: default;
   }
 
   @media (hover: hover) and (pointer: fine) {
     .footer-link:not(.is-static):hover {
-      color: #eaf3f5;
+      color: var(--ink);
     }
   }
 
@@ -1261,7 +1372,7 @@
 
   @media (hover: hover) and (pointer: fine) {
     .spec-link:hover {
-      color: #eaf3f5;
+      color: var(--ink);
     }
   }
 
@@ -1278,7 +1389,7 @@
     font-size: clamp(2.1rem, 4.4vw, 3.1rem);
     line-height: 1;
     letter-spacing: -0.03em;
-    color: #eaf3f5;
+    color: var(--ink);
   }
 
   /* The separator is structure, not content — it should not compete with the
@@ -1301,6 +1412,8 @@
   }
 
   /* Hatched, both halves: the empty part of a scale still exists. */
+  /* The empty half of the scale. Light hatching on a dark ground and dark
+     hatching on a pale one — the same mark, read the same way, either sky. */
   .spec-gauge {
     --cut: 4px;
     position: relative;
@@ -1310,7 +1423,7 @@
     overflow: hidden;
     background: repeating-linear-gradient(
       -45deg,
-      color-mix(in oklab, var(--color-steel-hi) 60%, transparent) 0 2px,
+      color-mix(in oklab, var(--line-2) 70%, transparent) 0 2px,
       transparent 2px 6px
     );
     clip-path: polygon(
@@ -1392,7 +1505,7 @@
     justify-content: space-between;
     gap: 0.75rem;
     padding: 0.7rem 0.9rem;
-    background: rgba(11, 17, 23, 0.9);
+    background: color-mix(in oklab, var(--panel-2) 92%, transparent);
   }
 
   .spec-chip-value {
@@ -1401,7 +1514,7 @@
     font-size: 0.8125rem;
     line-height: 1;
     letter-spacing: -0.02em;
-    color: #dcebee;
+    color: var(--ink-spec);
     white-space: nowrap;
   }
 
@@ -1477,7 +1590,7 @@
     padding: 0;
     border: 0;
     background: transparent;
-    color: #cfdcdf;
+    color: var(--ink-2);
     cursor: pointer;
     --cut-edge: color-mix(in oklab, var(--color-steel-hi) 85%, transparent);
     --cut-fill: var(--color-void);
@@ -1517,7 +1630,7 @@
   @media (hover: hover) and (pointer: fine) {
     .gallery-arrow:hover {
       --cut-edge: var(--color-arc);
-      color: #eaf3f5;
+      color: var(--ink);
     }
   }
 
@@ -1556,7 +1669,7 @@
     padding: 0;
     border: 0;
     cursor: zoom-in;
-    background: #0b1117;
+    background: var(--panel-2);
     transition: transform 200ms var(--ease-out);
     clip-path: polygon(
       var(--cut) 0%,
@@ -1572,7 +1685,7 @@
      part that mattered. The frame turns pale when it holds one, so the margin
      round it reads as paper rather than as a gap. */
   .gallery-frame:has(img) {
-    background: #eef3f6;
+    background: var(--plate);
   }
 
   .gallery-frame img {
@@ -1593,10 +1706,10 @@
     gap: 0.4rem;
     width: 100%;
     height: 100%;
-    color: #55636a;
+    color: var(--ink-slot);
     background: repeating-linear-gradient(
       -45deg,
-      rgba(64, 69, 75, 0.35) 0 2px,
+      color-mix(in oklab, var(--line-2) 45%, transparent) 0 2px,
       transparent 2px 9px
     );
   }
@@ -1605,7 +1718,7 @@
     font-size: 1.4rem;
     font-family: var(--font-spec);
     font-weight: 700;
-    color: #6f7a7f;
+    color: var(--ink-mono);
   }
 
   .gallery-frame:active {
@@ -1632,7 +1745,7 @@
     display: grid;
     place-items: center;
     padding: clamp(1rem, 4vw, 3rem);
-    background: rgba(3, 5, 7, 0.9);
+    background: color-mix(in oklab, var(--ground) 92%, transparent);
     backdrop-filter: blur(8px);
     animation: lightbox-in 200ms var(--ease-out);
   }
@@ -1650,7 +1763,7 @@
     flex-direction: column;
     max-width: min(1400px, 100%);
     max-height: 100%;
-    background: #eef3f6;
+    background: var(--plate);
     clip-path: polygon(
       var(--cut) 0%,
       100% 0%,
@@ -1676,11 +1789,11 @@
     justify-content: space-between;
     gap: 1.5rem;
     padding: 0.85rem 1rem 0.85rem 1.35rem;
-    background: #dde6ea;
+    background: var(--plate-2);
   }
 
   .lightbox-caption {
-    color: #45525a;
+    color: var(--plate-ink);
   }
 
   .lightbox-close {
@@ -1693,7 +1806,7 @@
     padding: 0;
     border: 0;
     background: transparent;
-    color: #45525a;
+    color: var(--plate-ink);
     cursor: pointer;
     transition: color 200ms ease, transform 160ms var(--ease-out);
   }
@@ -1704,7 +1817,7 @@
 
   @media (hover: hover) and (pointer: fine) {
     .lightbox-close:hover {
-      color: #0b1117;
+      color: var(--panel-2);
     }
   }
 
@@ -1790,7 +1903,7 @@
     width: 200px;
     height: 88px;
     padding: 0.95rem 1.2rem;
-    background: #eef3f6;
+    background: var(--plate);
     clip-path: polygon(
       var(--cut) 0%,
       100% 0%,
@@ -1816,7 +1929,7 @@
   }
 
   .partner-place {
-    color: #66757b;
+    color: var(--ink-faint);
   }
 
   @media (hover: hover) and (pointer: fine) {
@@ -1825,7 +1938,7 @@
     }
 
     a.partner:hover .partner-place {
-      color: #b6c6cb;
+      color: var(--ink-3);
     }
   }
 
@@ -1908,7 +2021,7 @@
     width: 100%;
     padding: 1.05rem 1.25rem;
     border: 0;
-    background: #080d12;
+    background: var(--panel);
     text-align: left;
     cursor: pointer;
     transition: background-color 220ms ease;
@@ -1925,7 +2038,7 @@
     font-size: 0.95rem;
     letter-spacing: 0.005em;
     text-transform: uppercase;
-    color: #cfdcdf;
+    color: var(--ink-2);
   }
 
   .room-label-open {
@@ -1935,7 +2048,7 @@
 
   @media (hover: hover) and (pointer: fine) {
     .room-label:hover {
-      background-color: #0b1219;
+      background-color: var(--panel-hover);
     }
 
     .room-label:hover .room-label-open {
