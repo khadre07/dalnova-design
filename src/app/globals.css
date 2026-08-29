@@ -993,16 +993,6 @@
     mix-blend-mode: screen;
   }
 
-  /* Over the copy, under the header. Screen, so it can only lighten: the copy
-     and its ground rise together and the contrast between them holds. */
-  .depths {
-    position: fixed;
-    inset: 0;
-    z-index: 21;
-    pointer-events: none;
-    mix-blend-mode: screen;
-  }
-
   [data-veil="on"] .reveal,
   [data-veil="on"] .reveal[data-shown="true"] {
     opacity: var(--ink, 0);
