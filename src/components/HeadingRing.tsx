@@ -20,8 +20,12 @@ import { accentHex, useSite } from "@/lib/site-state";
 
    Kept from the source: the projected ellipse rather than a circle squashed by
    scale, the tilt and axis angles, twelve plates, the fifteen-second
-   revolution, painter-ordered draw, and the rest state that only turns once a
-   pointer is over it.
+   revolution, and painter-ordered draw.
+
+   Not kept: the rest state. The source holds still until a pointer is over it,
+   which suits a demo where the ring is the whole page and hovering it is the
+   only thing to do. On a hero it is a switch nobody finds — the ring simply
+   looks broken. It turns.
 
    Painter order across real type. The source draws far plates, then the
    headline, then near plates, so the ring passes through the sentence rather
@@ -37,9 +41,14 @@ import { accentHex, useSite } from "@/lib/site-state";
    as the ring comes up to speed and leaves as it settles. */
 
 const PLATES = 12;
-/** One revolution, in seconds. From the source, and it is a good number: slow
- *  enough to be background, quick enough that a plate crosses while you read. */
-const REVOLUTION = 15.015;
+/** One revolution, in seconds.
+
+    The source turns in 15.015, and there the ring is the whole page: it fills
+    the frame, its plates are opaque, and there is nothing else moving to
+    measure it against. Behind a headline, at the value these plates are held
+    to, that same speed reads as a still image — the ring looked broken rather
+    than slow. Eleven seconds is still background and is unmistakably motion. */
+const REVOLUTION = 11;
 /** The ring's own geometry, in the source's own terms. */
 const RING = {
   ratio: 0.492, // semi-minor over semi-major: a 60.5° plane tilt
@@ -199,7 +208,9 @@ export default function HeadingRing() {
 
     let spin = 0;
     let speed = 0;
-    let target = 0;
+    /* Always turning. Eased up from nothing so the ring arrives with the copy
+       instead of being already in motion when the page appears. */
+    const target = 1;
     let raf = 0;
     let running = false;
     let last = performance.now();
@@ -208,19 +219,13 @@ export default function HeadingRing() {
     let repaint = () => {};
 
     const draw = (delta: number) => {
-      // Comes up to speed when pointed at and settles back when left, rather
-      // than snapping between still and turning.
-      speed += (target - speed) * (1 - Math.exp(-2.2 * delta));
+      // Eased rather than switched on, so the opening is a start and not a
+      // jump. Frame-rate independent: the same rise at 60 Hz and at 144 Hz.
+      speed += (target - speed) * (1 - Math.exp(-2.6 * delta));
       spin += (delta * speed * Math.PI * 2) / REVOLUTION;
 
       back.clearRect(0, 0, width, height);
       front.clearRect(0, 0, width, height);
-      /* The near half is a ghost at rest and solid while turning.
-         Hiding it entirely was the wrong call: it left half a ring, and half a
-         ring reads as a bug rather than as restraint. Held faint instead, so a
-         plate resting over a word is something you read through, and the
-         crossing arrives with the turn. */
-      frontCanvas.style.opacity = (0.26 + 0.74 * speed).toFixed(3);
 
       const order = Array.from({ length: PLATES }, (_, i) => {
         const psi = (RING.phase * Math.PI) / 180 - (i * 2 * Math.PI) / PLATES + spin;
@@ -300,21 +305,6 @@ export default function HeadingRing() {
       window.cancelAnimationFrame(raf);
     };
 
-    const wake = () => {
-      target = 1;
-      start();
-    };
-    const rest = () => {
-      target = 0;
-    };
-    /* The host spans the headline, and with the near half in front of the copy
-       it cannot take the pointer without standing between the reader and the
-       words. The hero does the waking instead — which is also truer to what is
-       being said: the ring turns while you are in the hero. */
-    const trigger: HTMLElement = host.closest(".hero") ?? host;
-    trigger.addEventListener("pointerenter", wake);
-    trigger.addEventListener("pointerleave", rest);
-
     const inView = new IntersectionObserver(([entry]) => {
       onScreen = entry?.isIntersecting ?? false;
       if (onScreen) start();
@@ -334,8 +324,6 @@ export default function HeadingRing() {
       resizeObserver.disconnect();
       inView.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
-      trigger.removeEventListener("pointerenter", wake);
-      trigger.removeEventListener("pointerleave", rest);
     };
   }, [hex, sky]);
 

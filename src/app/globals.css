@@ -1325,11 +1325,12 @@
 
   /* The near half, over the sentence. Held to the headline's own band: a plate
      crossing a display line is the effect, a plate crossing a call to action
-     is a plate in the way. Its opacity is written per frame by the turn, so at
-     rest this layer is empty. */
+     is a plate in the way. Held down in value too — enough that the crossing
+     reads, little enough that the sentence is never the thing you lose. */
   .ring-canvas[data-layer="front"] {
     z-index: 2;
     opacity: 0;
+    transition: opacity 1200ms var(--ease-out);
     -webkit-mask-image: linear-gradient(
       to bottom,
       transparent 2%,
@@ -1353,8 +1354,17 @@
     transition-delay: 500ms;
   }
 
+  [data-js="on"] .hero[data-ready="true"] .ring-canvas[data-layer="front"] {
+    opacity: 0.52;
+    transition-delay: 500ms;
+  }
+
   html:not([data-js="on"]) .ring-canvas[data-layer="back"] {
     opacity: 1;
+  }
+
+  html:not([data-js="on"]) .ring-canvas[data-layer="front"] {
+    opacity: 0.52;
   }
 
   /* On a phone the ring would sit under the copy at the only size the copy
