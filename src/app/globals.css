@@ -2024,3 +2024,260 @@
     opacity: 1;
   }
 }
+
+@layer components {
+  /* ------------------------------------------------------------------
+     Boot screen — the uplink sequence, counting real bytes
+
+     Adapted from the ThreeUI uplink loader: the readout plate with its
+     cut corners and brackets, the bank of skewed ticks with a heavier
+     mark every eighth, the haze widening behind the lit run, and the
+     corner markers with their turning diamonds. The palette is the
+     site's, and the number is the figure's own download.
+  ------------------------------------------------------------------- */
+
+  .boot {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    display: grid;
+    place-items: center;
+    background: var(--ground);
+    /* A cold pool behind the rig, as in the source. */
+    background-image: radial-gradient(
+      ellipse 60% 44% at 50% 52%,
+      color-mix(in oklab, var(--accent) 12%, transparent) 0%,
+      transparent 70%
+    );
+    transition: opacity 600ms var(--ease-out);
+  }
+
+  .boot[data-leaving="true"] {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .boot-rig {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 1.6rem;
+    width: min(600px, 78vw);
+    padding: 3.5rem 0;
+  }
+
+  .boot-mark {
+    height: 34px;
+    width: auto;
+    opacity: 0.9;
+  }
+
+  /* The readout plate: a chamfered frame with a hairline inset, drawn the way
+     every other panel on this page is drawn. */
+  .boot-plate {
+    --cut: 12px;
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    place-items: center;
+    width: 156px;
+    height: 88px;
+  }
+
+  .boot-plate::before,
+  .boot-plate::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    clip-path: polygon(
+      var(--cut) 0%,
+      100% 0%,
+      100% calc(100% - var(--cut)),
+      calc(100% - var(--cut)) 100%,
+      0% 100%,
+      0% var(--cut)
+    );
+  }
+
+  .boot-plate::before {
+    inset: 0;
+    background: color-mix(in oklab, var(--accent) 46%, transparent);
+  }
+
+  .boot-plate::after {
+    inset: 1px;
+    background: var(--panel-2);
+  }
+
+  /* The two brackets that sit off the plate's square corners. */
+  .boot-brk {
+    position: absolute;
+    width: 9px;
+    height: 9px;
+  }
+
+  .boot-brk::before,
+  .boot-brk::after {
+    content: "";
+    position: absolute;
+    background: var(--accent);
+    opacity: 0.9;
+  }
+
+  .boot-brk::before {
+    width: 9px;
+    height: 1.2px;
+  }
+
+  .boot-brk::after {
+    width: 1.2px;
+    height: 9px;
+  }
+
+  .boot-brk[data-at="tr"] {
+    right: -1px;
+    top: -1px;
+  }
+
+  .boot-brk[data-at="tr"]::before,
+  .boot-brk[data-at="tr"]::after {
+    right: 0;
+    top: 0;
+  }
+
+  .boot-brk[data-at="bl"] {
+    left: -1px;
+    bottom: -1px;
+  }
+
+  .boot-brk[data-at="bl"]::before,
+  .boot-brk[data-at="bl"]::after {
+    left: 0;
+    bottom: 0;
+  }
+
+  .boot-num {
+    font-family: var(--font-spec);
+    font-weight: 600;
+    font-size: 2.6rem;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+    text-shadow: 0 0 18px color-mix(in oklab, var(--accent) 40%, transparent);
+  }
+
+  .boot-num span {
+    font-size: 0.9rem;
+    opacity: 0.6;
+    margin-left: 0.15rem;
+  }
+
+  .boot-bar {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    width: 100%;
+    height: 30px;
+  }
+
+  .boot-haze {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    height: 52px;
+    width: var(--lit, 0%);
+    transform: translateY(-50%);
+    background: radial-gradient(
+      ellipse 50% 50% at center,
+      color-mix(in oklab, var(--accent) 28%, transparent) 0%,
+      transparent 72%
+    );
+    filter: blur(7px);
+    transition: width 160ms linear;
+  }
+
+  .boot-tick {
+    position: relative;
+    width: 4px;
+    height: 20px;
+    flex: none;
+    transform: skewX(12deg);
+    background: color-mix(in oklab, var(--line-2) 50%, transparent);
+    transition: background-color 180ms ease;
+  }
+
+  .boot-tick[data-mark="true"] {
+    height: 30px;
+  }
+
+  .boot-tick[data-on="true"] {
+    background: var(--accent);
+    box-shadow:
+      0 0 4px color-mix(in oklab, var(--accent) 55%, transparent),
+      0 0 11px color-mix(in oklab, var(--accent) 30%, transparent);
+  }
+
+  .boot-phase {
+    color: var(--ink-dim);
+    letter-spacing: 0.2em;
+  }
+
+  /* The corner markers, each turning on its own beat. */
+  .boot-mark-corner {
+    position: absolute;
+    width: 0;
+    height: 0;
+  }
+
+  .boot-mark-corner[data-at="tl"] {
+    left: -18px;
+    top: 8px;
+  }
+  .boot-mark-corner[data-at="tr"] {
+    right: -18px;
+    top: 8px;
+  }
+  .boot-mark-corner[data-at="bl"] {
+    left: -18px;
+    bottom: 8px;
+  }
+  .boot-mark-corner[data-at="br"] {
+    right: -18px;
+    bottom: 8px;
+  }
+
+  .boot-mark-corner i {
+    position: absolute;
+    left: -4px;
+    top: -4px;
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+    transform: rotate(45deg);
+    box-shadow: 0 0 6px color-mix(in oklab, var(--accent) 60%, transparent);
+    animation: boot-diamond 3.2s var(--ease-in-out) infinite;
+  }
+
+  @keyframes boot-diamond {
+    0%,
+    100% {
+      opacity: 0.5;
+      transform: rotate(45deg) scale(0.8);
+    }
+    50% {
+      opacity: 1;
+      transform: rotate(45deg) scale(1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .boot-mark-corner i {
+      animation: none;
+    }
+
+    .boot-haze {
+      transition: none;
+    }
+  }
+}

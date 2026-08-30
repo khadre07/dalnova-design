@@ -1,4 +1,5 @@
 import Backdrop from "@/components/Backdrop";
+import Boot from "@/components/Boot";
 import Capabilities from "@/components/Capabilities";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
@@ -36,6 +37,8 @@ function Column({ children }: { children: React.ReactNode }) {
 export default function Page() {
   return (
     <>
+      <Boot />
+
       <Backdrop />
 
       {/* Above the copy (z-10), below the header (z-50): the smoke has to be

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ACCENT_HEX } from "@/lib/content";
 import { accentHex, useSite } from "@/lib/site-state";
+import { reportProgress, reportReady } from "@/lib/boot";
 import { figureIsUp } from "@/lib/cue";
 import { WATER_FRAG, WATER_VERT } from "@/lib/water";
 import { presenceValue } from "@/lib/stage";
@@ -80,6 +81,7 @@ export default function RobotModelStage() {
         });
       } catch {
         setFailed(true);
+        reportReady();
         return;
       }
 
@@ -166,9 +168,13 @@ export default function RobotModelStage() {
 
       let gltf;
       try {
-        gltf = await new GLTFLoader().loadAsync(MODEL_URL);
+        // The boot screen counts these bytes rather than inventing a number.
+        gltf = await new GLTFLoader().loadAsync(MODEL_URL, (event) => {
+          if (event.lengthComputable) reportProgress(event.loaded, event.total);
+        });
       } catch {
         if (!disposed) setFailed(true);
+        reportReady();
         renderer.dispose();
         pmrem.dispose();
         return;
@@ -414,7 +420,10 @@ export default function RobotModelStage() {
         // The water lights with him: he is what is lighting it.
         waterUniforms.uIgnite.value = ignite * ignite * (3 - 2 * ignite);
         // He is simply standing there, so the cue is the water catching.
-        if (ignite >= 1) figureIsUp();
+        if (ignite >= 1) {
+          figureIsUp();
+          reportReady();
+        }
         renderer.toneMappingExposure = 0.45 + 0.7 * (ignite * ignite * (3 - 2 * ignite));
         overlayIntro = Math.max(0, Math.min(1, (elapsed - 0.62) / 0.45));
 
@@ -464,6 +473,7 @@ export default function RobotModelStage() {
         renderer.render(scene, camera);
         // Reduced motion: he is already standing, so the cue is already due.
         figureIsUp();
+        reportReady();
         running = false;
       } else {
         raf = window.requestAnimationFrame(frame);
@@ -506,6 +516,7 @@ export default function RobotModelStage() {
     })().catch((error) => {
       console.error("[RobotModelStage]", error);
       if (!disposed) setFailed(true);
+      reportReady();
     });
 
     return () => {
