@@ -1875,6 +1875,28 @@
   }
 
   /* ------------------------------------------------------------------
+     Spark slogan — the sentence rebuilt out of embers
+  ------------------------------------------------------------------- */
+
+  .spark {
+    position: relative;
+    left: 50%;
+    width: 100vw;
+    transform: translateX(-50%);
+    height: clamp(300px, 34vw, 460px);
+    margin-block: 1rem;
+    overflow: hidden;
+    /* Fades at both edges, so rain enters and leaves rather than being cut. */
+    mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  }
+
+  .spark-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ------------------------------------------------------------------
      Partners — a register that travels, stopped by a pointer and by a
      preference. Named rather than shown: the logos are not ours.
   ------------------------------------------------------------------- */

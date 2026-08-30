@@ -8,6 +8,7 @@ import Method from "@/components/Method";
 import Partners from "@/components/Partners";
 import Sectors from "@/components/Sectors";
 import SiteNav from "@/components/SiteNav";
+import SparkSlogan from "@/components/SparkSlogan";
 import SmokeVeil from "@/components/SmokeVeil";
 
 const shell = { paddingInline: "var(--shell-x)" };
@@ -77,6 +78,12 @@ export default function Page() {
           <Column>
             <Contact />
           </Column>
+        </Shell>
+
+        {/* The sentence again, rebuilt out of sparks, closing the page on the
+            same words it opened with. */}
+        <Shell wide>
+          <SparkSlogan lines={["On gère votre IT,", "du câble au code."]} />
         </Shell>
 
         <Shell>
