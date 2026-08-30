@@ -1273,6 +1273,59 @@
   }
 
   /* ------------------------------------------------------------------
+     Heading ring — plates turning behind the sentence
+
+     From the ThreeUI gallery heading: the projected ellipse rather than a
+     circle squashed by scale, the plane tilt and axis angle, twelve
+     plates, the fifteen-second revolution, painter-ordered draw so the
+     far half passes behind, and a ring that rests until pointed at.
+
+     What is not from it: the type. The original draws its headline into
+     the canvas, which on a page that needs to be found would put the one
+     sentence that matters beyond every crawler and every screen reader.
+  ------------------------------------------------------------------- */
+
+  .ring {
+    position: absolute;
+    /* Centred on the headline, and wider than the column so the far plates
+       leave the measure rather than stacking against its edge. */
+    left: 50%;
+    top: 42%;
+    width: min(150%, 1100px);
+    aspect-ratio: 1.6 / 1;
+    transform: translate(-50%, -50%);
+    z-index: -1;
+    pointer-events: auto;
+    opacity: 0;
+    transition: opacity 1200ms var(--ease-out);
+  }
+
+  /* Held back until the copy is released, so the hero opens on the sentence
+     and the ring arrives under it rather than with it. */
+  [data-js="on"] .hero[data-ready="true"] .ring {
+    opacity: 1;
+    transition-delay: 500ms;
+  }
+
+  html:not([data-js="on"]) .ring {
+    opacity: 1;
+  }
+
+  .ring-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* On a phone the ring would sit under the copy at the only size the copy
+     has. It is decoration, and decoration goes first. */
+  @media (max-width: 1023px) {
+    .ring {
+      display: none;
+    }
+  }
+
+  /* ------------------------------------------------------------------
      Spec block — the commitment read as an instrument
 
      One figure at display size with its unit, a gauge placing it against

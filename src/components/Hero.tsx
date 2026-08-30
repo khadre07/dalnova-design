@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { onFigure } from "@/lib/cue";
 import { useAccentZone, useSite } from "@/lib/site-state";
+import HeadingRing from "./HeadingRing";
 import Readout from "./Readout";
 import Uplink from "./Uplink";
 
@@ -48,12 +49,17 @@ export default function Hero() {
       data-ready={ready}
       className="hero relative flex min-h-[100svh] flex-col justify-center pt-28 pb-16 lg:min-h-screen lg:pb-24"
     >
-      <p className="t-mono hero-in" style={line(0)}>
+      {/* The ring turns behind the sentence, not around it: the headline stays
+          real type in the DOM, which is what a search engine reads and what a
+          screen reader says. The plates are the decoration. */}
+      <HeadingRing />
+
+      <p className="t-mono hero-in relative" style={line(0)}>
         <span className="mr-3 inline-block h-px w-8 translate-y-[-4px] bg-[var(--line-2)]" />
         {t.hero.eyebrow}
       </p>
 
-      <h1 className="t-display t-display-xl mt-6">
+      <h1 className="t-display t-display-xl relative mt-6">
         {t.hero.title.map((row, i) => (
           <span key={row} className="line-clip block">
             <span className="hero-line hero-in block" style={line(i + 1)}>

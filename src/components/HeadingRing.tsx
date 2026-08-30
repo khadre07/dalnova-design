@@ -64,8 +64,11 @@ function makePlate(index: number, hex: string, dark: boolean) {
     size * (0.5 - Math.cos(angle) * 0.5),
     size * (0.5 - Math.sin(angle) * 0.5),
   );
-  const deep = dark ? "#05070a" : "#dfe6ec";
-  const mid = dark ? "#0d1a24" : "#f2f6f8";
+  /* The plate has to read against the page it is on. Built at the ground's own
+     value it was invisible except at its edges — a ring of nothing with a few
+     hairlines in it. These sit a clear step above it. */
+  const deep = dark ? "#0d1922" : "#dfe6ec";
+  const mid = dark ? "#1d3442" : "#f7fafb";
   g.addColorStop(0, deep);
   g.addColorStop(0.45 + rand() * 0.2, mid);
   g.addColorStop(1, deep);
@@ -81,7 +84,7 @@ function makePlate(index: number, hex: string, dark: boolean) {
     size * 0.5,
     size * (0.5 + rand() * 0.4),
   );
-  glow.addColorStop(0, `${hex}${dark ? "66" : "55"}`);
+  glow.addColorStop(0, `${hex}${dark ? "99" : "66"}`);
   glow.addColorStop(1, `${hex}00`);
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, size, size);
@@ -96,6 +99,12 @@ function makePlate(index: number, hex: string, dark: boolean) {
     image.data[i + 2] += n;
   }
   ctx.putImageData(image, 0, 0);
+
+  // A hairline round the plate, so it reads as an object with an edge rather
+  // than as a patch of lighter ground.
+  ctx.strokeStyle = `${hex}55`;
+  ctx.lineWidth = 3;
+  ctx.strokeRect(1.5, 1.5, size - 3, size - 3);
   return canvas;
 }
 
@@ -205,9 +214,9 @@ export default function HeadingRing() {
         const n = img.width;
         ctx.save();
         // The far half is dimmer, which is what gives the ring its depth.
-        ctx.globalAlpha = z > 0 ? 0.5 : 0.22;
+        ctx.globalAlpha = z > 0 ? 0.72 : 0.3;
         ctx.setTransform(
-          ((ex * 2) / n) * (window.devicePixelRatio > 1 ? 1 : 1),
+          (ex * 2) / n,
           (ey * 2) / n,
           (fx * 2) / n,
           (fy * 2) / n,
