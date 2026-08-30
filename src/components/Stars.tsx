@@ -15,6 +15,18 @@ function rand(seed: number) {
   return x - Math.floor(x);
 }
 
+/* Rounded before it reaches the DOM, and this is not cosmetic.
+
+   A seeded generator is only half of what makes this hydrate. The other half
+   is precision. Written out in full, `10.468242550996365%` is parsed by the
+   browser and read back as `10.468243%`, so React compares what it computed
+   against what the browser kept and finds two different strings — a mismatch
+   on every load, on a component that is deterministic by construction. Three
+   decimals is below what the browser trims, so both sides say the same thing. */
+const px = (n: number) => `${n.toFixed(3)}px`;
+const pct = (n: number) => `${n.toFixed(3)}%`;
+const sec = (n: number) => `${n.toFixed(3)}s`;
+
 export default function Stars() {
   return (
     <div className="stars" aria-hidden="true">
@@ -29,15 +41,15 @@ export default function Stars() {
             key={i}
             className="star-dot"
             style={{
-              left: `${x}%`,
-              top: `${y}%`,
-              width: size,
-              height: size,
+              left: pct(x),
+              top: pct(y),
+              width: px(size),
+              height: px(size),
               // Spread over a long cycle so no two catch together and the
               // field never pulses as one.
-              animationDuration: `${2.6 + rand(i + 17) * 5.2}s`,
-              animationDelay: `${rand(i + 59) * -8}s`,
-              opacity: 0.25 + rand(i + 5) * 0.4,
+              animationDuration: sec(2.6 + rand(i + 17) * 5.2),
+              animationDelay: sec(rand(i + 59) * -8),
+              opacity: Number((0.25 + rand(i + 5) * 0.4).toFixed(3)),
             }}
           />
         );

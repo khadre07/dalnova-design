@@ -23,6 +23,13 @@ const TICKS = 48;
 const MARK_EVERY = 8;
 /** Below this, the load was instant and the screen is never shown. */
 const SHOW_AFTER = 220;
+/** How long the full bar is held before the page is uncovered. Without it the
+ *  bar reaches a hundred and vanishes in the same frame, so the one thing the
+ *  screen exists to say — that it is finished — is the one thing never seen. */
+const HOLD_AT_FULL = 520;
+/** Nothing has reported in this long: uncover the page anyway. A loading
+ *  screen that can strand the site is worse than one that leaves too early. */
+const GIVE_UP = 14000;
 
 const PHASES: [number, string][] = [
   [0, "INITIALISATION"],
@@ -43,16 +50,26 @@ export default function Boot() {
     timer.current = window.setTimeout(() => setShow(true), SHOW_AFTER);
 
     const offProgress = onProgress((loaded, total) => {
+      // Held below a hundred while bytes are still arriving: the model still
+      // has to be parsed and its environment built after the last byte, and a
+      // bar that sits at a hundred through that is lying about being done.
       if (total > 0) setPct(Math.min(99, (loaded / total) * 100));
     });
-    const offReady = onReady(() => {
+    let hold = 0;
+    const finish = () => {
       window.clearTimeout(timer.current);
       setPct(100);
-      setLeaving(true);
-    });
+      // Let the last ticks light and the number land before the page appears.
+      hold = window.setTimeout(() => setLeaving(true), HOLD_AT_FULL);
+    };
+
+    const offReady = onReady(finish);
+    const bail = window.setTimeout(finish, GIVE_UP);
 
     return () => {
       window.clearTimeout(timer.current);
+      window.clearTimeout(hold);
+      window.clearTimeout(bail);
       offProgress();
       offReady();
     };

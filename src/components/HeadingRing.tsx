@@ -20,8 +20,21 @@ import { accentHex, useSite } from "@/lib/site-state";
 
    Kept from the source: the projected ellipse rather than a circle squashed by
    scale, the tilt and axis angles, twelve plates, the fifteen-second
-   revolution, painter-ordered draw so the far half passes behind, and the rest
-   state that only turns once a pointer is over it. */
+   revolution, painter-ordered draw, and the rest state that only turns once a
+   pointer is over it.
+
+   Painter order across real type. The source draws far plates, then the
+   headline, then near plates, so the ring passes through the sentence rather
+   than around it — that crossing is the effect. Keeping the H1 in the DOM
+   would normally cost it, since a canvas is one layer and text cannot be
+   inside it. So there are two canvases: the far half draws on one that sits
+   behind the copy, the near half on one that sits in front, and the real
+   sentence is the filling. Same order as the source, same crossing, and the
+   type is still type.
+
+   The front layer is tied to the turn: at rest it is empty, so a plate can
+   never be parked over a word for someone who only came to read. It arrives
+   as the ring comes up to speed and leaves as it settles. */
 
 const PLATES = 12;
 /** One revolution, in seconds. From the source, and it is a good number: slow
@@ -110,17 +123,20 @@ function makePlate(index: number, hex: string, dark: boolean) {
 
 export default function HeadingRing() {
   const hostRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const backRef = useRef<HTMLCanvasElement>(null);
+  const frontRef = useRef<HTMLCanvasElement>(null);
   const { accent, sky } = useSite();
   const hex = accentHex(accent, sky);
 
   useEffect(() => {
     const host = hostRef.current;
-    const canvas = canvasRef.current;
-    if (!host || !canvas) return;
+    const backCanvas = backRef.current;
+    const frontCanvas = frontRef.current;
+    if (!host || !backCanvas || !frontCanvas) return;
 
-    const ctx = canvas.getContext("2d", { alpha: true });
-    if (!ctx) return;
+    const back = backCanvas.getContext("2d", { alpha: true });
+    const front = frontCanvas.getContext("2d", { alpha: true });
+    if (!back || !front) return;
 
     const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const dark = sky !== "day";
@@ -147,22 +163,38 @@ export default function HeadingRing() {
       width = Math.max(1, rect.width);
       height = Math.max(1, rect.height);
       const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-      canvas.width = Math.round(width * dpr);
-      canvas.height = Math.round(height * dpr);
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      radius = Math.min(width, height) * 0.52;
+      for (const [canvas, ctx] of [
+        [backCanvas, back],
+        [frontCanvas, front],
+      ] as const) {
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      /* The host is now the whole hero rather than a box sized around the
+         ring, so the ring's own size and seat are stated here. The centre sits
+         above the middle, on the headline; the radius lets the far plates
+         leave the measure instead of stacking against its edge. */
+      radius = Math.min(width * 0.54, height * 0.38);
     };
     resize();
-    const resizeObserver = new ResizeObserver(resize);
+    /* A resize has to repaint. At rest the frame loop is not running, so the
+       observer's first callback — which arrives after the opening paint —
+       would otherwise resize the canvas, which clears it, and leave an empty
+       ring until someone happened to point at the hero. */
+    const resizeObserver = new ResizeObserver(() => {
+      resize();
+      repaint();
+    });
     resizeObserver.observe(host);
 
     const project = (p: number[]) => {
       // Perspective, not a squashed circle: the far plates have to be smaller
       // as well as higher, or the ring reads as an ellipse drawn flat.
       const k = (radius * RING.dist) / (RING.dist - p[2]);
-      return [width / 2 + k * p[0], height / 2 + k * p[1]];
+      return [width / 2 + k * p[0], height * 0.42 + k * p[1]];
     };
 
     let spin = 0;
@@ -172,6 +204,8 @@ export default function HeadingRing() {
     let running = false;
     let last = performance.now();
     let onScreen = false;
+    // Set once draw is defined; resize can fire before that.
+    let repaint = () => {};
 
     const draw = (delta: number) => {
       // Comes up to speed when pointed at and settles back when left, rather
@@ -179,7 +213,14 @@ export default function HeadingRing() {
       speed += (target - speed) * (1 - Math.exp(-2.2 * delta));
       spin += (delta * speed * Math.PI * 2) / REVOLUTION;
 
-      ctx.clearRect(0, 0, width, height);
+      back.clearRect(0, 0, width, height);
+      front.clearRect(0, 0, width, height);
+      /* The near half is a ghost at rest and solid while turning.
+         Hiding it entirely was the wrong call: it left half a ring, and half a
+         ring reads as a bug rather than as restraint. Held faint instead, so a
+         plate resting over a word is something you read through, and the
+         crossing arrives with the turn. */
+      frontCanvas.style.opacity = (0.26 + 0.74 * speed).toFixed(3);
 
       const order = Array.from({ length: PLATES }, (_, i) => {
         const psi = (RING.phase * Math.PI) / 180 - (i * 2 * Math.PI) / PLATES + spin;
@@ -187,7 +228,9 @@ export default function HeadingRing() {
         const s = Math.sin(psi);
         return { i, psi, z: c * U[2] + s * V[2] };
       });
-      // Painter's order: the far half is drawn first and passes behind.
+      // Painter's order, as in the source. Here it also decides which of the
+      // two canvases a plate lands on, which is what puts the sentence between
+      // the halves instead of on top of both.
       order.sort((a, b) => a.z - b.z);
 
       const half = RING.tile / 2;
@@ -212,9 +255,11 @@ export default function HeadingRing() {
 
         const img = plates[i];
         const n = img.width;
+        const near = z > 0;
+        const ctx = near ? front : back;
         ctx.save();
         // The far half is dimmer, which is what gives the ring its depth.
-        ctx.globalAlpha = z > 0 ? 0.72 : 0.3;
+        ctx.globalAlpha = near ? 0.78 : 0.42;
         ctx.setTransform(
           (ex * 2) / n,
           (ey * 2) / n,
@@ -231,7 +276,8 @@ export default function HeadingRing() {
         ctx.restore();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
       }
-      ctx.globalAlpha = 1;
+      back.globalAlpha = 1;
+      front.globalAlpha = 1;
     };
 
     const frame = () => {
@@ -261,8 +307,13 @@ export default function HeadingRing() {
     const rest = () => {
       target = 0;
     };
-    host.addEventListener("pointerenter", wake);
-    host.addEventListener("pointerleave", rest);
+    /* The host spans the headline, and with the near half in front of the copy
+       it cannot take the pointer without standing between the reader and the
+       words. The hero does the waking instead — which is also truer to what is
+       being said: the ring turns while you are in the hero. */
+    const trigger: HTMLElement = host.closest(".hero") ?? host;
+    trigger.addEventListener("pointerenter", wake);
+    trigger.addEventListener("pointerleave", rest);
 
     const inView = new IntersectionObserver(([entry]) => {
       onScreen = entry?.isIntersecting ?? false;
@@ -274,6 +325,7 @@ export default function HeadingRing() {
     const onVisibility = () => (document.hidden ? stop() : start());
     document.addEventListener("visibilitychange", onVisibility);
 
+    repaint = () => draw(0);
     // One frame so the ring is there before anything moves.
     draw(0);
 
@@ -282,14 +334,15 @@ export default function HeadingRing() {
       resizeObserver.disconnect();
       inView.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
-      host.removeEventListener("pointerenter", wake);
-      host.removeEventListener("pointerleave", rest);
+      trigger.removeEventListener("pointerenter", wake);
+      trigger.removeEventListener("pointerleave", rest);
     };
   }, [hex, sky]);
 
   return (
     <div ref={hostRef} className="ring" aria-hidden="true">
-      <canvas ref={canvasRef} className="ring-canvas" />
+      <canvas ref={backRef} className="ring-canvas" data-layer="back" />
+      <canvas ref={frontRef} className="ring-canvas" data-layer="front" />
     </div>
   );
 }
