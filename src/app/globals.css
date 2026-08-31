@@ -191,15 +191,22 @@
     text-wrap: balance;
   }
 
-  /* Sized so the three written lines stay three lines in the 50%-width column,
-     and so the telemetry panel below still clears the fold at 900px tall. */
+  /* Sized so the written lines keep their breaks in the 50%-width column, and
+     so the telemetry panel below still clears the fold at 900px tall.
+
+     Brought down a step from where it was on the wide screens where the ring
+     exists. The sentence has to sit inside the ring, and at the old size it
+     filled the ellipse edge to edge — the plates were passing round a block
+     that had no room around it, which reads as a collision rather than as a
+     ring holding a headline. Only the top of the clamp moves: the small and
+     medium screens, where there is no ring, keep the size they had. */
   .t-display-xl {
-    font-size: clamp(1.8rem, 4.35vw, 4rem);
+    font-size: clamp(1.8rem, 4.35vw, 3.5rem);
   }
 
   @media (min-width: 480px) {
     .t-display-xl {
-      font-size: clamp(2.1rem, 4.35vw, 4rem);
+      font-size: clamp(2.1rem, 4.35vw, 3.5rem);
     }
   }
 
@@ -1308,14 +1315,14 @@
     -webkit-mask-image: linear-gradient(
       to bottom,
       transparent 0%,
-      #000 9%,
+      #000 15%,
       #000 66%,
       transparent 80%
     );
     mask-image: linear-gradient(
       to bottom,
       transparent 0%,
-      #000 9%,
+      #000 15%,
       #000 66%,
       transparent 80%
     );

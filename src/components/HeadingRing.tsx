@@ -53,7 +53,7 @@ const REVOLUTION = 11;
 const RING = {
   ratio: 0.492, // semi-minor over semi-major: a 60.5° plane tilt
   axis: 25.5, // screen angle of the major axis, degrees
-  tile: 0.235, // plate side, as a fraction of the ring radius
+  tile: 0.3, // plate side, as a fraction of the ring radius
   radius: 0.22, // corner radius, as a fraction of the plate side
   dist: 13, // camera distance, in ring radii
   phase: 93, // where plate zero starts, degrees
@@ -198,7 +198,12 @@ export default function HeadingRing() {
       if (box && box.width > 0) {
         cx = box.left - rect.left + box.width / 2;
         cy = box.top - rect.top + box.height / 2;
-        radius = Math.max(box.width * 0.62, (box.height / 2 / RING.ratio) * 1.06);
+        /* Clearance, not containment. Sized to the sentence exactly, the ring
+           ran along the block's own edge and the plates grazed the letters —
+           a collision, not a ring holding a headline. These factors are the
+           room around it, and they are what makes the sentence read as being
+           inside something. */
+        radius = Math.max(box.width * 0.74, (box.height / 2 / RING.ratio) * 1.24);
       } else {
         cx = width / 2;
         cy = height * 0.42;
