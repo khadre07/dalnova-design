@@ -2,18 +2,18 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAccentZone, useRecessZone, useSite } from "@/lib/site-state";
-import GalleryRoom, { type RoomControls } from "./GalleryRoom";
+import { accentHex } from "@/lib/site-state";
+import ImageGallery3D from "./ui/3d-image-gallery";
 import Lightbox from "./Lightbox";
 import Reveal from "./Reveal";
 import SectionHead from "./SectionHead";
 
 /* Two galleries, one at a time.
 
-   The room is the showpiece: the drawings hung in a line, each under its own
-   light and over its own reflection, with the camera tracking along the wall
-   as the section is scrolled through. It asks for a second WebGL context and a
-   GPU, so it appears where both are a fair assumption — a wide screen. Under
-   reduced motion it holds on a still frame rather than being replaced.
+   The orb is the showpiece: the drawings seated evenly on a sphere you can
+   turn, each plate facing you wherever it has ended up. It asks for a second
+   WebGL context and a GPU, so it appears where both are a fair assumption — a
+   wide screen.
 
    On narrow screens, and for anyone without scripting, the flat strip runs
    instead: native scroll snapping, which a trackpad, a touch screen and a
@@ -22,14 +22,13 @@ import SectionHead from "./SectionHead";
 
    The arrows drive whichever is on. */
 
-type Mode = "probing" | "room" | "flat";
+type Mode = "probing" | "orb" | "flat";
 
 export default function Gallery() {
-  const { t } = useSite();
+  const { t, sky } = useSite();
   const accentRef = useAccentZone("arc");
   const bandRef = useRecessZone();
   const trackRef = useRef<HTMLDivElement>(null);
-  const roomRef = useRef<RoomControls>(null);
   const [mode, setMode] = useState<Mode>("probing");
   /* Which drawing is open at full size, if any. The ribbon and the flat strip
      are two ways of getting here; this is where the work is actually read. */
@@ -40,9 +39,32 @@ export default function Gallery() {
      on a still frame for them and the arrows still step it, which is the
      authored contract. Falling back to a different gallery entirely would have
      given them less of the site for having a preference set. */
+  /* WebGL is asked for, not assumed.
+
+     The room this replaced reported its own failure and the section fell back
+     to the flat strip. A canvas that simply never draws does not report
+     anything, so without this probe a machine with no GPU — or a browser with
+     WebGL turned off — would get an empty box where the work should be. The
+     context is created and released immediately; all that is wanted is the
+     answer. */
+  const hasWebGL = useCallback(() => {
+    try {
+      const probe = document.createElement("canvas");
+      const gl =
+        probe.getContext("webgl2") ??
+        probe.getContext("webgl") ??
+        probe.getContext("experimental-webgl");
+      if (!gl) return false;
+      (gl as WebGLRenderingContext).getExtension("WEBGL_lose_context")?.loseContext();
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
   useEffect(() => {
     const wide = window.matchMedia("(min-width: 1024px)");
-    const sync = () => setMode(wide.matches ? "room" : "flat");
+    const sync = () => setMode(wide.matches && hasWebGL() ? "orb" : "flat");
     // Async so the first paint is not a synchronous cascade out of an effect.
     const id = window.setTimeout(sync, 0);
     wide.addEventListener("change", sync);
@@ -50,13 +72,9 @@ export default function Gallery() {
       window.clearTimeout(id);
       wide.removeEventListener("change", sync);
     };
-  }, []);
+  }, [hasWebGL]);
 
   const nudge = useCallback((direction: 1 | -1) => {
-    if (roomRef.current) {
-      roomRef.current.step(direction);
-      return;
-    }
     const track = trackRef.current;
     if (!track) return;
     // One slide plus its gap, measured rather than assumed.
@@ -65,7 +83,6 @@ export default function Gallery() {
     track.scrollBy({ left: stride * direction, behavior: "smooth" });
   }, []);
 
-  const sources = t.gallery.items.map((item) => item.src);
 
   return (
     <section
@@ -96,18 +113,19 @@ export default function Gallery() {
         </Reveal>
       </div>
 
-      {mode === "room" ? (
+      {mode === "orb" ? (
         <>
-          <GalleryRoom
-            sources={sources}
-            controlsRef={roomRef}
-            onFailed={() => setMode("flat")}
-            onPick={setPicked}
-          />
+          <div className="orb-stage">
+            <ImageGallery3D
+              works={t.gallery.items}
+              onPick={setPicked}
+              accent={accentHex("arc", sky)}
+            />
+          </div>
 
-          {/* The wall labels. Real type rather than something drawn into a
-              texture: it stays selectable, it is read aloud, and it does not
-              soften when the plate it belongs to is far down the room. */}
+          {/* The list under the ball. Real type rather than something drawn
+              into a texture: it stays selectable, it is read aloud, and it is
+              how the drawings are reached without a pointer at all. */}
           <ol className="room-labels">
             {t.gallery.items.map((item, i) => (
               <li key={item.caption}>

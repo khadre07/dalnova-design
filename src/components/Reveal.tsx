@@ -70,14 +70,24 @@ export default function Reveal({ children, as: Tag = "div", delay = 0, className
     if (node) setBlockActive(node, shown);
   }, [shown]);
 
+  /* Narrowed before it is rendered.
+
+     react-three-fiber augments the global JSX namespace with its own
+     intrinsic elements, and once it is installed a bare ElementType is a
+     union that includes them. Their props resolve to never against the DOM
+     attributes this passes, so the tag stops accepting a ref, a class or a
+     style. Saying out loud that this one renders an HTML element restores
+     what the type meant before the augmentation existed. */
+  const Element = Tag as "div";
+
   return (
-    <Tag
-      ref={ref}
+    <Element
+      ref={ref as React.Ref<HTMLDivElement>}
       data-shown={shown}
       className={`reveal ${className ?? ""}`}
       style={{ "--reveal-delay": `${wait}ms` } as React.CSSProperties}
     >
       {children}
-    </Tag>
+    </Element>
   );
 }
