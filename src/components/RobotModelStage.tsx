@@ -28,7 +28,15 @@ const EMISSIVE_URL = "/robot-emissive.png";
 const EMISSIVE_NAME = /eye|iris|core|reactor|glow|emis|led|light|lamp/i;
 
 
-export default function RobotModelStage() {
+export default function RobotModelStage({ hideFigure = false }: { hideFigure?: boolean }) {
+  /* Held in a ref so changing it does not rebuild the scene — see where it is
+     read, beside the model. Written in an effect rather than during render:
+     a ref written while rendering is a value the next render may not agree
+     with, and this one decides what is on screen. */
+  const hideRef = useRef(hideFigure);
+  useEffect(() => {
+    hideRef.current = hideFigure;
+  }, [hideFigure]);
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frontRef = useRef<HTMLDivElement>(null);
@@ -201,6 +209,13 @@ export default function RobotModelStage() {
 
       const model = gltf.scene;
       root.add(model);
+      /* Read every frame rather than rebuilt on change.
+
+         Whether the robot is drawn is a one-line decision; rebuilding the
+         scene for it would tear down the water with it, and the water is what
+         the rest of the page stands on. So the flag is a ref the loop reads,
+         and the scene never notices. */
+      model.visible = !hideRef.current;
 
       /* Normalise whatever we were handed. Generated models arrive at wildly
          different scales and origins, so the figure is measured, recentred on
@@ -388,13 +403,18 @@ export default function RobotModelStage() {
         if (frontRef.current) frontRef.current.style.transform = correction;
       };
 
-      const placeOverlays = (turn: number) => {
+      /* null means the figure is not on stage, so neither is what sits over
+         it. Passing an angle when there is nothing to sit on would leave the
+         overlay lit over an empty scene. */
+      const placeOverlays = (turn: number | null) => {
+        if (!frontRef.current) return;
+        if (turn === null) {
+          frontRef.current.style.opacity = "0";
+          return;
+        }
         const facing = Math.cos(turn);
         const visible = Math.max(0, Math.min(1, (facing - 0.12) / 0.88));
-        if (frontRef.current) {
-          frontRef.current.style.opacity = String(visible * overlayIntro);
-        }
-
+        frontRef.current.style.opacity = String(visible * overlayIntro);
       };
 
       const frame = () => {
@@ -480,8 +500,9 @@ export default function RobotModelStage() {
         camera.position.set(0, easedProgress * 0.26, baseDistance * dolly);
         camera.lookAt(0, -easedProgress * 0.06, 0);
 
+        model.visible = !hideRef.current;
         root.updateMatrixWorld();
-        placeOverlays(turn);
+        placeOverlays(hideRef.current ? null : turn);
         trackDolly(dolly, easedProgress * 0.26);
         renderer.render(scene, camera);
       };

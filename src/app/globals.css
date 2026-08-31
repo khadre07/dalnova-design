@@ -1430,6 +1430,58 @@
   }
 
   /* ------------------------------------------------------------------
+     The Spline figure
+
+     Seated where the model stands: three quarters across on a wide
+     screen, which is the same 0.74 the scene places its own root at.
+     Fixed like the stage it replaces, and behind everything the page
+     says. It arrives faded rather than switched on — a robot appearing
+     between two frames is a robot that was not there a moment ago.
+  ------------------------------------------------------------------- */
+
+  .spline-figure {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 900ms var(--ease-out);
+  }
+
+  /* It tracks the pointer, so it has to be able to see it. Only once it is
+     up: a transparent full-screen layer that swallows clicks before the
+     robot exists would be a page you cannot use while it loads. */
+  .spline-figure[data-live="true"] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .spline-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* On phones the figure sits behind the copy, as the model does, and the
+     copy wins. */
+  @media (max-width: 1023px) {
+    .spline-figure {
+      opacity: 0.2;
+      pointer-events: none;
+    }
+    .spline-figure[data-live="true"] {
+      opacity: 0.2;
+      pointer-events: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .spline-figure {
+      transition: none;
+    }
+  }
+
+  /* ------------------------------------------------------------------
      The orb — the work on a sphere you can turn
   ------------------------------------------------------------------- */
 
