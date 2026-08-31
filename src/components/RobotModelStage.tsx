@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ACCENT_HEX } from "@/lib/content";
 import { accentHex, useSite } from "@/lib/site-state";
-import { reportProgress, reportReady } from "@/lib/boot";
+import { reportProgress, reportReady, reportStage } from "@/lib/boot";
 import { figureIsUp } from "@/lib/cue";
 import { WATER_FRAG, WATER_VERT } from "@/lib/water";
 import { presenceValue } from "@/lib/stage";
@@ -105,6 +105,10 @@ export default function RobotModelStage() {
          reflections without shipping an HDRI. */
       const pmrem = new THREE.PMREMGenerator(renderer);
       const envRT = pmrem.fromScene(new RoomEnvironment(), 0.04);
+      /* The scene stage reports in steps rather than at the end. Building the
+         environment map and parsing the model are the seconds the bar used to
+         spend frozen at ninety-nine with nothing to say. */
+      reportStage("scene", 0.35);
       scene.environment = envRT.texture;
 
       const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 200);
@@ -172,6 +176,8 @@ export default function RobotModelStage() {
         gltf = await new GLTFLoader().loadAsync(MODEL_URL, (event) => {
           if (event.lengthComputable) reportProgress(event.loaded, event.total);
         });
+        // Downloaded, decoded and turned into geometry.
+        reportStage("scene", 0.7);
       } catch {
         if (!disposed) setFailed(true);
         reportReady();

@@ -167,6 +167,8 @@ export default function HeadingRing() {
     let width = 0;
     let height = 0;
     let radius = 0;
+    let cx = 0;
+    let cy = 0;
     const resize = () => {
       const rect = host.getBoundingClientRect();
       width = Math.max(1, rect.width);
@@ -182,11 +184,28 @@ export default function HeadingRing() {
         canvas.style.height = `${height}px`;
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       }
-      /* The host is now the whole hero rather than a box sized around the
-         ring, so the ring's own size and seat are stated here. The centre sits
-         above the middle, on the headline; the radius lets the far plates
-         leave the measure instead of stacking against its edge. */
-      radius = Math.min(width * 0.54, height * 0.38);
+      /* Seated on the headline, and sized from it.
+
+         In the source the sentence sits inside the ring — that is the
+         composition, not a ring parked next to some words. So the centre is
+         the headline's own centre and the radius is derived from its box: wide
+         enough that the ring clears the longest line, and tall enough that
+         half the minor axis clears half the block. Measured rather than
+         guessed, because the sentence is four lines in French and three in
+         English, and it re-wraps at every width. */
+      const h1 = host.parentElement?.querySelector("h1");
+      const box = h1?.getBoundingClientRect();
+      if (box && box.width > 0) {
+        cx = box.left - rect.left + box.width / 2;
+        cy = box.top - rect.top + box.height / 2;
+        radius = Math.max(box.width * 0.62, (box.height / 2 / RING.ratio) * 1.06);
+      } else {
+        cx = width / 2;
+        cy = height * 0.42;
+        radius = Math.min(width * 0.54, height * 0.38);
+      }
+      // Never so large that the ring leaves the hero altogether.
+      radius = Math.min(radius, width * 0.72, height * 0.42);
     };
     resize();
     /* A resize has to repaint. At rest the frame loop is not running, so the
@@ -203,7 +222,7 @@ export default function HeadingRing() {
       // Perspective, not a squashed circle: the far plates have to be smaller
       // as well as higher, or the ring reads as an ellipse drawn flat.
       const k = (radius * RING.dist) / (RING.dist - p[2]);
-      return [width / 2 + k * p[0], height * 0.42 + k * p[1]];
+      return [cx + k * p[0], cy + k * p[1]];
     };
 
     let spin = 0;
@@ -328,9 +347,9 @@ export default function HeadingRing() {
   }, [hex, sky]);
 
   return (
-    <div ref={hostRef} className="ring" aria-hidden="true">
-      <canvas ref={backRef} className="ring-canvas" data-layer="back" />
-      <canvas ref={frontRef} className="ring-canvas" data-layer="front" />
+    <div ref={hostRef} className="orbit" aria-hidden="true">
+      <canvas ref={backRef} className="orbit-canvas" data-layer="back" />
+      <canvas ref={frontRef} className="orbit-canvas" data-layer="front" />
     </div>
   );
 }

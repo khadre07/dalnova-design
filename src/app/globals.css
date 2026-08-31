@@ -1285,7 +1285,7 @@
      sentence that matters beyond every crawler and every screen reader.
   ------------------------------------------------------------------- */
 
-  .ring {
+  .orbit {
     /* Spans the hero and creates no stacking context of its own — no
        transform, no opacity, no filter. That is the whole trick: the two
        canvases can only escape to either side of the copy if nothing between
@@ -1296,11 +1296,29 @@
     pointer-events: none;
   }
 
-  .ring-canvas {
+  .orbit-canvas {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
+    /* Both halves die before the edges of the hero. Seated on the headline the
+       ring is wide enough to climb behind the header and drop past the calls
+       to action, and a plate half-hidden by the navigation reads as a mistake
+       rather than as depth. */
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      #000 9%,
+      #000 66%,
+      transparent 80%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      #000 9%,
+      #000 66%,
+      transparent 80%
+    );
   }
 
   /* Three layers in one order, all of them positive.
@@ -1311,23 +1329,24 @@
      children are lifted one step and the ring's halves sit either side of
      them. Nothing here creates a stacking context of its own, which is what
      lets the three take their places in a single order. */
-  .hero > *:not(.ring) {
+  .hero > *:not(.orbit) {
     position: relative;
     z-index: 1;
   }
 
   /* The far half, behind everything the hero says. */
-  .ring-canvas[data-layer="back"] {
+  .orbit-canvas[data-layer="back"] {
     z-index: 0;
     opacity: 0;
     transition: opacity 1200ms var(--ease-out);
   }
 
-  /* The near half, over the sentence. Held to the headline's own band: a plate
-     crossing a display line is the effect, a plate crossing a call to action
-     is a plate in the way. Held down in value too — enough that the crossing
-     reads, little enough that the sentence is never the thing you lose. */
-  .ring-canvas[data-layer="front"] {
+  /* The near half, over the sentence. Held to the upper band, where the
+     headline is: a plate crossing a display line is the effect, a plate
+     crossing a call to action is a plate in the way. Held down in value too —
+     enough that the crossing reads, little enough that the sentence is never
+     the thing you lose. */
+  .orbit-canvas[data-layer="front"] {
     z-index: 2;
     opacity: 0;
     transition: opacity 1200ms var(--ease-out);
@@ -1349,28 +1368,28 @@
 
   /* Held back until the copy is released, so the hero opens on the sentence
      and the ring arrives under it rather than with it. */
-  [data-js="on"] .hero[data-ready="true"] .ring-canvas[data-layer="back"] {
+  [data-js="on"] .hero[data-ready="true"] .orbit-canvas[data-layer="back"] {
     opacity: 1;
     transition-delay: 500ms;
   }
 
-  [data-js="on"] .hero[data-ready="true"] .ring-canvas[data-layer="front"] {
-    opacity: 0.52;
+  [data-js="on"] .hero[data-ready="true"] .orbit-canvas[data-layer="front"] {
+    opacity: 0.6;
     transition-delay: 500ms;
   }
 
-  html:not([data-js="on"]) .ring-canvas[data-layer="back"] {
+  html:not([data-js="on"]) .orbit-canvas[data-layer="back"] {
     opacity: 1;
   }
 
-  html:not([data-js="on"]) .ring-canvas[data-layer="front"] {
-    opacity: 0.52;
+  html:not([data-js="on"]) .orbit-canvas[data-layer="front"] {
+    opacity: 0.6;
   }
 
   /* On a phone the ring would sit under the copy at the only size the copy
      has. It is decoration, and decoration goes first. */
   @media (max-width: 1023px) {
-    .ring {
+    .orbit {
       display: none;
     }
   }
