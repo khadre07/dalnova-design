@@ -344,8 +344,22 @@ export default function RobotModelStage() {
       const resizeObserver = new ResizeObserver(layout);
       resizeObserver.observe(host);
 
+      /* He watches the pointer.
+
+         This is the one thing worth keeping from the Spline robot everyone
+         links to: the figure looks where you are. Theirs turns a head, which
+         needs a skeleton; this model came through the optimiser as a single
+         merged node, so there is no head to turn and the whole figure takes
+         the movement instead. Less articulate, and it still reads as
+         attention, which is the point.
+
+         A spring rather than a lag. Damped just under critical, so he arrives
+         with a little settle instead of sliding to a stop — the difference
+         between something watching you and something being dragged. */
       const pointer = { x: 0, y: 0 };
       const eased = { x: 0, y: 0 };
+      const velocity = { x: 0, y: 0 };
+      const AIM = { stiffness: 84, damping: 15 };
       const onPointer = (event: PointerEvent) => {
         pointer.x = (event.clientX / window.innerWidth - 0.5) * 2;
         pointer.y = (event.clientY / window.innerHeight - 0.5) * 2;
@@ -417,8 +431,21 @@ export default function RobotModelStage() {
         }
 
         easedProgress += (progressRef.current - easedProgress) * 0.07;
-        eased.x += (pointer.x - eased.x) * 0.05;
-        eased.y += (pointer.y - eased.y) * 0.05;
+
+        /* Stepped at a fixed rate rather than per frame. The old easing moved
+           by a flat fraction each frame, which makes him twice as quick on a
+           144 Hz screen as on a 60 Hz one — the same code producing two
+           different characters depending on the monitor. */
+        let remaining = Math.min(0.05, delta);
+        while (remaining > 0) {
+          const step = Math.min(1 / 240, remaining);
+          remaining -= step;
+          for (const axis of ["x", "y"] as const) {
+            const pull = (pointer[axis] - eased[axis]) * AIM.stiffness;
+            velocity[axis] += (pull - velocity[axis] * AIM.damping) * step;
+            eased[axis] += velocity[axis] * step;
+          }
+        }
 
         waterUniforms.uTime.value = elapsed;
 
@@ -437,10 +464,14 @@ export default function RobotModelStage() {
            his front toward screen-left, which is where the words are. A real
            model holds a three-quarter view without thinning out, so he takes
            more of it than the flat cut-out does. */
-        const turn = -easedProgress * 0.7 + Math.sin(elapsed * 0.24) * 0.05 + eased.x * 0.1;
+        const turn =
+          -easedProgress * 0.7 + Math.sin(elapsed * 0.24) * 0.05 + eased.x * 0.34;
         root.rotation.y = turn;
-        root.rotation.x = eased.y * 0.025;
-        root.position.y = baseY + Math.sin(elapsed * 0.55) * 0.008 - eased.y * 0.02;
+        root.rotation.x = eased.y * 0.1;
+        /* A shoulder drops toward the side you are on. Small, and it is what
+           stops the turn reading as a turntable. */
+        root.rotation.z = -eased.x * 0.045;
+        root.position.y = baseY + Math.sin(elapsed * 0.55) * 0.008 - eased.y * 0.03;
 
         /* The shot, not the subject. The camera pulls back and lifts as the
            page goes down, so we end up looking slightly down on him from
