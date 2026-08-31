@@ -1401,6 +1401,27 @@
     }
   }
 
+  /* The hero is set in from the other bands, and only where the ring is.
+
+     The ellipse reaches about three hundred and seventy pixels either side of
+     the sentence it holds. Flush with the other bands the sentence sits some
+     seventy pixels from the edge of the screen, so the whole left third of the
+     ring was falling off it — which is why the ring read as sitting beside the
+     words rather than around them: you were only ever seeing its right half.
+
+     Moving the sentence in moves the ring with it, and the edge of the screen
+     stays where it is, so the left of the ellipse comes back onto the page.
+     The right has room to spare: it runs out over the sky, which is where a
+     ring passing behind a figure is supposed to go.
+
+     Below 1024px there is no ring and the indent would be a hero that simply
+     fails to line up with everything under it, so there is none. */
+  @media (min-width: 1024px) {
+    .hero {
+      padding-left: clamp(0px, 8vw, 128px);
+    }
+  }
+
   /* ------------------------------------------------------------------
      Pictures arriving
 
