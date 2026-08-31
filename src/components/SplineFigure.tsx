@@ -19,6 +19,9 @@ import { SplineScene } from "./ui/splite";
 /** Nothing has arrived in this long: the model takes the stage back. */
 const GIVE_UP = 12000;
 
+/** Below this the canvas is not showing anything, whatever it reported. */
+const MIN_SIZE = 40;
+
 export default function SplineFigure({
   scene,
   onLive,
@@ -32,6 +35,22 @@ export default function SplineFigure({
 }) {
   const [state, setState] = useState<"waiting" | "live" | "failed">("waiting");
   const settled = useRef(false);
+  const host = useRef<HTMLDivElement>(null);
+
+  /* Loaded is not the same as showing.
+
+     This is not a hypothetical: the container lost its stylesheet rule, the
+     canvas came out nought by nought, Spline reported a clean load anyway, the
+     model stood down on the strength of it, and the page had no robot in it at
+     all. A load event says a scene was parsed. It says nothing about whether
+     there is anything on screen, and standing the working figure down is too
+     expensive to do on that word alone. */
+  const showing = () => {
+    const canvas = host.current?.querySelector("canvas");
+    if (!canvas) return false;
+    const box = canvas.getBoundingClientRect();
+    return box.width >= MIN_SIZE && box.height >= MIN_SIZE;
+  };
 
   const finish = (next: "live" | "failed") => {
     if (settled.current) return;
@@ -59,11 +78,15 @@ export default function SplineFigure({
   if (state === "failed") return null;
 
   return (
-    <div className="spline-figure" data-live={state === "live"} aria-hidden="true">
+    <div ref={host} className="spline-figure" data-live={state === "live"} aria-hidden="true">
       <SplineScene
         scene={scene}
         className="spline-canvas"
-        onLoad={() => finish("live")}
+        onLoad={() => {
+          // A frame later: the canvas is sized after the load event, not
+          // before it.
+          requestAnimationFrame(() => finish(showing() ? "live" : "failed"));
+        }}
         onError={() => finish("failed")}
       />
     </div>
