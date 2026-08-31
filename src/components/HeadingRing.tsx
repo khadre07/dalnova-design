@@ -59,7 +59,101 @@ const RING = {
   phase: 93, // where plate zero starts, degrees
 };
 
-/** A plate's face: a grainy field in the accent, no two alike. */
+/* Twelve plates, twelve colours.
+
+   The source gives each of its twelve a field of its own — violet, white silk,
+   deep blue, coral horizon, red chrome, pale plate — and that variety is the
+   reason the ring reads as twelve objects turning rather than as one texture
+   repeated. A single hue applied to all of them is a ring of identical tiles,
+   which is a pattern, not a set.
+
+   What is not taken is the source's own palette. Its twelve are a sampler for
+   a gradient shop: beige, terracotta, chrome, magenta silk. These twelve are
+   this site's — the voids and steels it is built on, its cyan through three
+   values, its amber through three, and two pale plates for the punch the
+   source gets from its white silk. Varied, and still from here.
+
+   Two sets, because a plate has to be seen against the ground it is on: the
+   dark ones would vanish into a bright sky and the pale ones into a dark one. */
+const PALETTE = {
+  night: [
+    "#12202b",
+    "#1b3040",
+    "#0e5f7d",
+    "#1789ad",
+    "#35d2ff",
+    "#24323d",
+    "#7a4520",
+    "#b3621f",
+    "#ff9a45",
+    "#b7c6cc",
+    "#e8eef0",
+    "#33454f",
+  ],
+  day: [
+    "#dde7ec",
+    "#b9c8d0",
+    "#0a7ea8",
+    "#0d9dcc",
+    "#6fc8e4",
+    "#93a6b1",
+    "#a85200",
+    "#d97a12",
+    "#f0a862",
+    "#2b3a44",
+    "#16222b",
+    "#eef3f6",
+  ],
+} as const;
+
+/** Deterministic, so the ring is the same ring on every render and machine. */
+function seeded(seed: number) {
+  let s = (seed * 2654435761) >>> 0;
+  return () => {
+    s ^= s << 13;
+    s >>>= 0;
+    s ^= s >>> 17;
+    s ^= s << 5;
+    s >>>= 0;
+    return s / 4294967296;
+  };
+}
+
+function smoothstep(t: number) {
+  return t * t * (3 - 2 * t);
+}
+
+/** One octave of value noise, sampled with a smooth curve between cells. */
+function octave(size: number, cells: number, rand: () => number) {
+  const seed = Array.from({ length: cells * cells }, rand);
+  const out = new Float32Array(size * size);
+  const step = size / cells;
+  for (let y = 0; y < size; y += 1) {
+    const gy = y / step;
+    const y0 = Math.floor(gy) % cells;
+    const y1 = (y0 + 1) % cells;
+    const fy = smoothstep(gy - Math.floor(gy));
+    for (let x = 0; x < size; x += 1) {
+      const gx = x / step;
+      const x0 = Math.floor(gx) % cells;
+      const x1 = (x0 + 1) % cells;
+      const fx = smoothstep(gx - Math.floor(gx));
+      const a = seed[y0 * cells + x0];
+      const b = seed[y0 * cells + x1];
+      const c = seed[y1 * cells + x0];
+      const d = seed[y1 * cells + x1];
+      out[y * size + x] = (a + (b - a) * fx) * (1 - fy) + (c + (d - c) * fx) * fy;
+    }
+  }
+  return out;
+}
+
+/** A plate's face: one flat colour, shaded by a noise field.
+ *
+ *  Shaded, not graded. A linear gradient has one direction and one smooth
+ *  sweep, which at this size reads as a UI panel; a noise field has a
+ *  thousand, which is what makes it a surface. It is also what the source
+ *  does. */
 function makePlate(index: number, hex: string, dark: boolean) {
   const size = 256;
   const canvas = document.createElement("canvas");
@@ -68,63 +162,50 @@ function makePlate(index: number, hex: string, dark: boolean) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return canvas;
 
-  // Deterministic, so the ring is the same ring on every render and machine.
-  let s = (index * 2654435761) >>> 0;
-  const rand = () => {
-    s ^= s << 13;
-    s >>>= 0;
-    s ^= s >>> 17;
-    s ^= s << 5;
-    s >>>= 0;
-    return s / 4294967296;
-  };
+  const rand = seeded(index + 1);
+  const base = PALETTE[dark ? "night" : "day"][index % 12];
+  const r = parseInt(base.slice(1, 3), 16);
+  const g = parseInt(base.slice(3, 5), 16);
+  const b = parseInt(base.slice(5, 7), 16);
 
-  const angle = rand() * Math.PI * 2;
-  const g = ctx.createLinearGradient(
-    size * (0.5 + Math.cos(angle) * 0.5),
-    size * (0.5 + Math.sin(angle) * 0.5),
-    size * (0.5 - Math.cos(angle) * 0.5),
-    size * (0.5 - Math.sin(angle) * 0.5),
-  );
-  /* The plate has to read against the page it is on. Built at the ground's own
-     value it was invisible except at its edges — a ring of nothing with a few
-     hairlines in it. These sit a clear step above it. */
-  const deep = dark ? "#0d1922" : "#dfe6ec";
-  const mid = dark ? "#1d3442" : "#f7fafb";
-  g.addColorStop(0, deep);
-  g.addColorStop(0.45 + rand() * 0.2, mid);
-  g.addColorStop(1, deep);
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, size, size);
+  // Three octaves, each finer and quieter, summed into one field.
+  const field = new Float32Array(size * size);
+  let amplitude = 1;
+  let sum = 0;
+  for (const cells of [3, 7, 15]) {
+    const layer = octave(size, cells, rand);
+    for (let i = 0; i < field.length; i += 1) field[i] += layer[i] * amplitude;
+    sum += amplitude;
+    amplitude *= 0.5;
+  }
 
-  // One band of accent per plate, at its own angle and depth.
-  const glow = ctx.createRadialGradient(
-    size * (0.2 + rand() * 0.6),
-    size * (0.2 + rand() * 0.6),
-    0,
-    size * 0.5,
-    size * 0.5,
-    size * (0.5 + rand() * 0.4),
-  );
-  glow.addColorStop(0, `${hex}${dark ? "99" : "66"}`);
-  glow.addColorStop(1, `${hex}00`);
-  ctx.fillStyle = glow;
-  ctx.fillRect(0, 0, size, size);
-
-  /* Film grain. The source's plates are grainy on purpose — a flat gradient at
-     this size reads as a UI panel, and the grain is what makes it a surface. */
-  const image = ctx.getImageData(0, 0, size, size);
-  for (let i = 0; i < image.data.length; i += 4) {
-    const n = (rand() - 0.5) * 26;
-    image.data[i] += n;
-    image.data[i + 1] += n;
-    image.data[i + 2] += n;
+  const image = ctx.createImageData(size, size);
+  for (let i = 0; i < field.length; i += 1) {
+    /* The field lifts and drops the plate around its own colour rather than
+       toward black: a plate shaded into black stops being its colour, and the
+       whole point of twelve of them is that they are twelve colours. */
+    const n = field[i] / sum;
+    const lift = 0.72 + n * 0.62;
+    image.data[i * 4] = Math.min(255, r * lift);
+    image.data[i * 4 + 1] = Math.min(255, g * lift);
+    image.data[i * 4 + 2] = Math.min(255, b * lift);
+    image.data[i * 4 + 3] = 255;
   }
   ctx.putImageData(image, 0, 0);
 
-  // A hairline round the plate, so it reads as an object with an edge rather
-  // than as a patch of lighter ground.
-  ctx.strokeStyle = `${hex}55`;
+  // Film grain, over the shading rather than in it.
+  const grain = ctx.getImageData(0, 0, size, size);
+  for (let i = 0; i < grain.data.length; i += 4) {
+    const n = (rand() - 0.5) * 22;
+    grain.data[i] += n;
+    grain.data[i + 1] += n;
+    grain.data[i + 2] += n;
+  }
+  ctx.putImageData(grain, 0, 0);
+
+  /* One thread back to the page: the edge carries the accent the section owns,
+     so twelve different plates still read as belonging to this band. */
+  ctx.strokeStyle = `${hex}44`;
   ctx.lineWidth = 3;
   ctx.strokeRect(1.5, 1.5, size - 3, size - 3);
   return canvas;
@@ -193,26 +274,36 @@ export default function HeadingRing() {
          half the minor axis clears half the block. Measured rather than
          guessed, because the sentence is four lines in French and three in
          English, and it re-wraps at every width. */
-      /* The sentence's own extents, not the element's.
+      /* The sentence's own extents, not the element's — and not its lines'.
 
          An h1 is a block: its box is the full width of the column whatever the
          words do inside it. The copy is set flush left and runs to about two
-         thirds of that, so a ring centred on the box sits a hundred pixels to
-         the right of the words it is supposed to be holding — which is exactly
-         how it looked. A range over the text reports the lines themselves, so
-         the ring is centred on the ink. */
+         thirds, so a ring sized on the box is half again too wide and hangs
+         off the screen.
+
+         A range over the element's contents does not fix that, which cost me
+         two passes to see: for block content getClientRects reports the *line
+         boxes*, and a line box is as wide as the block regardless of how much
+         ink is on it. Ranging each text node instead gives the glyphs
+         themselves, which is what the ring has to be sized on. */
       const h1 = host.parentElement?.querySelector("h1");
       let box: DOMRect | undefined;
       if (h1) {
+        const walker = document.createTreeWalker(h1, NodeFilter.SHOW_TEXT);
+        const rects: DOMRect[] = [];
         const range = document.createRange();
-        range.selectNodeContents(h1);
-        const lines = Array.from(range.getClientRects()).filter((r) => r.width > 0);
-        range.detach();
-        if (lines.length > 0) {
-          const left = Math.min(...lines.map((r) => r.left));
-          const right = Math.max(...lines.map((r) => r.right));
-          const top = Math.min(...lines.map((r) => r.top));
-          const bottom = Math.max(...lines.map((r) => r.bottom));
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+          if (!node.textContent?.trim()) continue;
+          range.selectNodeContents(node);
+          for (const rect of Array.from(range.getClientRects())) {
+            if (rect.width > 0 && rect.height > 0) rects.push(rect);
+          }
+        }
+        if (rects.length > 0) {
+          const left = Math.min(...rects.map((r) => r.left));
+          const right = Math.max(...rects.map((r) => r.right));
+          const top = Math.min(...rects.map((r) => r.top));
+          const bottom = Math.max(...rects.map((r) => r.bottom));
           box = new DOMRect(left, top, right - left, bottom - top);
         } else {
           box = h1.getBoundingClientRect();

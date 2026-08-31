@@ -201,12 +201,12 @@
      ring holding a headline. Only the top of the clamp moves: the small and
      medium screens, where there is no ring, keep the size they had. */
   .t-display-xl {
-    font-size: clamp(1.8rem, 4.35vw, 3.5rem);
+    font-size: clamp(1.8rem, 4.35vw, 3.05rem);
   }
 
   @media (min-width: 480px) {
     .t-display-xl {
-      font-size: clamp(2.1rem, 4.35vw, 3.5rem);
+      font-size: clamp(2.1rem, 4.35vw, 3.05rem);
     }
   }
 
@@ -1315,16 +1315,16 @@
     -webkit-mask-image: linear-gradient(
       to bottom,
       transparent 0%,
-      #000 15%,
-      #000 66%,
-      transparent 80%
+      #000 11%,
+      #000 68%,
+      transparent 82%
     );
     mask-image: linear-gradient(
       to bottom,
       transparent 0%,
-      #000 15%,
-      #000 66%,
-      transparent 80%
+      #000 11%,
+      #000 68%,
+      transparent 82%
     );
   }
 
@@ -1418,7 +1418,14 @@
      fails to line up with everything under it, so there is none. */
   @media (min-width: 1024px) {
     .hero {
-      padding-left: clamp(0px, 8vw, 128px);
+      --hero-in: clamp(0px, 9.5vw, 162px);
+      padding-left: var(--hero-in);
+      /* Shifted, not squeezed. The indent alone ate the same width off the
+         measure, and the lede went from four lines to five — the copy paying
+         for the composition. The matching negative on the right gives the
+         width back, so only the left edge moves. It runs out over the figure,
+         which is already behind a scrim. */
+      margin-right: calc(-1 * var(--hero-in));
     }
   }
 
