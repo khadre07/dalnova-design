@@ -12,12 +12,16 @@ import { createPortal } from "react-dom";
 export default function Lightbox({
   src,
   alt,
+  w,
+  h,
   caption,
   closeLabel,
   onClose,
 }: {
   src: string;
   alt: string;
+  w: number;
+  h: number;
   caption: string;
   closeLabel: string;
   onClose: () => void;
@@ -96,8 +100,12 @@ export default function Lightbox({
           </button>
         </div>
 
+        {/* The panel is sized before the file lands. Without the two numbers
+            it opens as a bar with nothing under it and then snaps to full
+            height around the reader — the most jarring shift on the page,
+            because it happens right where they are looking. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt={alt} />
+        <img src={src} alt={alt} width={w} height={h} decoding="async" />
       </div>
     </div>,
     document.body,

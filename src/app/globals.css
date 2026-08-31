@@ -1402,6 +1402,43 @@
   }
 
   /* ------------------------------------------------------------------
+     Pictures arriving
+
+     A picture that appears the instant its last byte lands is the one
+     thing on a page that moves without being asked to. Everything else
+     here is eased; the images alone were snapping in, and next to eased
+     neighbours a snap reads as a fault rather than as speed.
+
+     The fade is short — this is a picture finishing, not an entrance —
+     and it is scoped to the images that arrive late. Anything decoded
+     before paint never runs it: the browser fires load before the first
+     frame, the attribute is already set, and there is nothing to fade.
+  ------------------------------------------------------------------- */
+
+  img[data-fade] {
+    opacity: 0;
+    transition: opacity 260ms var(--ease-out);
+  }
+
+  img[data-fade][data-in="true"] {
+    opacity: 1;
+  }
+
+  /* Belt and braces: a cached picture can be complete before React has
+     attached its handler, so the load event never reaches us and the
+     image would stay at nothing forever. Scripting off has the same
+     shape. Both end up visible. */
+  html:not([data-js="on"]) img[data-fade] {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    img[data-fade] {
+      transition: none;
+    }
+  }
+
+  /* ------------------------------------------------------------------
      Spec block — the commitment read as an instrument
 
      One figure at display size with its unit, a gauge placing it against

@@ -145,7 +145,27 @@ export default function Gallery() {
               >
                 {item.src ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={item.src} alt={item.alt} loading="lazy" decoding="async" />
+                  <img
+                    src={item.src}
+                    alt={item.alt}
+                    width={item.w}
+                    height={item.h}
+                    /* The first drawing is the one on screen when the band
+                       arrives, and the one behind the lightbox if it is opened
+                       straight away. Deferring it means the frame reveals
+                       empty and the picture drops in afterwards. */
+                    loading={i === 0 ? "eager" : "lazy"}
+                    decoding="async"
+                    data-fade
+                    onLoad={(event) => {
+                      event.currentTarget.dataset.in = "true";
+                    }}
+                    ref={(node) => {
+                      // Already in the cache: load fired before this handler
+                      // existed, so nothing would ever mark it in.
+                      if (node?.complete) node.dataset.in = "true";
+                    }}
+                  />
                 ) : (
                   /* Nothing has been dropped in yet, and the frame says so
                      rather than pretending. */
@@ -164,6 +184,8 @@ export default function Gallery() {
         <Lightbox
           src={t.gallery.items[picked].src}
           alt={t.gallery.items[picked].alt}
+          w={t.gallery.items[picked].w}
+          h={t.gallery.items[picked].h}
           caption={t.gallery.items[picked].caption}
           closeLabel={t.gallery.close}
           onClose={() => setPicked(null)}

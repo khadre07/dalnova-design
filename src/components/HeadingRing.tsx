@@ -193,8 +193,31 @@ export default function HeadingRing() {
          half the minor axis clears half the block. Measured rather than
          guessed, because the sentence is four lines in French and three in
          English, and it re-wraps at every width. */
+      /* The sentence's own extents, not the element's.
+
+         An h1 is a block: its box is the full width of the column whatever the
+         words do inside it. The copy is set flush left and runs to about two
+         thirds of that, so a ring centred on the box sits a hundred pixels to
+         the right of the words it is supposed to be holding — which is exactly
+         how it looked. A range over the text reports the lines themselves, so
+         the ring is centred on the ink. */
       const h1 = host.parentElement?.querySelector("h1");
-      const box = h1?.getBoundingClientRect();
+      let box: DOMRect | undefined;
+      if (h1) {
+        const range = document.createRange();
+        range.selectNodeContents(h1);
+        const lines = Array.from(range.getClientRects()).filter((r) => r.width > 0);
+        range.detach();
+        if (lines.length > 0) {
+          const left = Math.min(...lines.map((r) => r.left));
+          const right = Math.max(...lines.map((r) => r.right));
+          const top = Math.min(...lines.map((r) => r.top));
+          const bottom = Math.max(...lines.map((r) => r.bottom));
+          box = new DOMRect(left, top, right - left, bottom - top);
+        } else {
+          box = h1.getBoundingClientRect();
+        }
+      }
       if (box && box.width > 0) {
         cx = box.left - rect.left + box.width / 2;
         cy = box.top - rect.top + box.height / 2;

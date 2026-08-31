@@ -25,7 +25,14 @@ export default function Wordmark({ height = 42 }: { height?: number }) {
     <img
       src={sky === "day" ? "/brand/dalnova-day.webp" : "/brand/dalnova.webp"}
       alt="Dalnova Technologies"
+      /* Both numbers, not just the height. Given height alone the browser has
+         no ratio to reserve, so the nav lays out around a zero-width logo and
+         then shoves everything sideways when the file lands — the one shift on
+         this page that happens above the fold, every load. 458 x 178 is the
+         file's own size. */
+      width={Math.round((height * 458) / 178)}
       height={height}
+      fetchPriority="high"
       style={{
         height,
         width: "auto",

@@ -71,22 +71,51 @@ export default function Boot() {
       reportStage("fonts", 1);
     });
 
-    const images = Array.from(document.images);
-    if (images.length === 0) reportStage("media", 1);
+    /* Everything that has to be decoded before the page is worth uncovering.
+
+       `document.images` is only the <img> elements, and the largest picture on
+       this page is not one: the sky is a CSS background. Left out of the count
+       the screen would stand down while the sky was still on the wire, and the
+       reader would get the page first and the sky fading in over it a second
+       later — a picture arriving after its moment, which is the one thing this
+       screen exists to prevent. So the sky showing is fetched by hand and
+       counted with the rest. */
+    const waiting: Promise<unknown>[] = Array.from(document.images).map(
+      (image) =>
+        image.complete
+          ? Promise.resolve()
+          : new Promise((resolve) => {
+              image.addEventListener("load", resolve, { once: true });
+              // A picture that failed is a picture that has stopped being
+              // waited on. It must still advance the bar, or one bad URL
+              // holds the page shut.
+              image.addEventListener("error", resolve, { once: true });
+            }),
+    );
+
+    const plate = document.querySelector('.sky-plate[data-on="true"]');
+    const url = plate
+      ? /url\(["']?([^"')]+)["']?\)/.exec(getComputedStyle(plate).backgroundImage)?.[1]
+      : null;
+    if (url) {
+      waiting.push(
+        new Promise((resolve) => {
+          const sky = new Image();
+          sky.onload = resolve;
+          sky.onerror = resolve;
+          sky.src = url;
+        }),
+      );
+    }
+
+    if (waiting.length === 0) reportStage("media", 1);
     else {
       let settled = 0;
-      const step = () => {
-        settled += 1;
-        reportStage("media", settled / images.length);
-      };
-      for (const image of images) {
-        if (image.complete) step();
-        else {
-          image.addEventListener("load", step, { once: true });
-          // A picture that failed is a picture that has stopped being waited
-          // on. It must still advance the bar, or one bad URL holds the page.
-          image.addEventListener("error", step, { once: true });
-        }
+      for (const one of waiting) {
+        void one.then(() => {
+          settled += 1;
+          reportStage("media", settled / waiting.length);
+        });
       }
     }
 
@@ -160,7 +189,14 @@ export default function Boot() {
     <div className="boot" data-leaving={leaving} role="status" aria-live="polite">
       <div className="boot-rig">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="boot-mark" src="/brand/dalnova.webp" alt="Dalnova Technologies" />
+        <img
+          className="boot-mark"
+          src="/brand/dalnova.webp"
+          alt="Dalnova Technologies"
+          width={458}
+          height={178}
+          fetchPriority="high"
+        />
 
         <div className="boot-plate">
           <span className="boot-brk" data-at="tr" aria-hidden="true" />

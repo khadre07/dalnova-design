@@ -35,7 +35,23 @@ export default function Partners() {
               >
                 <span className="partner-plate">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={partner.logo} alt={partner.name} loading="lazy" decoding="async" />
+                  <img
+                    src={partner.logo}
+                    alt={partner.name}
+                    width={partner.w}
+                    height={partner.h}
+                    loading="lazy"
+                    decoding="async"
+                    data-fade
+                    onLoad={(event) => {
+                      event.currentTarget.dataset.in = "true";
+                    }}
+                    ref={(node) => {
+                      // Already in the cache: load fired before this handler
+                      // existed, so nothing would ever mark it in.
+                      if (node?.complete) node.dataset.in = "true";
+                    }}
+                  />
                 </span>
                 <span className="partner-place t-mono">{partner.place}</span>
               </a>
@@ -52,7 +68,21 @@ export default function Partners() {
                 <span className="partner">
                   <span className="partner-plate">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={partner.logo} alt="" loading="lazy" decoding="async" />
+                    <img
+                      src={partner.logo}
+                      alt=""
+                      width={partner.w}
+                      height={partner.h}
+                      loading="lazy"
+                      decoding="async"
+                      data-fade
+                      onLoad={(event) => {
+                        event.currentTarget.dataset.in = "true";
+                      }}
+                      ref={(node) => {
+                        if (node?.complete) node.dataset.in = "true";
+                      }}
+                    />
                   </span>
                   <span className="partner-place t-mono">{partner.place}</span>
                 </span>

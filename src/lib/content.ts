@@ -66,14 +66,25 @@ export type Content = {
     open: string;
     close: string;
     emptyLabel: string;
-    items: { src: string; alt: string; caption: string }[];
+    /* Intrinsic pixel size travels with the picture. Without it the browser
+       cannot know the shape of a box until the bytes land, so the frame is
+       laid out at nothing and then jumps to its real height — the shove you
+       see when a page finishes loading around you. */
+    items: { src: string; alt: string; caption: string; w: number; h: number }[];
   };
   /* Linked to their own sites, and shown as their own marks. `logo` is the
      file; `name` still travels with it as the alt text and as what a reader
      without images gets. */
   partners: {
     label: string;
-    items: { name: string; place: string; href: string; logo: string }[];
+    items: {
+      name: string;
+      place: string;
+      href: string;
+      logo: string;
+      w: number;
+      h: number;
+    }[];
   };
   contact: {
     eyebrow: string;
@@ -93,11 +104,14 @@ export type Content = {
    a far better answer to "can you do this" than any photograph of a rack. The
    seven service illustrations that came with them are marked as temporary in
    Dalnova's own notes, so none of them are used here. */
+/* Each drawing with the size it actually is. The three landscape ones share a
+   shape; the telephony one is nearly square, which is exactly why the numbers
+   have to travel with the file rather than be assumed. */
 const WORK = {
-  reseau: "/work/reseau-active-directory.webp",
-  supervision: "/work/supervision-infogerance.webp",
-  video: "/work/videosurveillance.webp",
-  voip: "/work/telephonie-ip.webp",
+  reseau: { src: "/work/reseau-active-directory.webp", w: 1600, h: 1067 },
+  supervision: { src: "/work/supervision-infogerance.webp", w: 1600, h: 1067 },
+  video: { src: "/work/videosurveillance.webp", w: 1600, h: 1067 },
+  voip: { src: "/work/telephonie-ip.webp", w: 1600, h: 1482 },
 } as const;
 
 export const CONTENT: Record<Lang, Content> = {
@@ -307,22 +321,22 @@ export const CONTENT: Record<Lang, Content> = {
       emptyLabel: "Emplacement ",
       items: [
         {
-          src: WORK.reseau,
+          ...WORK.reseau,
           alt: "Schéma d'une infrastructure LAN : routeur FAI, MikroTik hEX, switch Cisco 24 ports, borne Ubiquiti U6, serveur HP ProLiant sous Windows Server, NAS Synology, supervision Zabbix et Grafana, et un plan d'adressage réparti en quatre VLAN.",
           caption: "Infrastructure réseau et annuaire d'entreprise",
         },
         {
-          src: WORK.supervision,
+          ...WORK.supervision,
           alt: "Schéma d'infogérance : le parc informatique du client — postes, serveurs, sauvegardes, imprimantes — relié par Internet à la supervision et au helpdesk de Dalnova.",
           caption: "Infogérance d'un parc informatique",
         },
         {
-          src: WORK.video,
+          ...WORK.video,
           alt: "Schéma de vidéosurveillance : huit caméras IP reliées à un switch PoE 16 ports et à un enregistreur Hikvision 16 canaux, avec écran de supervision et accès distant sur mobile.",
           caption: "Vidéosurveillance et contrôle d'accès",
         },
         {
-          src: WORK.voip,
+          ...WORK.voip,
           alt: "Schéma de téléphonie IP : arrivée opérateur, IPBX Yeastar S20, switch et quatre postes GrandStream GRP2612W.",
           caption: "Migration vers la téléphonie IP",
         },
@@ -336,24 +350,32 @@ export const CONTENT: Record<Lang, Content> = {
           place: "Tunisie",
           href: "https://wikistartup.tn",
           logo: "/partners/wikistartup.webp",
+          w: 300,
+          h: 70,
         },
         {
           name: "ISRA — BAME",
           place: "Sénégal",
           href: "https://www.isra-bame.sn",
           logo: "/partners/isra-bame.webp",
+          w: 304,
+          h: 149,
         },
         {
           name: "Enactus Morocco",
           place: "Maroc",
           href: "https://enactus-morocco.org",
           logo: "/partners/enactus-morocco.svg",
+          w: 300,
+          h: 100,
         },
         {
           name: "E4Impact",
           place: "International",
           href: "https://e4impact.org",
           logo: "/partners/e4impact.webp",
+          w: 360,
+          h: 101,
         },
       ],
     },
@@ -635,22 +657,22 @@ export const CONTENT: Record<Lang, Content> = {
       emptyLabel: "Slot ",
       items: [
         {
-          src: WORK.reseau,
+          ...WORK.reseau,
           alt: "LAN infrastructure diagram: ISP router, MikroTik hEX, 24-port Cisco switch, Ubiquiti U6 access point, HP ProLiant server running Windows Server, Synology NAS, Zabbix and Grafana monitoring, and an addressing plan across four VLANs.",
           caption: "Network infrastructure and directory",
         },
         {
-          src: WORK.supervision,
+          ...WORK.supervision,
           alt: "Managed services diagram: the client estate — workstations, servers, backups, printers — linked over the internet to Dalnova's monitoring and helpdesk.",
           caption: "Managed IT for a client estate",
         },
         {
-          src: WORK.video,
+          ...WORK.video,
           alt: "Video surveillance diagram: eight IP cameras on a 16-port PoE switch and a 16-channel Hikvision recorder, with a monitoring screen and remote access from mobile.",
           caption: "Video surveillance and access control",
         },
         {
-          src: WORK.voip,
+          ...WORK.voip,
           alt: "IP telephony diagram: carrier line, Yeastar S20 IPBX, switch and four GrandStream GRP2612W handsets.",
           caption: "Migration to IP telephony",
         },
@@ -664,24 +686,32 @@ export const CONTENT: Record<Lang, Content> = {
           place: "Tunisia",
           href: "https://wikistartup.tn",
           logo: "/partners/wikistartup.webp",
+          w: 300,
+          h: 70,
         },
         {
           name: "ISRA — BAME",
           place: "Senegal",
           href: "https://www.isra-bame.sn",
           logo: "/partners/isra-bame.webp",
+          w: 304,
+          h: 149,
         },
         {
           name: "Enactus Morocco",
           place: "Morocco",
           href: "https://enactus-morocco.org",
           logo: "/partners/enactus-morocco.svg",
+          w: 300,
+          h: 100,
         },
         {
           name: "E4Impact",
           place: "International",
           href: "https://e4impact.org",
           logo: "/partners/e4impact.webp",
+          w: 360,
+          h: 101,
         },
       ],
     },
