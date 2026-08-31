@@ -6,12 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "node scripts/spline-draco.mjs"
   },
   "dependencies": {
     "@designcodeio/threeui": "^1.1.0",
     "@react-three/drei": "^10.7.8",
     "@react-three/fiber": "^9.7.0",
+    "@splinetool/react-spline": "^4.1.0",
+    "@splinetool/runtime": "^2.0.12",
     "lucide-react": "^1.38.0",
     "next": "16.3.1",
     "react": "19.2.8",
