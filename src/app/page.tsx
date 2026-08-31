@@ -29,9 +29,14 @@ function Shell({ children, wide = false }: { children: React.ReactNode; wide?: b
   );
 }
 
-/** The left-hand measure, for bands that share the screen with the figure. */
+/** The measure for bands that share the screen with the figure. */
 function Column({ children }: { children: React.ReactNode }) {
   return <div className="lg:w-[50%] lg:max-w-[700px]">{children}</div>;
+}
+
+/** The hero's, which sits opposite the figure rather than beside it. */
+function HeroColumn({ children }: { children: React.ReactNode }) {
+  return <div className="lg:ml-auto lg:w-[52%] lg:max-w-[700px]">{children}</div>;
 }
 
 export default function Page() {
@@ -53,9 +58,9 @@ export default function Page() {
           idle throughout. */}
       <main className="relative z-10">
         <Shell>
-          <Column>
+          <HeroColumn>
             <Hero />
-          </Column>
+          </HeroColumn>
         </Shell>
 
         <Shell wide>
