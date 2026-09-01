@@ -205,14 +205,32 @@ export default function SplineFigure({ scene }: { scene: string }) {
      for nobody, taking frames from the one place it is actually seen.
 
      So it runs while the hero is in view and stops otherwise, and stops with
-     the tab. */
+     the tab.
+
+     It also stops while the page is being scrolled, and that is not about
+     frames — it is the only way to hold the figure still.
+
+     The scroll movement was never mine to stop by not sending events. The
+     scene has a scroll event and a look-at behaviour built into it — both are
+     in the file, and the runtime registers its own listener on `document` —
+     so it answers a scroll whatever this component forwards or withholds.
+     Blocking the event before it reaches `document` would mean stopping its
+     propagation at window capture, which would take every other scroll
+     listener on the page down with it, this section's own carousel included.
+
+     Halting the scene is the honest lever: the last frame stays on the canvas,
+     the figure holds exactly the pose it had, and it picks up again once the
+     page settles. */
   useEffect(() => {
     const node = host.current;
     if (!node) return;
 
     let onScreen = true;
+    let scrolling = false;
+    let settle = 0;
+
     const sync = () => {
-      const wanted = onScreen && !document.hidden;
+      const wanted = onScreen && !document.hidden && !scrolling;
       // Guarded: play() on an already-running scene restarts its clock.
       if (wanted === running.current) return;
       running.current = wanted;
@@ -232,9 +250,27 @@ export default function SplineFigure({ scene }: { scene: string }) {
     watch.observe(node);
     document.addEventListener("visibilitychange", sync);
 
+    /* Held for a moment after the last scroll event rather than resumed on it.
+       Scroll arrives in bursts with gaps inside them, and resuming in a gap
+       would let the figure twitch through what should be one still passage. */
+    const onScroll = () => {
+      if (!scrolling) {
+        scrolling = true;
+        sync();
+      }
+      window.clearTimeout(settle);
+      settle = window.setTimeout(() => {
+        scrolling = false;
+        sync();
+      }, 160);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+
     return () => {
       watch.disconnect();
       document.removeEventListener("visibilitychange", sync);
+      window.removeEventListener("scroll", onScroll);
+      window.clearTimeout(settle);
     };
   }, [state]);
 
