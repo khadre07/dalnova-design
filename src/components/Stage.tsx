@@ -2,25 +2,21 @@
 
 import dynamic from "next/dynamic";
 
-/* Two figures, on purpose.
+/* One figure now, standing in water this page still draws itself.
 
-   They were meant to take turns: the Spline robot was to replace the model,
-   and the model was to stand down the moment Spline said it was up. For a
-   while the handover was broken and both were drawn at once — the model
-   standing in the water, the Spline robot over it, sharing a centre — and that
-   accident was better than either of them alone. So it stays, and it is
-   arranged rather than tolerated.
+   The .glb is gone. What is not gone is the scene it stood in: the surface
+   runs the width of the page and every band below is measured against it, and
+   the conduits carry the charge out to the copy. Taking the water out with the
+   robot would have removed most of what the hero is.
 
-   Both are seated three quarters across, so they occupy one another rather
-   than sitting side by side, and both are cut at the same waterline. Both
-   follow the pointer, which is what makes the pair read as one figure instead
-   of two: they turn together, at slightly different rates, because the model
-   is also turning to face the copy as the page goes down.
+   So the water keeps its own scene — much cheaper without a figure to light,
+   since the environment map, the three lights, the loader and the glow map all
+   left with the model — and the Spline robot stands in it.
 
-   The model remains the one that matters if the other never comes. Spline is a
-   scene on someone else's host, fetched at run time; nothing about the page
-   now waits on it arriving, and nothing breaks if it does not. */
-const Model = dynamic(() => import("./RobotModelStage"), { ssr: false });
+   The water also keeps the cue. It is the one that cannot fail: Spline lives
+   on someone else's host, and a hero whose words wait on a request to a third
+   party is a hero that can stay blank. */
+const Water = dynamic(() => import("./WaterStage"), { ssr: false });
 const Spline = dynamic(() => import("./SplineFigure"), { ssr: false });
 
 /** The scene the prompt names. */
@@ -29,11 +25,7 @@ const SCENE = "https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode";
 export default function Stage() {
   return (
     <>
-      {/* Never stood down. The cues the figure gives — the copy's start, the
-          loading screen's last stage — are each guarded against being given
-          twice, so whichever arrives first gives them and the other is
-          silent. */}
-      <Model />
+      <Water />
       <Spline scene={SCENE} />
     </>
   );

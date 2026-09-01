@@ -15,26 +15,31 @@
    while the page behind it was still unusable, which is the same lie the
    source tells, arrived at honestly.
 
-   So four stages, each weighted by roughly how long it actually takes, and a
-   hundred that means the page is ready rather than that the download finished.
-   Whatever has not reported by the time everything else has is what the bar is
-   waiting on, and it says so. */
+   So the bar counts stages, each weighted by roughly how long it actually
+   takes, and a hundred means the page is ready rather than that a download
+   finished.
 
-export type Stage = "fonts" | "media" | "model" | "scene";
+   There were four. The model was much the heaviest at 0.55, because it was
+   1.7 MB off the wire; the .glb is gone and the figure is a Spline scene that
+   does not report its progress at all. Leaving that stage in place would have
+   pinned the bar at forty-five for the whole of the wait and then jumped it to
+   a hundred — worse than the invented number this replaced, because it would
+   look like a stall. So there are three, and they sum to one again. */
+
+export type Stage = "fonts" | "media" | "scene";
 
 /** Share of the bar each stage owns. They sum to one. */
 const WEIGHT: Record<Stage, number> = {
-  fonts: 0.1,
-  media: 0.18,
-  model: 0.55,
-  scene: 0.17,
+  fonts: 0.18,
+  media: 0.34,
+  scene: 0.48,
 };
 
 const STAGES = Object.keys(WEIGHT) as Stage[];
 
 type Listener = (fraction: number) => void;
 
-const progress: Record<Stage, number> = { fonts: 0, media: 0, model: 0, scene: 0 };
+const progress: Record<Stage, number> = { fonts: 0, media: 0, scene: 0 };
 const listeners = new Set<Listener>();
 const doneListeners = new Set<() => void>();
 let done = false;
@@ -53,11 +58,6 @@ export function reportStage(stage: Stage, value: number) {
   progress[stage] = next;
   const fraction = total();
   for (const listener of listeners) listener(fraction);
-}
-
-/** Bytes off the wire, for the one stage that can be measured that way. */
-export function reportProgress(loaded: number, sizeInBytes: number) {
-  if (sizeInBytes > 0) reportStage("model", loaded / sizeInBytes);
 }
 
 export function onProgress(listener: Listener) {
