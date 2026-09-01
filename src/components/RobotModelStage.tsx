@@ -14,9 +14,8 @@ export const MODEL_URL = "/robot.glb";
 /* Where the figure stands across the screen, now that the scene is full bleed.
    Centred on a phone, where he sits behind the copy; on the right on a wide
    screen, where the copy has the left half. */
-/* Where the figure stands across the frame. Left on a wide screen, so the copy
-   can have the right — the two used to be the other way round. */
-const FIGURE_AT = { narrow: 0.5, wide: 0.26 };
+/** Where the figure stands across the frame. */
+const FIGURE_AT = { narrow: 0.5, wide: 0.74 };
 
 /* The glow map that came with the model: black everywhere except the eyes,
    the reactor and the seams. Kept out of the .glb on purpose — held apart it
@@ -305,9 +304,7 @@ export default function RobotModelStage({ hideFigure = false }: { hideFigure?: b
            his feet, so almost all of it was off the frame. Giving it room to
            run out in front of him is what makes it read as an expanse rather
            than as a rim of light under his soles. */
-        // Smaller than it was: on the left it shares the frame with a ring
-        // and a sentence rather than having a whole half to itself.
-        const frameFill = narrow ? 0.64 : 0.62;
+        const frameFill = narrow ? 0.64 : 0.78;
 
         // Frame by distance rather than by scaling him: pull the camera back
         // until a unit-tall figure occupies `frameFill` of the viewport height.

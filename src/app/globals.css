@@ -1401,17 +1401,29 @@
     }
   }
 
-  /* The hero used to be set in from the other bands so the ring would fit.
+  /* The hero is set in from the other bands, and only where the ring is.
 
-     Flush left, with the ellipse reaching some three hundred and seventy
-     pixels either side of the sentence, the whole left third of the ring fell
-     off the screen — you only ever saw its right half, which is why it read as
-     sitting beside the words rather than around them. The indent bought that
-     room back.
+     The ellipse reaches some three hundred and seventy pixels either side of
+     the sentence it holds. Flush with the other bands the sentence sits about
+     seventy pixels from the edge of the screen, so the whole left third of the
+     ring falls off it, and the ring reads as sitting beside the words rather
+     than around them — you only ever see its right half.
 
-     The copy sits on the right of the shell now, opposite the figure, so the
-     room is there of its own accord and the indent would only push the
-     sentence into the edge. */
+     Moving the sentence in moves the ring with it while the edge of the screen
+     stays put, so the left of the ellipse comes back onto the page. Shifted
+     and not squeezed: the indent alone ate the same width off the measure and
+     the lede went from four lines to five, the copy paying for the
+     composition, so the negative on the right gives the width back.
+
+     Below 1024px there is no ring, and the indent would only be a hero that
+     fails to line up with everything under it. */
+  @media (min-width: 1024px) {
+    .hero {
+      --hero-in: clamp(0px, 9.5vw, 162px);
+      padding-left: var(--hero-in);
+      margin-right: calc(-1 * var(--hero-in));
+    }
+  }
 
   /* ------------------------------------------------------------------
      The Spline figure
@@ -1424,25 +1436,50 @@
   ------------------------------------------------------------------- */
 
   .spline-figure {
+    /* Where the figure meets the water, as a fraction of the frame.
+
+       Measured off a capture rather than guessed: the ripple our own scene
+       draws under the figure sits at about four fifths of the height. The
+       first value I reached for was 63%, which would have cut the robot off at
+       the waist and called it water. One number, so it can be moved to follow
+       the scene instead of being hunted for. */
+    --waterline: 82%;
     position: fixed;
     inset: 0;
     z-index: 0;
     pointer-events: none;
     opacity: 0;
     transition: opacity 900ms var(--ease-out);
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 calc(var(--waterline) - 3%),
+      transparent var(--waterline)
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      #000 calc(var(--waterline) - 3%),
+      transparent var(--waterline)
+    );
   }
 
   /* Held to the left of the frame.
 
      The scene frames itself to the box it is handed, so the box is what
      places it — and only the width is narrowed, because that is the part that
-     moves the robot left. Cropping the height as well put the figure outside
+     moves the robot across. Cropping the height as well put the figure outside
      what was left and it vanished altogether. Bounding rather than scaling:
      scaling the canvas would scale the pointer with it, and the robot would
-     look past you. */
+     look past you.
+
+     Cut at the water rather than cropped to it, for the same reason. A mask
+     takes away what is below the line and leaves the framing alone; a shorter
+     box would have moved the robot up out of the water instead of standing him
+     in it. Our own model is clipped at the same line inside its scene — this
+     is the second figure being told the same thing in the only language CSS
+     has. */
   @media (min-width: 1024px) {
     .spline-figure {
-      inset: 0 48% 0 0;
+      inset: 0 0 0 48%;
     }
   }
 
