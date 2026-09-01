@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { reportReady, reportStage } from "@/lib/boot";
 import { figureIsUp } from "@/lib/cue";
+import { useSite } from "@/lib/site-state";
 import { SplineScene } from "./ui/splite";
 
 /* The Spline robot, standing in for the model.
@@ -35,7 +36,19 @@ const MIN_SIZE = 40;
 /** The sliver of the runtime's Application this needs. */
 type SplineApp = { play?: () => void; stop?: () => void };
 
+/* How far each accent's hue sits from sepia's own.
+
+   sepia() is what gives a dark, all-but-colourless robot something to rotate:
+   it maps grey onto a warm axis at roughly 35 degrees. These are the section
+   accents measured against that — cyan at 195, amber at 25 — so the figure
+   ends up wearing the colour the band it stands in already owns. */
+const TINT: Record<"arc" | "ember", string> = {
+  arc: "160deg",
+  ember: "350deg",
+};
+
 export default function SplineFigure({ scene }: { scene: string }) {
+  const { accent, sky } = useSite();
   const [state, setState] = useState<"waiting" | "live" | "failed">("waiting");
   const settled = useRef(false);
   const host = useRef<HTMLDivElement>(null);
@@ -92,14 +105,100 @@ export default function SplineFigure({ scene }: { scene: string }) {
     };
   }, []);
 
+  /* The pointer has to be carried to it.
+
+     The scene tracks the pointer natively — that is the whole reason for
+     choosing it — but on this page it would never see one. Two things are in
+     the way, and each alone is enough.
+
+     `main` is z-10 and this layer is z-0, and an element with no background
+     still takes hit tests across its whole box. So `main` swallows every
+     pointer event over the entire page before it can reach the canvas
+     underneath. And even without that, the layer only covers the right half,
+     so the robot would go still whenever you moved over the words.
+
+     So the events are forwarded: window is listened to, and each move is
+     dispatched again onto the canvas. `bubbles: false` keeps the copy from
+     climbing back to window and starting a loop, and the layer stays
+     pointer-events: none — nothing needs to be hit-testable when nothing is
+     being hit.
+
+     Coarse pointers are left out. There is no hovering on a touch screen, and
+     forwarding every touch would make the robot lurch at each tap. */
+  useEffect(() => {
+    if (state !== "live") return;
+    const canvas = host.current?.querySelector("canvas");
+    if (!canvas) return;
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    /* Where the last pointer was, so a scroll can be replayed at it.
+
+       A scroll moves everything under a cursor that has not moved, and no
+       pointermove is emitted for that — the robot would go still exactly while
+       the page slides past it, which is the moment it most needs to look
+       alive. So the last position is kept and sent again as the page moves. */
+    let x = window.innerWidth * 0.5;
+    let y = window.innerHeight * 0.5;
+    let queued = 0;
+
+    const send = () => {
+      queued = 0;
+      const box = canvas.getBoundingClientRect();
+      if (box.width === 0) return;
+
+      /* Left, right and down — never up.
+
+         Its own tracking is two-axis and not ours to constrain, so the
+         constraint goes on what is handed to it: the vertical coordinate is
+         held at or below the figure's own eyeline, so the robot ranges from
+         level to looking down and never tips its head back. Horizontal is
+         passed through untouched, which is where most of the movement reads
+         anyway. */
+      const eyeline = box.top + box.height * 0.34;
+      const init: PointerEventInit = {
+        clientX: x,
+        clientY: Math.max(y, eyeline),
+        pointerType: "mouse",
+        bubbles: false,
+        cancelable: true,
+      };
+      canvas.dispatchEvent(new PointerEvent("pointermove", init));
+      // Older listeners watch mousemove rather than pointermove; sending both
+      // costs nothing and means not having to guess which this runtime uses.
+      canvas.dispatchEvent(new MouseEvent("mousemove", init));
+    };
+
+    // Coalesced to one send per frame: a scroll fires far more often than the
+    // scene can draw, and every extra event is work thrown away.
+    const schedule = () => {
+      if (!queued) queued = window.requestAnimationFrame(send);
+    };
+
+    const onPointer = (event: PointerEvent) => {
+      // Ours would have isTrusted false; belt to the bubbles: false braces.
+      if (!event.isTrusted) return;
+      x = event.clientX;
+      y = event.clientY;
+      schedule();
+    };
+
+    window.addEventListener("pointermove", onPointer, { passive: true });
+    window.addEventListener("scroll", schedule, { passive: true });
+    return () => {
+      window.removeEventListener("pointermove", onPointer);
+      window.removeEventListener("scroll", schedule);
+      if (queued) window.cancelAnimationFrame(queued);
+    };
+  }, [state]);
+
   /* Frames are the whole of fluidity here.
 
      The scene is somebody else's and its own smoothing is not ours to tune, so
      the only thing that can be given to it is room to draw. It shares a GPU
-     with our model, which renders the water the page stands on, and it was
-     drawing at full rate whether or not it was on screen — a full-screen scene
-     painting behind the services section, for nobody, taking frames from the
-     one place it is actually seen.
+     with the water scene, and it was drawing at full rate whether or not it
+     was on screen — a full-screen scene painting behind the services section,
+     for nobody, taking frames from the one place it is actually seen.
 
      So it runs while the hero is in view and stops otherwise, and stops with
      the tab. */
@@ -138,7 +237,14 @@ export default function SplineFigure({ scene }: { scene: string }) {
   if (state === "failed") return null;
 
   return (
-    <div ref={host} className="spline-figure" data-live={state === "live"} aria-hidden="true">
+    <div
+      ref={host}
+      className="spline-figure"
+      data-live={state === "live"}
+      data-sky={sky}
+      style={{ "--robot-hue": TINT[accent] } as React.CSSProperties}
+      aria-hidden="true"
+    >
       <SplineScene
         scene={scene}
         className="spline-canvas"

@@ -1435,7 +1435,40 @@
      between two frames is a robot that was not there a moment ago.
   ------------------------------------------------------------------- */
 
+  /* The figure wears the section's colour.
+
+     The runtime can set a colour per object, and that was the first thing I
+     reached for — but the scene has no named parts, only Mesh, Group and a
+     hundred uuids, so it could only be applied to everything at once. The
+     documented behaviour is to add a colour layer at the top of the material
+     stack, which on every mesh at once would flatten a modelled robot into a
+     silhouette. Grading the picture keeps every highlight and seam the
+     modelling gives it.
+
+     Four steps, and each is needed. Brightness first, because the robot is
+     nearly black and black has no colour to move. Then sepia, which is what
+     gives a colourless surface an axis at all — hue-rotate on grey does
+     nothing. Then the rotation onto the accent, and saturation to say how much
+     of it to wear.
+
+     It costs: a filter chain over an animated canvas is composited every
+     frame. It is scoped to this element rather than a parent, and the element
+     is half the screen and masked at the water, which is most of the saving
+     available. If the page feels heavier, --robot-sat to 1 and --robot-sepia
+     to 0 makes it free again without touching the layout. */
   .spline-figure {
+    --robot-lift: 1.3;
+    --robot-sepia: 0.5;
+    --robot-hue: 160deg;
+    --robot-sat: 1.45;
+    filter: brightness(var(--robot-lift)) sepia(var(--robot-sepia))
+      hue-rotate(var(--robot-hue)) saturate(var(--robot-sat));
+    /* The turn between sections, at the pace the rest of the page changes
+       colour at — a robot that changes hue in one frame reads as a fault. */
+    transition:
+      opacity 900ms var(--ease-out),
+      filter 1400ms var(--ease-out);
+
     /* Where the figure meets the water, as a fraction of the frame.
 
        Measured off a capture rather than guessed: the ripple our own scene
@@ -1449,7 +1482,6 @@
     z-index: 0;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 900ms var(--ease-out);
     -webkit-mask-image: linear-gradient(
       to bottom,
       #000 calc(var(--waterline) - 3%),
@@ -1483,12 +1515,26 @@
     }
   }
 
-  /* It tracks the pointer, so it has to be able to see it. Only once it is
-     up: a transparent full-screen layer that swallows clicks before the
-     robot exists would be a page you cannot use while it loads. */
+  /* Never hit-testable. It tracks the pointer, but the events are carried to
+     its canvas by hand rather than landing on it — `main` sits above this
+     layer and would swallow them all anyway. Leaving it hittable would only
+     put a transparent sheet over half the page for nothing. */
   .spline-figure[data-live="true"] {
     opacity: 1;
-    pointer-events: auto;
+  }
+
+  /* Daylight needs less lifting and less colour: the sky behind is bright, and
+     a figure graded for a dark ground reads as a sticker on a pale one. */
+  .spline-figure[data-sky="day"] {
+    --robot-lift: 1.08;
+    --robot-sepia: 0.38;
+    --robot-sat: 1.2;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .spline-figure {
+      transition: none;
+    }
   }
 
   .spline-canvas {
