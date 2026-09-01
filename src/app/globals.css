@@ -1563,86 +1563,107 @@
   }
 
   /* ------------------------------------------------------------------
-     The orb — the work on a sphere you can turn
+     The carousel — the work on a ring that turns as you pass
+
+     CSS 3D rather than a third WebGL context. `preserve-3d` on the ring
+     is the whole mechanism: without it the children are flattened into
+     the parent's plane and every plate lands in the same place.
   ------------------------------------------------------------------- */
 
-  .orb-stage {
+  .carousel {
     position: relative;
-    /* Tall enough that the ball is the subject and not a band across the
-       middle, capped so it never eats a whole screen on a long monitor. */
-    height: clamp(32rem, 56vh, 44rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: clamp(30rem, 52vh, 40rem);
     margin-top: 3rem;
-    /* The plates carry their own ground; the stage does not, so the sky and
-       the water stay the floor here as everywhere else on this page. */
-    touch-action: none;
-    cursor: grab;
+    /* Deep enough that the near plates grow rather than loom. A short
+       perspective on a ring this wide bends the far ones into slivers. */
+    perspective: 1800px;
+    /* The plates swing wide of the measure at the sides. */
+    overflow: hidden;
   }
 
-  .orb-stage:active {
-    cursor: grabbing;
+  .carousel-ring {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    /* No transition. The turn is written every frame from the section's
+       own position, and a transition on top of that is a smoothing of a
+       thing that is already smooth — it only adds lag. */
   }
 
-  .orb-canvas {
+  .carousel-seat {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 260px;
+    height: 340px;
+    margin-left: -130px;
+    margin-top: -170px;
+  }
+
+  .carousel-plate {
+    --cut: 12px;
     display: block;
     width: 100%;
     height: 100%;
-  }
-
-  /* One plate. A button, not a div with a click on it: it is reachable by
-     keyboard, it says what it opens, and it takes a focus ring. */
-  .orb-plate {
-    --cut: 10px;
-    display: block;
-    width: 190px;
-    padding: 9px 9px 7px;
-    background: color-mix(in oklab, var(--panel) 88%, transparent);
+    padding: 10px 10px 8px;
+    background: color-mix(in oklab, var(--panel) 90%, transparent);
     border: 1px solid var(--line-1);
     text-align: left;
     transition:
-      transform 220ms var(--ease-out),
       border-color 220ms var(--ease-out),
       box-shadow 220ms var(--ease-out);
   }
 
-  .orb-plate img {
+  .carousel-plate img {
     display: block;
     width: 100%;
-    height: 116px;
+    height: 252px;
     object-fit: cover;
     background: var(--ground);
   }
 
-  .orb-plate-cap {
-    display: block;
-    margin-top: 7px;
+  .carousel-cap {
+    display: flex;
+    gap: 0.5rem;
+    align-items: baseline;
+    margin-top: 0.6rem;
+  }
+
+  .carousel-cap-n {
+    flex: none;
     font-size: 0.5rem;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+  }
+
+  .carousel-cap-title {
+    font-size: 0.72rem;
     line-height: 1.3;
-    letter-spacing: 0.06em;
-    color: var(--ink-faint);
-    /* Two lines at most: the ball is a way in, and a paragraph on a plate
-       turning in space is a paragraph nobody reads. */
+    color: var(--ink-2);
+    /* Two lines at most: a caption on a plate turning past is a caption
+       nobody finishes. The list below carries the full text. */
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
 
-  .orb-plate[data-hot="true"] {
-    transform: scale(1.08);
+  .carousel-plate:hover,
+  .carousel-plate:focus-visible {
     border-color: color-mix(in oklab, var(--accent) 62%, transparent);
     box-shadow: 0 18px 40px -12px color-mix(in oklab, var(--accent) 45%, transparent);
   }
 
-  .orb-plate[data-hot="true"] .orb-plate-cap {
-    color: var(--ink-2);
-  }
-
+  /* The ring is turned by scrolling, which is exactly the movement someone
+     with this preference set has asked not to be given. It holds at its
+     opening angle and stays a legible row of plates. */
   @media (prefers-reduced-motion: reduce) {
-    .orb-plate {
+    .carousel-plate {
       transition: none;
-    }
-    .orb-plate[data-hot="true"] {
-      transform: none;
     }
   }
 

@@ -2,18 +2,18 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAccentZone, useRecessZone, useSite } from "@/lib/site-state";
-import { accentHex } from "@/lib/site-state";
-import ImageGallery3D from "./ui/3d-image-gallery";
+import { CircularGallery } from "./ui/circular-gallery";
 import Lightbox from "./Lightbox";
 import Reveal from "./Reveal";
 import SectionHead from "./SectionHead";
 
 /* Two galleries, one at a time.
 
-   The orb is the showpiece: the drawings seated evenly on a sphere you can
-   turn, each plate facing you wherever it has ended up. It asks for a second
-   WebGL context and a GPU, so it appears where both are a fair assumption — a
-   wide screen.
+   The carousel is the showpiece: the drawings seated at equal angles on a
+   ring that turns as the section is scrolled through, the far half fading
+   behind. It is CSS 3D rather than WebGL, which is why it can be here at all —
+   the page already holds two contexts for the figure and the water, and a
+   third is the one that costs frames.
 
    On narrow screens, and for anyone without scripting, the flat strip runs
    instead: native scroll snapping, which a trackpad, a touch screen and a
@@ -22,10 +22,10 @@ import SectionHead from "./SectionHead";
 
    The arrows drive whichever is on. */
 
-type Mode = "probing" | "orb" | "flat";
+type Mode = "probing" | "ring" | "flat";
 
 export default function Gallery() {
-  const { t, sky } = useSite();
+  const { t } = useSite();
   const accentRef = useAccentZone("arc");
   const bandRef = useRecessZone();
   const trackRef = useRef<HTMLDivElement>(null);
@@ -39,32 +39,11 @@ export default function Gallery() {
      on a still frame for them and the arrows still step it, which is the
      authored contract. Falling back to a different gallery entirely would have
      given them less of the site for having a preference set. */
-  /* WebGL is asked for, not assumed.
-
-     The room this replaced reported its own failure and the section fell back
-     to the flat strip. A canvas that simply never draws does not report
-     anything, so without this probe a machine with no GPU — or a browser with
-     WebGL turned off — would get an empty box where the work should be. The
-     context is created and released immediately; all that is wanted is the
-     answer. */
-  const hasWebGL = useCallback(() => {
-    try {
-      const probe = document.createElement("canvas");
-      const gl =
-        probe.getContext("webgl2") ??
-        probe.getContext("webgl") ??
-        probe.getContext("experimental-webgl");
-      if (!gl) return false;
-      (gl as WebGLRenderingContext).getExtension("WEBGL_lose_context")?.loseContext();
-      return true;
-    } catch {
-      return false;
-    }
-  }, []);
-
   useEffect(() => {
     const wide = window.matchMedia("(min-width: 1024px)");
-    const sync = () => setMode(wide.matches && hasWebGL() ? "orb" : "flat");
+    // No WebGL needed any more; width is the only question. On a phone a ring
+    // this wide would put every plate off the screen but one.
+    const sync = () => setMode(wide.matches ? "ring" : "flat");
     // Async so the first paint is not a synchronous cascade out of an effect.
     const id = window.setTimeout(sync, 0);
     wide.addEventListener("change", sync);
@@ -72,7 +51,7 @@ export default function Gallery() {
       window.clearTimeout(id);
       wide.removeEventListener("change", sync);
     };
-  }, [hasWebGL]);
+  }, []);
 
   const nudge = useCallback((direction: 1 | -1) => {
     const track = trackRef.current;
@@ -101,31 +80,34 @@ export default function Gallery() {
           lede={t.gallery.lede}
         />
 
-        <Reveal delay={140} className="gallery-controls">
-          <button type="button" className="gallery-arrow" onClick={() => nudge(-1)}>
-            <span className="sr-only">{t.gallery.previous}</span>
-            <Chevron direction="left" />
-          </button>
-          <button type="button" className="gallery-arrow" onClick={() => nudge(1)}>
-            <span className="sr-only">{t.gallery.next}</span>
-            <Chevron direction="right" />
-          </button>
-        </Reveal>
+        {/* The arrows step the flat strip. The ring is turned by the section
+            passing the screen, so there is nothing for them to drive there —
+            and two buttons that do nothing is worse than no buttons. */}
+        {mode === "flat" ? (
+          <Reveal delay={140} className="gallery-controls">
+            <button type="button" className="gallery-arrow" onClick={() => nudge(-1)}>
+              <span className="sr-only">{t.gallery.previous}</span>
+              <Chevron direction="left" />
+            </button>
+            <button type="button" className="gallery-arrow" onClick={() => nudge(1)}>
+              <span className="sr-only">{t.gallery.next}</span>
+              <Chevron direction="right" />
+            </button>
+          </Reveal>
+        ) : null}
       </div>
 
-      {mode === "orb" ? (
+      {mode === "ring" ? (
         <>
-          <div className="orb-stage">
-            <ImageGallery3D
-              works={t.gallery.items}
-              onPick={setPicked}
-              accent={accentHex("arc", sky)}
-            />
-          </div>
+          <CircularGallery
+            items={t.gallery.items}
+            onPick={setPicked}
+            openLabel={t.gallery.open}
+          />
 
-          {/* The list under the ball. Real type rather than something drawn
-              into a texture: it stays selectable, it is read aloud, and it is
-              how the drawings are reached without a pointer at all. */}
+          {/* The list under the ring. Every drawing reachable in one place, in
+              order, without turning anything — which is how they are reached
+              with a keyboard, and how they are read aloud. */}
           <ol className="room-labels">
             {t.gallery.items.map((item, i) => (
               <li key={item.caption}>
@@ -137,13 +119,6 @@ export default function Gallery() {
               </li>
             ))}
           </ol>
-          {/* The canvas announces nothing, so what it is showing stays in the
-              page for anyone reading it aloud. */}
-          <ul className="sr-only">
-            {t.gallery.items.map((item) => (
-              <li key={item.caption}>{item.alt || item.caption}</li>
-            ))}
-          </ul>
         </>
       ) : (
         <div
