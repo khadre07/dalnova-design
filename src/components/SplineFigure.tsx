@@ -32,10 +32,15 @@ const POLL = 120;
 /** Below this the canvas is not showing anything, whatever it reported. */
 const MIN_SIZE = 40;
 
+/** The sliver of the runtime's Application this needs. */
+type SplineApp = { play?: () => void; stop?: () => void };
+
 export default function SplineFigure({ scene }: { scene: string }) {
   const [state, setState] = useState<"waiting" | "live" | "failed">("waiting");
   const settled = useRef(false);
   const host = useRef<HTMLDivElement>(null);
+  const app = useRef<SplineApp | null>(null);
+  const running = useRef(true);
 
   /* Loaded is not the same as showing.
 
@@ -87,6 +92,49 @@ export default function SplineFigure({ scene }: { scene: string }) {
     };
   }, []);
 
+  /* Frames are the whole of fluidity here.
+
+     The scene is somebody else's and its own smoothing is not ours to tune, so
+     the only thing that can be given to it is room to draw. It shares a GPU
+     with our model, which renders the water the page stands on, and it was
+     drawing at full rate whether or not it was on screen — a full-screen scene
+     painting behind the services section, for nobody, taking frames from the
+     one place it is actually seen.
+
+     So it runs while the hero is in view and stops otherwise, and stops with
+     the tab. */
+  useEffect(() => {
+    const node = host.current;
+    if (!node) return;
+
+    let onScreen = true;
+    const sync = () => {
+      const wanted = onScreen && !document.hidden;
+      // Guarded: play() on an already-running scene restarts its clock.
+      if (wanted === running.current) return;
+      running.current = wanted;
+      if (wanted) app.current?.play?.();
+      else app.current?.stop?.();
+    };
+
+    const watch = new IntersectionObserver(
+      ([entry]) => {
+        onScreen = entry?.isIntersecting ?? true;
+        sync();
+      },
+      // A margin, so it is running before it is looked at rather than starting
+      // as it comes into frame.
+      { rootMargin: "25% 0px" },
+    );
+    watch.observe(node);
+    document.addEventListener("visibilitychange", sync);
+
+    return () => {
+      watch.disconnect();
+      document.removeEventListener("visibilitychange", sync);
+    };
+  }, [state]);
+
   if (state === "failed") return null;
 
   return (
@@ -96,7 +144,8 @@ export default function SplineFigure({ scene }: { scene: string }) {
         className="spline-canvas"
           /* The load event is a hint, not the answer. The watch above decides,
            and it decides on whether there is a canvas with a size in it. */
-        onLoad={() => {
+        onLoad={(instance) => {
+          app.current = instance as SplineApp;
           requestAnimationFrame(() => {
             if (showing()) finish("live");
           });

@@ -322,7 +322,12 @@ export default function RobotModelStage() {
         /* Capped at 1.5 rather than 2. A PBR figure lit by an environment map
            costs fragments, and ratio 2 is four times the pixels of ratio 1 for
            a difference nobody can see on a figure this size. */
-        const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+        /* Capped lower than it was. This scene is full-screen and multisampled,
+           and it now shares a GPU with a second one; a quarter off the pixel
+           ratio is about a third off the fragment work, for a difference in
+           edge quality you have to go looking for. The frames go to the figure
+           standing in front of it. */
+        const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
         renderer.setPixelRatio(dpr);
         renderer.setSize(stage.w, stage.h, false);
 
@@ -361,7 +366,11 @@ export default function RobotModelStage() {
       const pointer = { x: 0, y: 0 };
       const eased = { x: 0, y: 0 };
       const velocity = { x: 0, y: 0 };
-      const AIM = { stiffness: 84, damping: 15 };
+      /* Softened, and brought to the edge of critical damping — 0.968 by
+         measurement, against 0.818 before. It no longer overshoots and settles
+         back; it arrives. Slower by two tenths, and that slowness is what
+         reads as fluid rather than as eager. */
+      const AIM = { stiffness: 60, damping: 15 };
       const onPointer = (event: PointerEvent) => {
         pointer.x = (event.clientX / window.innerWidth - 0.5) * 2;
         pointer.y = (event.clientY / window.innerHeight - 0.5) * 2;

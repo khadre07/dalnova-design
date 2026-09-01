@@ -4,10 +4,13 @@ import { Suspense, lazy } from "react";
 
 const Spline = lazy(() => import("@splinetool/react-spline"));
 
+/* `unknown` rather than the runtime's Application type: importing that type
+   pulls the runtime into the module graph eagerly, which is the one thing the
+   lazy import above exists to avoid. The caller narrows it. */
 interface SplineSceneProps {
   scene: string;
   className?: string;
-  onLoad?: () => void;
+  onLoad?: (app: unknown) => void;
   onError?: () => void;
 }
 
