@@ -8,13 +8,15 @@ import { SplineScene } from "./ui/splite";
 /* The Spline robot, standing in for the model.
 
    It is a scene held on prod.spline.design and fetched at run time — 1.35 MB,
-   measured, and about the same weight as the model it replaces. That it lives
-   on someone else's host is the part to keep in mind: if it is unreachable
-   there is nothing to fall back on but our own figure, which is why the model
-   is still in the page and why this reports failure rather than staying
-   silent.
+   measured, and about the same weight as the model it stands with. That it
+   lives on someone else's host is the part to keep in mind, and the reason
+   nothing on the page waits for it: the model is there either way.
 
-   It comes with its own pointer tracking, which is the whole reason for it. */
+   It comes with its own pointer tracking, which is the whole reason for it.
+
+   When it fails it removes itself rather than leaving an empty layer over the
+   scene — a transparent sheet that takes the pointer in front of a figure that
+   is tracking the pointer is a figure that stops responding. */
 
 /** Nothing has arrived in this long: the model takes the stage back.
  *
@@ -30,17 +32,7 @@ const POLL = 120;
 /** Below this the canvas is not showing anything, whatever it reported. */
 const MIN_SIZE = 40;
 
-export default function SplineFigure({
-  scene,
-  onLive,
-  onFailed,
-}: {
-  scene: string;
-  /** Called once the robot is on screen, so the model can stand down. */
-  onLive: () => void;
-  /** Called if it cannot be shown at all, so the model keeps the stage. */
-  onFailed: () => void;
-}) {
+export default function SplineFigure({ scene }: { scene: string }) {
   const [state, setState] = useState<"waiting" | "live" | "failed">("waiting");
   const settled = useRef(false);
   const host = useRef<HTMLDivElement>(null);
@@ -65,13 +57,12 @@ export default function SplineFigure({
     settled.current = true;
     setState(next);
     if (next === "live") {
-      onLive();
-      // It is the figure now, so it owns the two cues the model used to give.
+      /* It gives the same cues the model gives. Both are guarded against
+         being given twice, so whichever figure is up first releases the copy
+         and closes the loading screen, and the other says nothing. */
       figureIsUp();
       reportStage("scene", 1);
       reportReady();
-    } else {
-      onFailed();
     }
   };
 
@@ -94,7 +85,6 @@ export default function SplineFigure({
       window.clearInterval(poll);
       window.clearTimeout(bail);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (state === "failed") return null;

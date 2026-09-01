@@ -1,18 +1,25 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState } from "react";
 
-/* Two figures, and only ever one on screen.
+/* Two figures, on purpose.
 
-   The Spline robot is the one asked for, and the reason is its pointer
-   tracking. It is a scene on someone else's host, fetched at run time, so it
-   is not a thing to bet the opening of the page on: the model stays mounted
-   until Spline says it is up, and takes the stage back if it never does.
+   They were meant to take turns: the Spline robot was to replace the model,
+   and the model was to stand down the moment Spline said it was up. For a
+   while the handover was broken and both were drawn at once — the model
+   standing in the water, the Spline robot over it, sharing a centre — and that
+   accident was better than either of them alone. So it stays, and it is
+   arranged rather than tolerated.
 
-   The model is not merely a fallback either — it is what lights the water, and
-   the water is drawn in the same scene. So its stage keeps running whichever
-   figure is showing; what changes is whether its robot is drawn. */
+   Both are seated three quarters across, so they occupy one another rather
+   than sitting side by side, and both are cut at the same waterline. Both
+   follow the pointer, which is what makes the pair read as one figure instead
+   of two: they turn together, at slightly different rates, because the model
+   is also turning to face the copy as the page goes down.
+
+   The model remains the one that matters if the other never comes. Spline is a
+   scene on someone else's host, fetched at run time; nothing about the page
+   now waits on it arriving, and nothing breaks if it does not. */
 const Model = dynamic(() => import("./RobotModelStage"), { ssr: false });
 const Spline = dynamic(() => import("./SplineFigure"), { ssr: false });
 
@@ -20,16 +27,14 @@ const Spline = dynamic(() => import("./SplineFigure"), { ssr: false });
 const SCENE = "https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode";
 
 export default function Stage() {
-  const [showing, setShowing] = useState<"model" | "spline">("model");
-
   return (
     <>
-      <Model hideFigure={showing === "spline"} />
-      <Spline
-        scene={SCENE}
-        onLive={() => setShowing("spline")}
-        onFailed={() => setShowing("model")}
-      />
+      {/* Never stood down. The cues the figure gives — the copy's start, the
+          loading screen's last stage — are each guarded against being given
+          twice, so whichever arrives first gives them and the other is
+          silent. */}
+      <Model />
+      <Spline scene={SCENE} />
     </>
   );
 }
