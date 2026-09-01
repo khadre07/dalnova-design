@@ -16,8 +16,16 @@ import { SplineScene } from "./ui/splite";
 
    It comes with its own pointer tracking, which is the whole reason for it. */
 
-/** Nothing has arrived in this long: the model takes the stage back. */
-const GIVE_UP = 12000;
+/** Nothing has arrived in this long: the model takes the stage back.
+ *
+ *  Generous, and it has to be. The scene is stored at schema 114 and the
+ *  runtime migrates it to 130 on every load — the console says so — on top of
+ *  fetching 1.35 MB. Twelve seconds cut that short on a real machine and the
+ *  model kept a stage it was supposed to hand over. */
+const GIVE_UP = 30000;
+
+/** How often the canvas is looked at while waiting for it to have a size. */
+const POLL = 120;
 
 /** Below this the canvas is not showing anything, whatever it reported. */
 const MIN_SIZE = 40;
@@ -68,10 +76,24 @@ export default function SplineFigure({
   };
 
   useEffect(() => {
-    /* A remote scene that never answers is the worst case: no load, no error,
-       and a hero with nothing in it. The model is given the stage back. */
+    /* Watched rather than checked once.
+
+       The first version asked whether the canvas had a size one frame after
+       the load event, and one frame is not enough: the element is sized when
+       the runtime is ready to draw into it, which is after a migration and a
+       fetch, not after a parse. So it is looked at until it is there.
+
+       A remote scene that never answers at all is the worst case — no load, no
+       error, and a hero with nothing in it — so the watch has an end, and the
+       model is given the stage back. */
+    const poll = window.setInterval(() => {
+      if (showing()) finish("live");
+    }, POLL);
     const bail = window.setTimeout(() => finish("failed"), GIVE_UP);
-    return () => window.clearTimeout(bail);
+    return () => {
+      window.clearInterval(poll);
+      window.clearTimeout(bail);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -82,10 +104,12 @@ export default function SplineFigure({
       <SplineScene
         scene={scene}
         className="spline-canvas"
+          /* The load event is a hint, not the answer. The watch above decides,
+           and it decides on whether there is a canvas with a size in it. */
         onLoad={() => {
-          // A frame later: the canvas is sized after the load event, not
-          // before it.
-          requestAnimationFrame(() => finish(showing() ? "live" : "failed"));
+          requestAnimationFrame(() => {
+            if (showing()) finish("live");
+          });
         }}
         onError={() => finish("failed")}
       />
