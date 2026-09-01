@@ -132,12 +132,15 @@ export default function SplineFigure({ scene }: { scene: string }) {
     if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    /* Where the last pointer was, so a scroll can be replayed at it.
+    /* Where the pointer last was. Only a real move is answered.
 
-       A scroll moves everything under a cursor that has not moved, and no
-       pointermove is emitted for that — the robot would go still exactly while
-       the page slides past it, which is the moment it most needs to look
-       alive. So the last position is kept and sent again as the page moves. */
+       I had this backwards a moment ago: a scroll was replayed at the last
+       position so the figure kept turning as the page slid past. It should
+       hold. Scrolling is not the reader addressing the robot, it is the reader
+       going somewhere, and a figure that swings through it is a figure moving
+       for no reason — the page already recedes on scroll, and that is the
+       movement scrolling is entitled to. It answers the pointer moving, and
+       nothing else. */
     let x = window.innerWidth * 0.5;
     let y = window.innerHeight * 0.5;
     let queued = 0;
@@ -147,18 +150,21 @@ export default function SplineFigure({ scene }: { scene: string }) {
       const box = canvas.getBoundingClientRect();
       if (box.width === 0) return;
 
-      /* Left, right and down — never up.
+      /* Left, right and down. Above the eyeline it holds.
 
          Its own tracking is two-axis and not ours to constrain, so the
-         constraint goes on what is handed to it: the vertical coordinate is
-         held at or below the figure's own eyeline, so the robot ranges from
-         level to looking down and never tips its head back. Horizontal is
-         passed through untouched, which is where most of the movement reads
-         anyway. */
+         constraint goes on what is handed to it. Clamping the vertical to the
+         eyeline was the first thing I tried, and it is not the same: clamped,
+         the robot still swings left and right along the top of the screen
+         while looking level. Gated, it holds the pose it had. Above its own
+         eyeline nothing is sent at all, so the nav and the top of the copy are
+         somewhere the reader can go without the figure answering. */
       const eyeline = box.top + box.height * 0.34;
+      if (y < eyeline) return;
+
       const init: PointerEventInit = {
         clientX: x,
-        clientY: Math.max(y, eyeline),
+        clientY: y,
         pointerType: "mouse",
         bubbles: false,
         cancelable: true,
@@ -169,8 +175,8 @@ export default function SplineFigure({ scene }: { scene: string }) {
       canvas.dispatchEvent(new MouseEvent("mousemove", init));
     };
 
-    // Coalesced to one send per frame: a scroll fires far more often than the
-    // scene can draw, and every extra event is work thrown away.
+    // Coalesced to one send per frame: a fine pointer reports far more often
+    // than the scene can draw, and every extra event is work thrown away.
     const schedule = () => {
       if (!queued) queued = window.requestAnimationFrame(send);
     };
@@ -184,10 +190,8 @@ export default function SplineFigure({ scene }: { scene: string }) {
     };
 
     window.addEventListener("pointermove", onPointer, { passive: true });
-    window.addEventListener("scroll", schedule, { passive: true });
     return () => {
       window.removeEventListener("pointermove", onPointer);
-      window.removeEventListener("scroll", schedule);
       if (queued) window.cancelAnimationFrame(queued);
     };
   }, [state]);
