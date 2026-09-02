@@ -1504,12 +1504,15 @@ function buildTemple() {
 const MOON = { x: 17.9, y: 31.9, z: -72, r: 8.6 };
 function buildMoon() {
   const disc = new THREE.Mesh(new THREE.PlaneGeometry(MOON.r * 2, MOON.r * 2),
-    /* The whole blood-moon grade lives here, on a near-neutral albedo. The
-       plate measures G/R ≈ B/R ≈ .48, but that is a *display* ratio: the map
-       is decoded out of sRGB before this multiplies it, so the tint has to be
-       written in linear, where the same look is ≈ .21. Reading the ratio
-       straight off the reference is what left the moon a pale pink. */
-    new THREE.MeshBasicMaterial({ map: tx(texMoon()), color: hdr(3.6, .64, .61),
+    /* The grade lives here, on a near-neutral albedo, and it is linear rather
+       than display — the map is decoded out of sRGB before this multiplies it,
+       which is the trap the author documented and the reason these are not the
+       numbers you would read off a reference image.
+
+       Turned from blood to cold. A red moon is the one thing in the sky that
+       could only ever have been Kage's; a pale one leaning to the page's own
+       cyan belongs to the water underneath it. */
+    new THREE.MeshBasicMaterial({ map: tx(texMoon()), color: hdr(2.35, 2.95, 3.45),
       transparent: true, depthWrite: false, fog: false, toneMapped: false }));
   disc.position.set(MOON.x, MOON.y, MOON.z); disc.renderOrder = 1;
   scene.add(disc); WORLD.moon = disc;
@@ -3123,7 +3126,7 @@ function wireHeroExit() {
 function wireNav() {
   let last = 0;
   const rail = $('#rail');
-  const names = ['The Hidden Gate', 'The Sanmon', 'Still Gardens', 'Sacred Craft', 'Afterlight', 'Colophon'];
+  const names = ['Le point d\u2019entr\u00e9e', 'Nos services', 'Notre m\u00e9thode', 'Nos domaines', 'Contact', 'Mentions'];
   SECS.forEach((s, i) => {
     const b = document.createElement('button');
     b.innerHTML = '<i></i>'; b.title = names[i] || '';
@@ -3493,42 +3496,243 @@ function frame(now) {
 const TIMER = qs('driver', 'raf') === 'timer';
 function queue() { TIMER ? setTimeout(() => frame(performance.now()), 16) : requestAnimationFrame(frame); }
 
+
+/* ==========================================================================
+   The Dalnova world.
+
+   The authored scene is a Kyoto temple: a hall on a podium at the end of a
+   long flight, a vermilion gate across the approach, stone lanterns down the
+   rail, five maples, and fourteen photographic foreground layers of grass and
+   red leaves. The words on the page are Dalnova's now; the place was not.
+
+   What is kept is everything that is not the temple — and that is most of the
+   craft. The camera rig, the waypoints, the scroll-to-chapter walk, the
+   lighting, the mist and the wisps, the grain, the post chain, the wordmark
+   cut through the scene, and every texture generator: the wood, the stone, the
+   sky, the moon, the glow. Those are not Japanese, they are just well made.
+
+   What is replaced is the iconography, and it maps almost one to one, which is
+   why this was worth doing rather than starting again:
+
+     the worship hall  →  a plant room, lit from inside through its louvres
+     the torii gate    →  a cable gantry, which is the same shape doing a job
+     the stone lantern →  an equipment cabinet with a lit panel
+     the maples        →  masts, with catenary between them
+     the fallen leaves →  nothing; it was the most Japanese thing in the frame
+
+   The site plan is untouched. Everything below is pinned to the same PODIUM,
+   STAIR_Z0, STAIR_RUN and TEMPLE_Z the temple used, so the camera arrives
+   where it was authored to arrive.
+   ======================================================================== */
+
+const DAL = { steel: 0x2a3138, dark: 0x11161b, panel: 0x0d1218, accent: 0x35d2ff };
+
+function dalMetal(rough) {
+  return new THREE.MeshStandardMaterial({
+    color: DAL.steel, roughness: rough === undefined ? .72 : rough, metalness: .55,
+  });
+}
+function dalLit(colour, strength) {
+  return new THREE.MeshBasicMaterial({
+    color: colour === undefined ? DAL.accent : colour,
+    transparent: true, opacity: strength === undefined ? .85 : strength,
+  });
+}
+
+/* The plant room, where the worship hall stood. Long, low and banded with
+   louvres, lit from inside the way the hall was lit through its screens —
+   that glow is the single best thing in the authored composition and it costs
+   nothing to keep it doing the same work for a different building. */
+function buildPlantRoom() {
+  const g = new THREE.Group();
+  const W = 26, H = 9, D = 13;
+
+  const shell = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), dalMetal(.78));
+  shell.position.y = H / 2;
+  g.add(shell);
+
+  /* A parapet, so the roofline is a line and not a lid. */
+  const cap = new THREE.Mesh(new THREE.BoxGeometry(W + 1.4, .5, D + 1.4), dalMetal(.6));
+  cap.position.y = H + .25;
+  g.add(cap);
+
+  /* The louvres. Two rows of lit slots across the long face: the plant room's
+     answer to the paper screens, and the reason the building reads as running
+     rather than as a box. */
+  for (let row = 0; row < 2; row += 1) {
+    for (let i = 0; i < 14; i += 1) {
+      const slot = new THREE.Mesh(new THREE.PlaneGeometry(1.15, .62), dalLit(DAL.accent, .5 + Math.random() * .3));
+      slot.position.set(-W / 2 + 1.4 + i * 1.72, 2.6 + row * 2.6, D / 2 + .02);
+      g.add(slot);
+    }
+  }
+
+  /* Two intake stacks. The hall had its eaves; a plant room has its plant. */
+  for (const side of [-1, 1]) {
+    const stack = new THREE.Mesh(new THREE.CylinderGeometry(.62, .62, 4.2, 12), dalMetal(.5));
+    stack.position.set(side * (W / 2 - 3.2), H + 2.3, 0);
+    g.add(stack);
+  }
+
+  g.position.set(0, PODIUM, TEMPLE_Z);
+  scene.add(g);
+  WORLD.plant = g;
+  return g;
+}
+
+/* The gantry, where the gate stood. A torii is two posts and a crossbeam, and
+   so is a cable gantry — the shape survives the change of subject, which is
+   why the approach still reads as passing under something. */
+function buildGantry() {
+  const g = new THREE.Group();
+  const H = 7.4, SPAN = 11.6;
+
+  for (const side of [-1, 1]) {
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(.3, .38, H, 12), dalMetal(.6));
+    post.position.set(side * SPAN / 2, H / 2, 0);
+    g.add(post);
+  }
+  const beam = new THREE.Mesh(new THREE.BoxGeometry(SPAN + 1.8, .42, .42), dalMetal(.55));
+  beam.position.y = H - .5;
+  g.add(beam);
+  const brace = new THREE.Mesh(new THREE.BoxGeometry(SPAN - .6, .26, .26), dalMetal(.6));
+  brace.position.y = H - 1.9;
+  g.add(brace);
+
+  /* The tray the cable actually rides in, and a run of lit markers along it. */
+  const tray = new THREE.Mesh(new THREE.BoxGeometry(SPAN - .4, .16, .7), dalMetal(.8));
+  tray.position.y = H - .78;
+  g.add(tray);
+  for (let i = 0; i < 7; i += 1) {
+    const led = new THREE.Mesh(new THREE.PlaneGeometry(.18, .08), dalLit(DAL.accent, .9));
+    led.position.set(-SPAN / 2 + 1 + i * 1.6, H - .78, .37);
+    g.add(led);
+  }
+
+  g.position.set(0, 0, -6.2);
+  scene.add(g);
+  WORLD.gantry = g;
+  return g;
+}
+
+/* A cabinet, where a lantern stood. Same job in the composition: a small lit
+   object at a known height that gives the eye something near to measure the
+   flight against. */
+function buildCabinet(x, z, s, y) {
+  const g = new THREE.Group();
+  const scale = s === undefined ? 1 : s;
+
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.15, 2.0, .95), dalMetal(.74));
+  body.position.y = 1.0;
+  g.add(body);
+
+  const plinth = new THREE.Mesh(new THREE.BoxGeometry(1.4, .22, 1.2), dalMetal(.85));
+  plinth.position.y = .11;
+  g.add(plinth);
+
+  /* The panel is the light. Three rows of indicators behind a dark face — the
+     lantern's ember, told in the language of equipment. */
+  const face = new THREE.Mesh(new THREE.PlaneGeometry(.86, 1.3), new THREE.MeshBasicMaterial({ color: DAL.panel }));
+  face.position.set(0, 1.15, .48);
+  g.add(face);
+  for (let r = 0; r < 3; r += 1) {
+    for (let c = 0; c < 4; c += 1) {
+      const led = new THREE.Mesh(new THREE.PlaneGeometry(.09, .05), dalLit(DAL.accent, .4 + Math.random() * .55));
+      led.position.set(-.3 + c * .2, .72 + r * .38, .49);
+      g.add(led);
+    }
+  }
+
+  g.scale.setScalar(scale);
+  g.position.set(x, y === undefined ? 0 : y, z);
+  scene.add(g);
+  return g;
+}
+
+/* A mast, where a maple stood, and the cable that leaves it. Five maples put
+   red into every quarter of the frame; five masts put verticals there
+   instead, which is what the composition actually needed them for. */
+function buildMast(seed, x, z, scale) {
+  const g = new THREE.Group();
+  const H = (7.5 + (seed % 5) * .9) * (scale === undefined ? 1 : scale);
+
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(.16, .26, H, 10), dalMetal(.66));
+  pole.position.y = H / 2;
+  g.add(pole);
+
+  for (let i = 0; i < 2; i += 1) {
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(2.6, .14, .14), dalMetal(.6));
+    arm.position.y = H - .8 - i * 1.1;
+    arm.rotation.y = i * .5;
+    g.add(arm);
+  }
+
+  const lamp = new THREE.Mesh(new THREE.PlaneGeometry(.3, .12), dalLit(DAL.accent, .8));
+  lamp.position.set(0, H - .3, .2);
+  g.add(lamp);
+
+  g.position.set(x, 0, z);
+  scene.add(g);
+  WORLD.masts = WORLD.masts || [];
+  WORLD.masts.push({ group: g, top: new THREE.Vector3(x, H, z) });
+  return g;
+}
+
+/* The cable between the masts. A catenary, because that is what a cable does
+   between two poles, and drawing it straight is the one thing that would make
+   this read as a diagram rather than as a place. */
+function buildCableRun() {
+  const tops = (WORLD.masts || []).map(m => m.top).sort((a, b) => b.z - a.z);
+  if (tops.length < 2) return;
+  const mat = new THREE.LineBasicMaterial({ color: DAL.accent, transparent: true, opacity: .3 });
+  for (let i = 0; i < tops.length - 1; i += 1) {
+    const a = tops[i], b = tops[i + 1];
+    const sag = .5 + (i % 3) * .18;
+    const pts = [];
+    for (let s = 0; s <= 14; s += 1) {
+      const u = s / 14;
+      const p = a.clone().lerp(b, u);
+      p.y -= sag * 4 * u * (1 - u);
+      pts.push(p);
+    }
+    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat);
+    scene.add(line);
+  }
+}
+
 /* ======================================================== 14 · booting */
 const JOBS = [
   ['Reading the type', () => document.fonts && document.fonts.load('600 320px Wordmark')],
   ['Pouring the ground', () => { initGL(); WORLD.uT = { value: 0 }; buildRig(); buildLights(); }],
-  ['Cutting the approach', () => buildShell()],
-  ['Raising the hall', () => buildTemple()],
+  ['Pouring the approach', () => buildShell()],
+  ['Raising the plant room', () => buildPlantRoom()],
   ['Hanging the moon', () => buildMoon()],
-  ['Setting the gate', () => buildTorii()],
-  ['Placing the stones', () => {
-    buildRocks();
-    buildLantern(7.4, -7.0, 1.15); buildLantern(-7.6, -5.2, 1.0);
-    /* The pairs flanking the flight were given flat heights — 2 and PODIUM —
-       and the flight does not reach either at those depths, so both pairs hung
-       in the air. Solve the step under each one from the same constants the
-       treads and cheeks are built from, and they stand on the rail instead of
-       beside it. */
+  ['Setting the gantry', () => buildGantry()],
+  ['Placing the cabinets', () => {
+    buildCabinet(7.4, -7.0, 1.15); buildCabinet(-7.6, -5.2, 1.0);
+    /* Solved from the same constants the treads and cheeks are built from, so
+       the pairs stand on the rail rather than beside it — the authored fix,
+       kept, because the flight is unchanged. */
     const stepAt   = z => Math.max(0, (STAIR_Z0 - z) / STAIR_RUN - .5);
     const cheekTop = z => (stepAt(z) + 1) * (PODIUM / STEPS) + .45;
     const cheekX   = z => (STAIR_W + (STEPS - stepAt(z)) * .052) / 2 + .45;
     [-14.4, -23.5].forEach((z, i) => {
       const sc = i ? .95 : .90;
-      buildLantern( cheekX(z), z, sc, cheekTop(z));
-      buildLantern(-cheekX(z), z, sc, cheekTop(z));
+      buildCabinet( cheekX(z), z, sc, cheekTop(z));
+      buildCabinet(-cheekX(z), z, sc, cheekTop(z));
     });
   }],
-  ['Growing the maples', () => {
-    buildMaple(71, 12.6, -13.0, 1.05); buildMaple(72, -11.8, -9.4, .95);
-    buildMaple(73, 9.2, -19.0, .82);   buildMaple(74, -14.5, -17.5, 1.0);
-    buildMaple(75, 16.5, -6.0, .88);
+  ['Raising the masts', () => {
+    buildMast(71, 12.6, -13.0, 1.05); buildMast(72, -11.8, -9.4, .95);
+    buildMast(73, 9.2, -19.0, .82);   buildMast(74, -14.5, -17.5, 1.0);
+    buildMast(75, 16.5, -6.0, .88);
+    buildCableRun();
   }],
-  ['Painting the near grass', () => buildForeground()],
   ['Cutting the word', () => buildWordmark()],
-  ['Raising the mist', () => { buildAtmosphere(); buildLeafFall(); buildWisps(); }],
+  ['Raising the mist', () => { buildAtmosphere(); buildWisps(); }],
   ['Polishing the water', () => {
     initPost(); buildCards(); buildCardCloth();
-    WORLD.fg.forEach(m => m.layers.set(1));
+    if (WORLD.fg) WORLD.fg.forEach(m => m.layers.set(1));
     WORD.glyphs.forEach(m => m.layers.set(2));
     if (WORLD.rain) WORLD.rain.layers.set(1);
     /* the fall is all around the rig, including behind it — mirroring it
