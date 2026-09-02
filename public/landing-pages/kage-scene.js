@@ -3539,45 +3539,202 @@ function dalLit(colour, strength) {
   });
 }
 
-/* The plant room, where the worship hall stood. Long, low and banded with
-   louvres, lit from inside the way the hall was lit through its screens —
-   that glow is the single best thing in the authored composition and it costs
-   nothing to keep it doing the same work for a different building. */
-function buildPlantRoom() {
+/* The building, where the worship hall stood.
+
+   A plant room was the first answer and it was too modest: a long low shed
+   reads as a substation, and the composition wants something at the end of the
+   flight that is worth the climb. This is a data hall — a slab with a glass
+   curtain wall, its floors lit unevenly the way a building in use is lit, fins
+   down the face, plant on the roof and a mast with a beacon on it.
+
+   The lit interior is still the authored idea. The worship hall glowed through
+   paper screens; this glows through glass. That was the best thing in the
+   original composition and it survives the change of subject intact. */
+function buildBuilding() {
   const g = new THREE.Group();
-  const W = 26, H = 9, D = 13;
+  /* Measured against the frame, not against ambition. Twenty units of tower on
+     a seven-unit podium put the roof at thirty and the top third of the
+     building outside the shot — the camera was composed for a low hall, and
+     the composition is the authored part. Ten fills the end of the flight
+     without leaving it. */
+  const W = 27, H = 10, D = 15;
 
-  const shell = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), dalMetal(.78));
-  shell.position.y = H / 2;
-  g.add(shell);
+  /* The base is wider than the tower and shorter, so the slab lands on
+     something instead of growing out of the ground. */
+  const base = new THREE.Mesh(new THREE.BoxGeometry(W + 4, 3.4, D + 3), dalMetal(.8));
+  base.position.y = 1.7;
+  g.add(base);
 
-  /* A parapet, so the roofline is a line and not a lid. */
-  const cap = new THREE.Mesh(new THREE.BoxGeometry(W + 1.4, .5, D + 1.4), dalMetal(.6));
-  cap.position.y = H + .25;
-  g.add(cap);
+  const tower = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), dalMetal(.62));
+  tower.position.y = 3.4 + H / 2;
+  g.add(tower);
 
-  /* The louvres. Two rows of lit slots across the long face: the plant room's
-     answer to the paper screens, and the reason the building reads as running
-     rather than as a box. */
-  for (let row = 0; row < 2; row += 1) {
-    for (let i = 0; i < 14; i += 1) {
-      const slot = new THREE.Mesh(new THREE.PlaneGeometry(1.15, .62), dalLit(DAL.accent, .5 + Math.random() * .3));
-      slot.position.set(-W / 2 + 1.4 + i * 1.72, 2.6 + row * 2.6, D / 2 + .02);
-      g.add(slot);
+  /* The curtain wall. Eight floors of glazing, unevenly lit: a building where
+     every window is the same brightness is a building nobody works in. */
+  const FLOORS = 4, BAYS = 15;
+  for (let f = 0; f < FLOORS; f += 1) {
+    for (let b = 0; b < BAYS; b += 1) {
+      const on = Math.random();
+      const pane = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.42, 1.5),
+        dalLit(on > .78 ? 0xd6f2ff : DAL.accent, .12 + on * .62));
+      pane.position.set(-W / 2 + 1.3 + b * 1.72, 5.2 + f * 2.05, D / 2 + .03);
+      g.add(pane);
     }
   }
 
-  /* Two intake stacks. The hall had its eaves; a plant room has its plant. */
-  for (const side of [-1, 1]) {
-    const stack = new THREE.Mesh(new THREE.CylinderGeometry(.62, .62, 4.2, 12), dalMetal(.5));
-    stack.position.set(side * (W / 2 - 3.2), H + 2.3, 0);
-    g.add(stack);
+  /* Vertical fins across the face — what stops a glass slab reading as a
+     screenshot of a spreadsheet. */
+  for (let i = 0; i <= BAYS; i += 1) {
+    const fin = new THREE.Mesh(new THREE.BoxGeometry(.16, H - 2, .5), dalMetal(.55));
+    fin.position.set(-W / 2 + .44 + i * 1.72, 3.4 + H / 2, D / 2 + .2);
+    g.add(fin);
   }
+
+  const capBand = new THREE.Mesh(new THREE.BoxGeometry(W + 1.6, .7, D + 1.6), dalMetal(.5));
+  capBand.position.y = 3.4 + H + .35;
+  g.add(capBand);
+
+  /* Roof plant: two chillers and the mast. */
+  for (const side of [-1, 1]) {
+    const unit = new THREE.Mesh(new THREE.BoxGeometry(4.2, 1.8, 3.6), dalMetal(.75));
+    unit.position.set(side * 7.5, 3.4 + H + 1.6, 0);
+    g.add(unit);
+  }
+  const mast = new THREE.Mesh(new THREE.CylinderGeometry(.13, .2, 6.5, 10), dalMetal(.5));
+  mast.position.y = 3.4 + H + 3.9;
+  g.add(mast);
+
+  /* The beacon. One red light at the top of a mast is what every tall thing
+     in a flight path wears, and it is the only warm point left in the sky. */
+  const beacon = new THREE.Mesh(new THREE.SphereGeometry(.26, 10, 10),
+    new THREE.MeshBasicMaterial({ color: 0xff5a3c, transparent: true, opacity: .95 }));
+  beacon.position.y = 3.4 + H + 7.2;
+  g.add(beacon);
+  WORLD.beacon = beacon;
 
   g.position.set(0, PODIUM, TEMPLE_Z);
   scene.add(g);
-  WORLD.plant = g;
+  WORLD.building = g;
   return g;
+}
+
+/* The weather, and it changes with the year.
+
+   Rain was already here — the authored scene has a shader-driven fall of thin
+   bright lines. What is added is the rest of the calendar: snow in winter,
+   petals in spring. One scene that is not the same scene in February as it is
+   in April, and nobody has to switch it.
+
+   Read from the real date rather than from a setting. A control would be a
+   control nobody touches; the date is already true, and a visitor in December
+   should get December. `?season=` overrides it, which is how this was built
+   and how it can be shown.
+
+   Northern seasons, and that is a decision worth naming rather than hiding:
+   Dalnova is in Dakar, where the year divides into dry and wet, not into four.
+   But snow in a Dakar winter is a fiction either way, and what the page is
+   after is the feeling of a year turning — so it follows the calendar its
+   readers abroad share, and the rains land in June to October, which is when
+   Dakar's actually do. */
+function seasonNow() {
+  const forced = qs('season', '');
+  if (['winter', 'spring', 'summer', 'autumn'].indexOf(forced) >= 0) return forced;
+  const m = new Date().getMonth();          /* 0 = January */
+  if (m === 11 || m <= 1) return 'winter';
+  if (m <= 4) return 'spring';
+  if (m <= 8) return 'summer';              /* Dakar's rains: June to October */
+  return 'autumn';
+}
+
+/* Snow and petals share a system: slow bodies drifting down and sideways,
+   wrapping at the top so the fall never ends. Only the sprite, the speed and
+   the sway differ, which is the honest way to say that they are the same
+   phenomenon at different temperatures. */
+function buildDrift(kind) {
+  const N = kind === 'snow' ? 900 : 520;
+  const SPREAD = 46, TOP = 26;
+
+  /* The sprite. A soft disc for snow; a petal is the same disc squashed and
+     turned, which at this size is all a petal is. */
+  const c = cvs(64, 64), x = c.getContext('2d');
+  const grd = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+  if (kind === 'snow') {
+    grd.addColorStop(0, 'rgba(255,255,255,1)');
+    grd.addColorStop(.45, 'rgba(228,240,248,.7)');
+  } else {
+    grd.addColorStop(0, 'rgba(255,226,235,1)');
+    grd.addColorStop(.45, 'rgba(248,196,214,.75)');
+  }
+  grd.addColorStop(1, 'rgba(255,255,255,0)');
+  x.fillStyle = grd;
+  if (kind === 'snow') { x.beginPath(); x.arc(32, 32, 32, 0, 6.284); x.fill(); }
+  else { x.save(); x.translate(32, 32); x.rotate(.6); x.scale(1, .52); x.beginPath(); x.arc(0, 0, 31, 0, 6.284); x.fill(); x.restore(); }
+
+  const n = N;
+  const pos = new Float32Array(n * 3);
+  const seed = new Float32Array(n);
+  const size = new Float32Array(n);
+  for (let i = 0; i < n; i += 1) {
+    pos[i * 3] = (Math.random() - .5) * SPREAD;
+    pos[i * 3 + 1] = Math.random() * TOP;
+    pos[i * 3 + 2] = -Math.random() * 52 + 6;
+    seed[i] = Math.random() * 6.283;
+    size[i] = (kind === 'snow' ? .13 : .2) * (.6 + Math.random() * .8);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('aSeed', new THREE.BufferAttribute(seed, 1));
+  geo.setAttribute('aSize', new THREE.BufferAttribute(size, 1));
+
+  const fall = kind === 'snow' ? 1.15 : .85;
+  const sway = kind === 'snow' ? .9 : 1.5;
+
+  const mat = new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, fog: false,
+    blending: THREE.NormalBlending,
+    uniforms: { uT: WORLD.uT, uMap: { value: tx(c) }, uPix: { value: Math.min(devicePixelRatio || 1, 2) } },
+    vertexShader:
+      'attribute float aSeed; attribute float aSize; uniform float uT; uniform float uPix;\n' +
+      'varying float vA;\n' +
+      'void main(){ vec3 p = position;\n' +
+      /* wraps at TOP so the fall has no beginning and no end */
+      ' float y = mod(p.y - uT * ' + fall.toFixed(2) + ', 26.0);\n' +
+      ' p.y = y;\n' +
+      /* the sideways wander: two frequencies, or it reads as a pendulum */
+      ' p.x += sin(uT * 0.5 + aSeed) * ' + sway.toFixed(2) + ' + sin(uT * 1.3 + aSeed * 2.0) * 0.35;\n' +
+      ' vA = smoothstep(0.0, 3.0, y) * smoothstep(26.0, 19.0, y);\n' +
+      ' vec4 mv = modelViewMatrix * vec4(p, 1.0);\n' +
+      ' gl_PointSize = aSize * 300.0 * uPix / max(1.0, -mv.z);\n' +
+      ' gl_Position = projectionMatrix * mv; }',
+    fragmentShader:
+      'uniform sampler2D uMap; varying float vA;\n' +
+      'void main(){ vec4 t = texture2D(uMap, gl_PointCoord);\n' +
+      ' gl_FragColor = vec4(t.rgb, t.a * vA * ' + (kind === 'snow' ? '0.62' : '0.5') + '); }'
+  });
+
+  const pts = new THREE.Points(geo, mat);
+  pts.frustumCulled = false;
+  pts.renderOrder = 6;
+  scene.add(pts);
+  WORLD.drift = pts;
+  return pts;
+}
+
+/* One call, and the year decides what falls. Rain is the authored system and
+   is left alone; it is simply not built outside the seasons that have it. */
+function buildWeather() {
+  const season = seasonNow();
+  WORLD.season = season;
+  document.documentElement.setAttribute('data-season', season);
+  if (season === 'winter') buildDrift('snow');
+  else if (season === 'spring') buildDrift('petals');
+  /* summer and autumn keep the rain the author wrote, which buildAtmosphere
+     has already put in the scene */
+  else if (WORLD.rain) WORLD.rain.visible = true;
+  if (season === 'winter' || season === 'spring') {
+    if (WORLD.rain) WORLD.rain.visible = false;
+  }
 }
 
 /* The gantry, where the gate stood. A torii is two posts and a crossbeam, and
@@ -3705,7 +3862,7 @@ const JOBS = [
   ['Reading the type', () => document.fonts && document.fonts.load('600 320px Wordmark')],
   ['Pouring the ground', () => { initGL(); WORLD.uT = { value: 0 }; buildRig(); buildLights(); }],
   ['Pouring the approach', () => buildShell()],
-  ['Raising the plant room', () => buildPlantRoom()],
+  ['Raising the building', () => buildBuilding()],
   ['Hanging the moon', () => buildMoon()],
   ['Setting the gantry', () => buildGantry()],
   ['Placing the cabinets', () => {
@@ -3729,12 +3886,13 @@ const JOBS = [
     buildCableRun();
   }],
   ['Cutting the word', () => buildWordmark()],
-  ['Raising the mist', () => { buildAtmosphere(); buildWisps(); }],
+  ['Raising the weather', () => { buildAtmosphere(); buildWisps(); buildWeather(); }],
   ['Polishing the water', () => {
     initPost(); buildCards(); buildCardCloth();
     if (WORLD.fg) WORLD.fg.forEach(m => m.layers.set(1));
     WORD.glyphs.forEach(m => m.layers.set(2));
     if (WORLD.rain) WORLD.rain.layers.set(1);
+    if (WORLD.drift) WORLD.drift.layers.set(1);
     /* the fall is all around the rig, including behind it — mirroring it
        would drop leaves into the water that are nowhere near the water */
     if (WORLD.leaves) WORLD.leaves.mesh.layers.set(1);
