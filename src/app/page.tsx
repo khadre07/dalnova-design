@@ -21,9 +21,24 @@ const shell = { paddingInline: "var(--shell-x)" };
  * the measure has changed. The whole page was one value throughout, and
  * nothing advanced or receded.
  */
-function Shell({ children, wide = false }: { children: React.ReactNode; wide?: boolean }) {
+function Shell({
+  children,
+  wide = false,
+  cam,
+}: {
+  children: React.ReactNode;
+  wide?: boolean;
+  /* Which camera stop this band is. Read from the markup by the rig rather
+     than kept in a list beside it, so moving or adding a band cannot put the
+     travel out of step with the page. */
+  cam?: number;
+}) {
   return (
-    <div className={`mx-auto max-w-[1560px] ${wide ? "band-wide" : ""}`} style={shell}>
+    <div
+      className={`mx-auto max-w-[1560px] ${wide ? "band-wide" : ""}`}
+      style={shell}
+      data-cam={cam}
+    >
       {children}
     </div>
   );
@@ -52,37 +67,37 @@ export default function Page() {
           column was a single layout repeated five times, with half the screen
           idle throughout. */}
       <main className="relative z-10">
-        <Shell>
+        <Shell cam={0}>
           <Column>
             <Hero />
           </Column>
         </Shell>
 
-        <Shell wide>
+        <Shell wide cam={1}>
           <Capabilities />
         </Shell>
 
-        <Shell>
+        <Shell cam={2}>
           <Column>
             <Method />
           </Column>
         </Shell>
 
-        <Shell wide>
+        <Shell wide cam={3}>
           <Sectors />
         </Shell>
 
-        <Shell wide>
+        <Shell wide cam={4}>
           <Gallery />
         </Shell>
 
-        <Shell>
+        <Shell cam={5}>
           <Column>
             <Contact />
           </Column>
         </Shell>
 
-        <Shell>
+        <Shell cam={6}>
           <Partners />
         </Shell>
 

@@ -6,6 +6,8 @@ import { accentHex, useSite } from "@/lib/site-state";
 import { reportReady, reportStage } from "@/lib/boot";
 import { figureIsUp } from "@/lib/cue";
 import { WATER_FRAG, WATER_VERT } from "@/lib/water";
+import { measure, progressAt, type Anchors } from "@/lib/rig";
+import { buildWorld, type World } from "@/lib/world";
 import { presenceValue } from "@/lib/stage";
 import { Conduits, type Box } from "./Conduits";
 
@@ -24,6 +26,29 @@ import { Conduits, type Box } from "./Conduits";
 
 /** Where the figure stands across the frame — the water is centred on it. */
 const FIGURE_AT = { narrow: 0.5, wide: 0.74 };
+
+/* The camera stops, one per chapter, in the order the sections carry.
+
+   Kage's rig, with its own numbers. Each stop is where the camera stands, what
+   it looks at, and how long a lens it wears; a Catmull-Rom curve is laid
+   through the stops and sampled at the fractional chapter index, so the travel
+   is continuous while the stops stay nameable.
+
+   The shape of the journey: it opens level with the water beside the figure,
+   lifts and turns out over the line of masts as the page talks about what
+   Dalnova installs, comes back down and close for the method, pulls wide for
+   the sectors and the work, and settles low again for the contact — ending
+   near where it started, which is what makes it read as a walk rather than a
+   departure. */
+const STOPS = [
+  { p: [0, 0, 3.05], t: [0, -0.02, 0], fov: 32 },
+  { p: [0.9, 0.34, 3.5], t: [0.5, -0.1, -1.6], fov: 34 },
+  { p: [1.7, 0.62, 3.9], t: [1.4, -0.16, -3.4], fov: 36 },
+  { p: [1.2, 0.5, 4.4], t: [1.0, -0.14, -2.6], fov: 38 },
+  { p: [0.6, 0.72, 5.0], t: [0.8, -0.2, -4.0], fov: 40 },
+  { p: [0.2, 0.4, 4.2], t: [0.3, -0.12, -2.0], fov: 36 },
+  { p: [0, 0.2, 3.4], t: [0, -0.06, -0.8], fov: 33 },
+] as const;
 
 export default function WaterStage() {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -106,11 +131,46 @@ export default function WaterStage() {
       water.renderOrder = -1;
       scene.add(water);
 
+      /* The horizon the camera walks past. Built, not photographed — see the
+         module for why that is not only a cost decision. */
+      const world: World = buildWorld(THREE, -0.502);
+      scene.add(world.group);
+
+      /* The rig. A curve through the stops for the position and a second for
+         what the camera is looking at, so the aim travels as smoothly as the
+         camera does — panning to a fixed point while moving is what makes a
+         dolly feel like a machine. */
+      const curveP = new THREE.CatmullRomCurve3(
+        STOPS.map((c) => new THREE.Vector3(c.p[0], c.p[1], c.p[2])),
+        false,
+        "catmullrom",
+        0.42,
+      );
+      const curveT = new THREE.CatmullRomCurve3(
+        STOPS.map((c) => new THREE.Vector3(c.t[0], c.t[1], c.t[2])),
+        false,
+        "catmullrom",
+        0.42,
+      );
+      const rigP = new THREE.Vector3();
+      const rigT = new THREE.Vector3();
+
+      /* Which sections are chapters, and where they sit on the scrollbar.
+
+         Measured from the markup rather than from a list kept here: the
+         sections carry data-cam, so adding or moving a band cannot put the rig
+         out of step with the page. */
+      let anchors: Anchors = { at: [], max: 1 };
+      const chapters = () =>
+        Array.from(document.querySelectorAll<HTMLElement>("[data-cam]"));
+      const remeasure = () => {
+        anchors = measure(chapters());
+      };
+
       // Nothing to fetch and nothing to build: the surface is a shader, and it
       // is ready the moment the context is.
       reportStage("scene", 0.8);
 
-      let baseDistance = 1;
       let unitPx = 1;
 
       const layout = () => {
@@ -122,16 +182,11 @@ export default function WaterStage() {
 
         const narrow = stage.w < 1024;
         const frameFill = narrow ? 0.64 : 0.78;
-        const vFov = (camera.fov * Math.PI) / 180;
-        const distance = 1 / (2 * frameFill * Math.tan(vFov / 2));
-        camera.position.set(0, 0, distance);
-        camera.lookAt(0, 0, 0);
 
         // Where the feet would have come to rest. The Spline figure is cut at
         // the matching fraction in CSS, so the two agree on where the water is.
         const baseY = narrow ? 0.03 : 0.06;
         water.position.y = baseY - 0.502;
-        baseDistance = distance;
         unitPx = stage.h * frameFill;
 
         /* The pool of light sits under the figure rather than in the middle of
@@ -162,8 +217,17 @@ export default function WaterStage() {
       };
 
       layout();
-      const resizeObserver = new ResizeObserver(layout);
+      remeasure();
+      const resizeObserver = new ResizeObserver(() => {
+        layout();
+        remeasure();
+      });
       resizeObserver.observe(host);
+      /* The bands grow when their pictures land, which moves every anchor
+         below them. Watching the document catches that; watching only the
+         window would leave the rig aimed at where the page used to be. */
+      const bodyObserver = new ResizeObserver(remeasure);
+      bodyObserver.observe(document.body);
 
       /* The section's accent, read per frame. Held beside the loop rather
          than closed over directly so a colour change never rebuilds a scene
@@ -222,15 +286,34 @@ export default function WaterStage() {
         overlayIntro = Math.max(0, Math.min(1, (elapsed - 0.62) / 0.45));
         if (frontRef.current) frontRef.current.style.opacity = String(overlayIntro);
 
-        easedProgress += (progressRef.current - easedProgress) * 0.07;
+        /* Along the curve, at the chapter the page is on.
 
-        /* The shot, not the subject. The camera pulls back and lifts as the
-           page goes down, so the surface recedes rather than being scaled. */
-        const dolly = 1 + easedProgress * 0.22;
-        camera.position.set(0, easedProgress * 0.26, baseDistance * dolly);
-        camera.lookAt(0, -easedProgress * 0.06, 0);
+           Smoothed before it is applied rather than after: the scroll position
+           is a step function on a trackpad, and sampling a spline at a
+           stepping value gives a stepping camera however smooth the spline
+           is. */
+        const wanted = progressAt(window.scrollY, anchors);
+        easedProgress += (wanted - easedProgress) * (1 - Math.exp(-3.4 * delta));
 
-        trackDolly(dolly, easedProgress * 0.26);
+        const finalStop = STOPS.length - 1;
+        const u = Math.min(1, Math.max(0, easedProgress / finalStop));
+        curveP.getPoint(u, rigP);
+        curveT.getPoint(u, rigT);
+
+        // The lens is stepped between the two stops it lies between, not
+        // splined: a field of view that overshoots reads as a lurch.
+        const i = Math.min(finalStop - 1, Math.max(0, Math.floor(easedProgress)));
+        const f = Math.min(1, Math.max(0, easedProgress - i));
+        camera.fov = STOPS[i].fov + (STOPS[i + 1].fov - STOPS[i].fov) * f;
+        camera.position.copy(rigP);
+        camera.lookAt(rigT);
+        camera.updateProjectionMatrix();
+
+        world.tint(currentAccent);
+
+        // The conduits ride the figure, and the figure's apparent size now
+        // comes from the lens rather than from a dolly number.
+        trackDolly(STOPS[0].fov / camera.fov, rigP.y);
         renderer.render(scene, camera);
       };
 
@@ -276,6 +359,8 @@ export default function WaterStage() {
         document.removeEventListener("visibilitychange", onVisibility);
         resizeObserver.disconnect();
         inView.disconnect();
+        bodyObserver.disconnect();
+        world.dispose();
         waterMaterial.dispose();
         water.geometry.dispose();
         renderer.dispose();
