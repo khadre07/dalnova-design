@@ -17,6 +17,8 @@ export default function Capabilities() {
       className="scroll-mt-24 py-24 lg:py-32"
     >
       <SectionHead
+        chapter={1}
+        code="SRV"
         conduit={0}
         eyebrow={t.capabilities.eyebrow}
         title={t.capabilities.title}

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { fireCharge } from "@/lib/charge";
+import ChapterRule from "./ChapterRule";
 import Reveal from "./Reveal";
 
 export default function SectionHead({
@@ -9,12 +10,18 @@ export default function SectionHead({
   title,
   lede,
   conduit,
+  chapter,
+  code,
 }: {
   eyebrow: string;
   title: string;
   lede?: string;
   /** Which conduit carries this section. Omit and no charge is sent. */
   conduit?: number;
+  /* The chapter this section opens. Both are needed or neither is printed —
+     a number with no code is half a rule, and it would read as a mistake. */
+  chapter?: number;
+  code?: string;
 }) {
   const ref = useRef<HTMLElement>(null);
 
@@ -42,12 +49,20 @@ export default function SectionHead({
 
   return (
     <header ref={ref}>
-      <Reveal>
-        <p className="t-mono flex items-center gap-3">
-          <span className="h-px w-8 bg-[var(--line-2)]" aria-hidden="true" />
-          {eyebrow}
-        </p>
-      </Reveal>
+      {/* The chapter line replaces the eyebrow rather than joining it. Both
+          would be two labels stacked on one heading, each saying where you
+          are — and the chapter line says it better, because it says how far
+          along as well. */}
+      {chapter !== undefined && code ? (
+        <ChapterRule index={chapter} name={eyebrow} code={code} />
+      ) : (
+        <Reveal>
+          <p className="t-mono flex items-center gap-3">
+            <span className="h-px w-8 bg-[var(--line-2)]" aria-hidden="true" />
+            {eyebrow}
+          </p>
+        </Reveal>
+      )}
 
       {/* reveal-flat: the wrapper only fades, so the line is not moved by the
           reveal and the mask at the same time. */}

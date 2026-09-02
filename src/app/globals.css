@@ -1668,6 +1668,56 @@
   }
 
   /* ------------------------------------------------------------------
+     The chapter rule
+
+     Kage's opening line, with Dalnova's own second language in the far
+     mark. The rule between the name and the code is the part that does
+     the work: it says the page is a sequence and that you are somewhere
+     in it, which is the difference between eight bands stacked up and a
+     walk through eight rooms.
+  ------------------------------------------------------------------- */
+
+  .chapter {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    /* The full measure, whatever the copy under it does. A rule that
+       stops at the text's width is a rule that reads as an underline. */
+    width: 100%;
+  }
+
+  .chapter-n {
+    flex: none;
+    color: var(--ink-faint);
+    letter-spacing: 0.1em;
+  }
+
+  /* The number itself carries the accent. It is the one thing on the line
+     that changes from chapter to chapter, so it is the one thing lit. */
+  .chapter-n b {
+    color: var(--accent);
+    font-weight: inherit;
+  }
+
+  .chapter-rule {
+    flex: 1;
+    height: 1px;
+    /* Fading out toward the code rather than meeting it: a rule that
+       lands hard on a label reads as a table cell. */
+    background: linear-gradient(
+      to right,
+      var(--line-2),
+      color-mix(in oklab, var(--line-2) 20%, transparent)
+    );
+  }
+
+  .chapter-code {
+    flex: none;
+    color: var(--ink-faint);
+    letter-spacing: 0.16em;
+  }
+
+  /* ------------------------------------------------------------------
      Pictures arriving
 
      A picture that appears the instant its last byte lands is the one

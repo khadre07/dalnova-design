@@ -24,6 +24,8 @@ export default function Sectors() {
       className="scroll-mt-24 py-24 lg:py-32"
     >
       <SectionHead
+        chapter={3}
+        code="SEC"
         conduit={2}
         eyebrow={t.sectors.eyebrow}
         title={t.sectors.title}

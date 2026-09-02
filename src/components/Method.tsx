@@ -14,7 +14,7 @@ export default function Method() {
       id="methode"
       className="scroll-mt-24 py-24 lg:py-32"
     >
-      <SectionHead conduit={1} eyebrow={t.method.eyebrow} title={t.method.title} lede={t.method.lede} />
+      <SectionHead chapter={2} code="MTH" conduit={1} eyebrow={t.method.eyebrow} title={t.method.title} lede={t.method.lede} />
 
       {/* Numbered because these steps genuinely run in order: nothing is
           deployed before it has been designed, and nothing is designed before

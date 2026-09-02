@@ -74,6 +74,8 @@ export default function Gallery() {
     >
       <div className="flex flex-wrap items-end justify-between gap-6">
         <SectionHead
+        chapter={4}
+        code="REF"
           conduit={4}
           eyebrow={t.gallery.eyebrow}
           title={t.gallery.title}
