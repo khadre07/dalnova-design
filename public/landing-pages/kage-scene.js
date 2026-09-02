@@ -1816,11 +1816,11 @@ function buildWordmark() {
      Four letters at the old tracking put a 400-pixel cap height across the
      scene; the letters are spaced out instead, which keeps the type edge to
      edge while the caps come back down to the height of the headline block. */
-  const SZ = 320, TRACK = .40, PAD = 26;
+  const SZ = 320, TRACK = .12, PAD = 26;
   const m = cvs(4, 4).getContext('2d');
   m.font = '600 ' + SZ + 'px Wordmark, sans-serif';
   m.textBaseline = 'alphabetic'; m.textAlign = 'left';
-  const word = 'KAGE', gl = [];
+  const word = 'DALNOVA', gl = [];
   let pen = 0, ascMax = 0, descMax = 0, xMin = 1e9, xMax = -1e9;
   for (const ch of word) {
     const t = m.measureText(ch);

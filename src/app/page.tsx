@@ -14,13 +14,18 @@ import KagePage from "@/components/kage/KagePage";
    and anything indexing this domain finds an empty document. Ported, the
    markup is served here — crawlable, selectable, read aloud.
 
-   One thing the port does not change, because the brief forbids it: this is
-   Kage. Its title is "Where stillness reveals the unseen" and its subject is a
-   temple in Kyoto. Making it say Dalnova is a separate job — and now a
-   possible one, which it was not while the page lived behind a frame. */
+   And now it says Dalnova. Every visible string is French and Dalnova's own —
+   the navigation, the four cards, the five chapters, the statistics, the
+   footer. The Japanese is gone, and what replaced it is not a translation of
+   it but the page's own second language: the three-letter service codes the
+   content already carried. The wordmark cut into the scene reads DALNOVA.
+
+   What could not follow is written in the components: the temple itself. */
 
 export const metadata = {
-  title: "Kage — Where stillness reveals the unseen",
+  title: "Dalnova Technologies — Services informatiques à Dakar",
+  description:
+    "De l'installation du serveur au développement de votre application métier — Dalnova Technologies accompagne votre transformation digitale à Dakar.",
 };
 
 export default function Page() {
