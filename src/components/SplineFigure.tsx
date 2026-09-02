@@ -36,6 +36,10 @@ const MIN_SIZE = 40;
 /** The sliver of the runtime's Application this needs. */
 type SplineApp = { play?: () => void; stop?: () => void };
 
+/** Above this fraction of the screen the figure holds. One number: raise it to
+ *  give the robot more of the screen to answer, lower it to give it less. */
+const HOLD_ABOVE = 0.45;
+
 /* How far each accent's hue sits from sepia's own.
 
    sepia() is what gives a dark, all-but-colourless robot something to rotate:
@@ -54,6 +58,10 @@ export default function SplineFigure({ scene }: { scene: string }) {
   const host = useRef<HTMLDivElement>(null);
   const app = useRef<SplineApp | null>(null);
   const running = useRef(true);
+  /** Pointer in the upper band: the figure is held. */
+  const aloft = useRef(false);
+  /** Set by the play/stop effect so the pointer can ask it to re-decide. */
+  const sync = useRef<() => void>(() => {});
 
   /* Loaded is not the same as showing.
 
@@ -150,18 +158,6 @@ export default function SplineFigure({ scene }: { scene: string }) {
       const box = canvas.getBoundingClientRect();
       if (box.width === 0) return;
 
-      /* Left, right and down. Above the eyeline it holds.
-
-         Its own tracking is two-axis and not ours to constrain, so the
-         constraint goes on what is handed to it. Clamping the vertical to the
-         eyeline was the first thing I tried, and it is not the same: clamped,
-         the robot still swings left and right along the top of the screen
-         while looking level. Gated, it holds the pose it had. Above its own
-         eyeline nothing is sent at all, so the nav and the top of the copy are
-         somewhere the reader can go without the figure answering. */
-      const eyeline = box.top + box.height * 0.34;
-      if (y < eyeline) return;
-
       const init: PointerEventInit = {
         clientX: x,
         clientY: y,
@@ -186,6 +182,22 @@ export default function SplineFigure({ scene }: { scene: string }) {
       if (!event.isTrusted) return;
       x = event.clientX;
       y = event.clientY;
+
+      /* Above the line the scene is halted, not merely starved of events.
+
+         Withholding the pointer was the first thing I tried, twice, and it is
+         not enough: the scene carries its own states and its own idle, so it
+         goes on moving whether or not anything is sent to it. Halting is the
+         same lever the scroll uses, and it is the only one that actually holds
+         a scene somebody else authored — the last frame stays, and the figure
+         keeps the pose it had. */
+      const high = y < window.innerHeight * HOLD_ABOVE;
+      if (high !== aloft.current) {
+        aloft.current = high;
+        sync.current();
+      }
+      if (high) return;
+
       schedule();
     };
 
@@ -229,26 +241,28 @@ export default function SplineFigure({ scene }: { scene: string }) {
     let scrolling = false;
     let settle = 0;
 
-    const sync = () => {
-      const wanted = onScreen && !document.hidden && !scrolling;
+    const decide = () => {
+      const wanted =
+        onScreen && !document.hidden && !scrolling && !aloft.current;
       // Guarded: play() on an already-running scene restarts its clock.
       if (wanted === running.current) return;
       running.current = wanted;
       if (wanted) app.current?.play?.();
       else app.current?.stop?.();
     };
+    sync.current = decide;
 
     const watch = new IntersectionObserver(
       ([entry]) => {
         onScreen = entry?.isIntersecting ?? true;
-        sync();
+        decide();
       },
       // A margin, so it is running before it is looked at rather than starting
       // as it comes into frame.
       { rootMargin: "25% 0px" },
     );
     watch.observe(node);
-    document.addEventListener("visibilitychange", sync);
+    document.addEventListener("visibilitychange", decide);
 
     /* Held for a moment after the last scroll event rather than resumed on it.
        Scroll arrives in bursts with gaps inside them, and resuming in a gap
@@ -256,19 +270,19 @@ export default function SplineFigure({ scene }: { scene: string }) {
     const onScroll = () => {
       if (!scrolling) {
         scrolling = true;
-        sync();
+        decide();
       }
       window.clearTimeout(settle);
       settle = window.setTimeout(() => {
         scrolling = false;
-        sync();
+        decide();
       }, 160);
     };
     window.addEventListener("scroll", onScroll, { passive: true });
 
     return () => {
       watch.disconnect();
-      document.removeEventListener("visibilitychange", sync);
+      document.removeEventListener("visibilitychange", decide);
       window.removeEventListener("scroll", onScroll);
       window.clearTimeout(settle);
     };
