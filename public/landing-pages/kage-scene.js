@@ -1823,6 +1823,13 @@ function buildWordmark() {
   const m = cvs(4, 4).getContext('2d');
   m.font = '600 ' + SZ + 'px Wordmark, sans-serif';
   m.textBaseline = 'alphabetic'; m.textAlign = 'left';
+  /* The cut word is the wordmark, and a wordmark is short.
+
+     'DALNOVA TECHNOLOGIES' is nineteen characters; fitted to the frame it ran
+     past both edges and read DALNOVA TECHNOLO. The full name belongs where a
+     name belongs — the header, the footer, the document title — and the letters
+     cut through the scene carry the mark. Every company that has both does
+     exactly this. */
   const word = 'DALNOVA', gl = [];
   let pen = 0, ascMax = 0, descMax = 0, xMin = 1e9, xMax = -1e9;
   for (const ch of word) {
@@ -3236,11 +3243,21 @@ function makeGrain() {
 /* ============================================ 12 · the card viewports */
 const CARDS = [];
 function buildCards() {
+  /* Re-aimed at the world that is actually here.
+
+     These are live sub-renders, not pictures: each card is the scene seen from
+     its own camera. The authored four looked at the flight to the hall, the
+     lantern court and the wet court, and three of them now framed empty air —
+     the cards were not broken, they were pointed at a temple that had left.
+
+     Aimed instead at what replaced it: the run of masts and cable, the
+     cabinets along the rail, the gantry from underneath, and the building at
+     the end of the climb. */
   const defs = [
-    { p: [-2.0, 1.60, -2.0], t: [0, 10.0, -34.0], fov: 40 },    /* the long climb */
-    { p: [4.2, 2.90, -9.5], t: [6.4, 2.90, -14.4], fov: 40 },   /* lantern court  */
-    { p: [3.4, 2.40, 2.0], t: [-1.0, -.60, -6.0], fov: 40 },    /* the wet court  */
-    { p: [0.6, 3.40, -12.0], t: [0, 12.0, -40.0], fov: 26 }     /* hero window    */
+    { p: [-2.0, 1.60, -2.0], t: [0, 9.0, -40.0], fov: 40 },     /* the climb to the building */
+    { p: [5.6, 2.40, -8.0], t: [12.6, 5.0, -13.0], fov: 42 },   /* the masts and the cable   */
+    { p: [3.4, 1.60, -2.4], t: [7.4, .9, -7.0], fov: 40 },      /* a cabinet on the rail     */
+    { p: [0.6, 3.40, -12.0], t: [0, 11.0, -40.0], fov: 26 }     /* the hero window           */
   ];
   $$('[data-view]').forEach(el => {
     const d = defs[+el.dataset.view]; if (!d) return;
@@ -3541,72 +3558,106 @@ function dalLit(colour, strength) {
 
 /* The building, where the worship hall stood.
 
-   A plant room was the first answer and it was too modest: a long low shed
-   reads as a substation, and the composition wants something at the end of the
-   flight that is worth the climb. This is a data hall — a slab with a glass
-   curtain wall, its floors lit unevenly the way a building in use is lit, fins
-   down the face, plant on the roof and a mast with a beacon on it.
+   A glass slab was the second answer and it was from nowhere. It is the
+   building every render puts at the end of every avenue, and a company in
+   Dakar deserves better than a curtain wall that could be in Frankfurt.
 
-   The lit interior is still the authored idea. The worship hall glowed through
-   paper screens; this glows through glass. That was the best thing in the
-   original composition and it survives the change of subject intact. */
+   This one is built from Dakar's own architecture. Tropical modernism — what
+   this city did with concrete from the sixties on — has one great device: the
+   claustra, a perforated screen standing clear of the wall behind it. It is
+   not ornament. It shades the facade, it lets the wind through, and at night
+   it turns the whole face into a lantern, because the light inside comes out
+   through several hundred small openings instead of one large window.
+
+   That is why it belongs here and a glass wall did not. The authored temple
+   glowed through paper screens; this glows through a concrete one, which is
+   the same idea in the material this coast actually builds with. The deep roof
+   slab overhanging the face is the other half of the device: shade is the
+   whole problem tropical modernism was solving.
+
+   The drum on the podium is the second reference — the round impluvium plan
+   the Musée des Civilisations Noires took from Casamance. It is here because a
+   long orthogonal box needs one curve to stop being a box, and because that
+   curve should come from somewhere rather than from a menu of shapes. */
 function buildBuilding() {
   const g = new THREE.Group();
-  /* Measured against the frame, not against ambition. Twenty units of tower on
-     a seven-unit podium put the roof at thirty and the top third of the
-     building outside the shot — the camera was composed for a low hall, and
-     the composition is the authored part. Ten fills the end of the flight
-     without leaving it. */
   const W = 27, H = 10, D = 15;
 
-  /* The base is wider than the tower and shorter, so the slab lands on
-     something instead of growing out of the ground. */
-  const base = new THREE.Mesh(new THREE.BoxGeometry(W + 4, 3.4, D + 3), dalMetal(.8));
+  /* Sand-toned concrete rather than steel. The masts and the cable are the
+     cold things in this frame; the building it all runs to should be warm, or
+     the whole scene is one temperature. */
+  const concrete = new THREE.MeshStandardMaterial({ color: 0x6d6252, roughness: .92, metalness: .04 });
+  const concreteDark = new THREE.MeshStandardMaterial({ color: 0x3e382f, roughness: .95, metalness: .03 });
+
+  const base = new THREE.Mesh(new THREE.BoxGeometry(W + 4, 3.4, D + 3), concreteDark);
   base.position.y = 1.7;
   g.add(base);
 
-  const tower = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), dalMetal(.62));
-  tower.position.y = 3.4 + H / 2;
-  g.add(tower);
+  const mass = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), concrete);
+  mass.position.y = 3.4 + H / 2;
+  g.add(mass);
 
-  /* The curtain wall. Eight floors of glazing, unevenly lit: a building where
-     every window is the same brightness is a building nobody works in. */
-  const FLOORS = 4, BAYS = 15;
-  for (let f = 0; f < FLOORS; f += 1) {
-    for (let b = 0; b < BAYS; b += 1) {
-      const on = Math.random();
-      const pane = new THREE.Mesh(
-        new THREE.PlaneGeometry(1.42, 1.5),
-        dalLit(on > .78 ? 0xd6f2ff : DAL.accent, .12 + on * .62));
-      pane.position.set(-W / 2 + 1.3 + b * 1.72, 5.2 + f * 2.05, D / 2 + .03);
-      g.add(pane);
-    }
+  /* The lit face behind the screen. One plane, warm, so what shows through the
+     openings is a room and not a row of lamps. */
+  const inner = new THREE.Mesh(new THREE.PlaneGeometry(W - 1.5, H - 1.6),
+    new THREE.MeshBasicMaterial({ color: 0xffc98a, transparent: true, opacity: .5 }));
+  inner.position.set(0, 3.4 + H / 2, D / 2 + .04);
+  g.add(inner);
+
+  /* The claustra. Members, not holes: the screen is built from what is solid,
+     and the openings are what is left between. Standing clear of the wall so
+     it casts on it and reads as a second skin. */
+  const COLS = 26, ROWS = 7;
+  const stepX = (W - 1.2) / COLS, stepY = (H - 1.6) / ROWS;
+  const zScreen = D / 2 + .62;
+  const vertGeo = new THREE.BoxGeometry(.17, H - 1.6, .5);
+  const horzGeo = new THREE.BoxGeometry(W - 1.2, .16, .5);
+  for (let i = 0; i <= COLS; i += 1) {
+    const m = new THREE.Mesh(vertGeo, concrete);
+    m.position.set(-(W - 1.2) / 2 + i * stepX, 3.4 + H / 2, zScreen);
+    g.add(m);
+  }
+  for (let j = 0; j <= ROWS; j += 1) {
+    const m = new THREE.Mesh(horzGeo, concrete);
+    m.position.set(0, 3.4 + .8 + j * stepY, zScreen);
+    g.add(m);
   }
 
-  /* Vertical fins across the face — what stops a glass slab reading as a
-     screenshot of a spreadsheet. */
-  for (let i = 0; i <= BAYS; i += 1) {
-    const fin = new THREE.Mesh(new THREE.BoxGeometry(.16, H - 2, .5), dalMetal(.55));
-    fin.position.set(-W / 2 + .44 + i * 1.72, 3.4 + H / 2, D / 2 + .2);
-    g.add(fin);
+  /* The roof slab, overhanging deeply on every side. In this climate that
+     shadow is the point of the building. */
+  const slab = new THREE.Mesh(new THREE.BoxGeometry(W + 5, .55, D + 5), concrete);
+  slab.position.y = 3.4 + H + .28;
+  g.add(slab);
+  /* Its edge beam, so the overhang has a line under it. */
+  const edge = new THREE.Mesh(new THREE.BoxGeometry(W + 5, .3, .22), concreteDark);
+  edge.position.set(0, 3.4 + H - .1, (D + 5) / 2);
+  g.add(edge);
+
+  /* The drum: the impluvium plan, on the podium beside the mass. */
+  const drum = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.2, 5.6, 28, 1, true), concrete);
+  drum.position.set(W / 2 + 3.4, 3.4 + 2.8, 2.2);
+  g.add(drum);
+  const drumCap = new THREE.Mesh(new THREE.CylinderGeometry(4.9, 4.9, .4, 28), concrete);
+  drumCap.position.set(W / 2 + 3.4, 3.4 + 5.8, 2.2);
+  g.add(drumCap);
+  /* Lit from inside, through a ring of openings, the way the screen is. */
+  for (let i = 0; i < 16; i += 1) {
+    const a = (i / 16) * Math.PI * 2;
+    const slit = new THREE.Mesh(new THREE.PlaneGeometry(.34, 2.6),
+      new THREE.MeshBasicMaterial({ color: 0xffc98a, transparent: true, opacity: .42 }));
+    slit.position.set(W / 2 + 3.4 + Math.sin(a) * 4.24, 3.4 + 2.8, 2.2 + Math.cos(a) * 4.24);
+    slit.rotation.y = a;
+    g.add(slit);
   }
 
-  const capBand = new THREE.Mesh(new THREE.BoxGeometry(W + 1.6, .7, D + 1.6), dalMetal(.5));
-  capBand.position.y = 3.4 + H + .35;
-  g.add(capBand);
-
-  /* Roof plant: two chillers and the mast. */
-  for (const side of [-1, 1]) {
-    const unit = new THREE.Mesh(new THREE.BoxGeometry(4.2, 1.8, 3.6), dalMetal(.75));
-    unit.position.set(side * 7.5, 3.4 + H + 1.6, 0);
-    g.add(unit);
-  }
+  /* Plant and the mast, kept — a building this size has both, and the beacon
+     is the only warm point in the sky. */
+  const unit = new THREE.Mesh(new THREE.BoxGeometry(4.2, 1.5, 3.6), concreteDark);
+  unit.position.set(-7.5, 3.4 + H + 1.3, -2);
+  g.add(unit);
   const mast = new THREE.Mesh(new THREE.CylinderGeometry(.13, .2, 6.5, 10), dalMetal(.5));
   mast.position.y = 3.4 + H + 3.9;
   g.add(mast);
-
-  /* The beacon. One red light at the top of a mast is what every tall thing
-     in a flight path wears, and it is the only warm point left in the sky. */
   const beacon = new THREE.Mesh(new THREE.SphereGeometry(.26, 10, 10),
     new THREE.MeshBasicMaterial({ color: 0xff5a3c, transparent: true, opacity: .95 }));
   beacon.position.y = 3.4 + H + 7.2;
@@ -3619,15 +3670,10 @@ function buildBuilding() {
   return g;
 }
 
-/* The weather, and it changes with the year.
+/* Which season it is, and the page is not asked.
 
-   Rain was already here — the authored scene has a shader-driven fall of thin
-   bright lines. What is added is the rest of the calendar: snow in winter,
-   petals in spring. One scene that is not the same scene in February as it is
-   in April, and nobody has to switch it.
-
-   Read from the real date rather than from a setting. A control would be a
-   control nobody touches; the date is already true, and a visitor in December
+   Read from the real date rather than from a setting. A setting would be a
+   setting nobody touches; the date is already true, and a visitor in December
    should get December. `?season=` overrides it, which is how this was built
    and how it can be shown.
 
@@ -3647,70 +3693,84 @@ function seasonNow() {
   return 'autumn';
 }
 
-/* Snow and petals share a system: slow bodies drifting down and sideways,
-   wrapping at the top so the fall never ends. Only the sprite, the speed and
-   the sway differ, which is the honest way to say that they are the same
-   phenomenon at different temperatures. */
+/* What falls, and it is not weather.
+
+   Snow made of soft white discs was a snowdrift on an IT company. These are
+   ones and zeros — the smallest true thing this business is made of — falling
+   the way snow falls in winter and drifting the way petals drift in spring.
+   Same system, same physics, two temperaments: winter is quick, dense and
+   cold; spring is slow, sparse and warm.
+
+   One texture holding both glyphs side by side, and an attribute per particle
+   choosing a half. Two Points systems would have been simpler to write and
+   twice as expensive to draw, and there is no reason for a second draw call to
+   say "1" instead of "0". */
 function buildDrift(kind) {
-  const N = kind === 'snow' ? 900 : 520;
+  const winter = kind === 'snow';
+  const N = winter ? 820 : 460;
   const SPREAD = 46, TOP = 26;
 
-  /* The sprite. A soft disc for snow; a petal is the same disc squashed and
-     turned, which at this size is all a petal is. */
-  const c = cvs(64, 64), x = c.getContext('2d');
-  const grd = x.createRadialGradient(32, 32, 0, 32, 32, 32);
-  if (kind === 'snow') {
-    grd.addColorStop(0, 'rgba(255,255,255,1)');
-    grd.addColorStop(.45, 'rgba(228,240,248,.7)');
-  } else {
-    grd.addColorStop(0, 'rgba(255,226,235,1)');
-    grd.addColorStop(.45, 'rgba(248,196,214,.75)');
-  }
-  grd.addColorStop(1, 'rgba(255,255,255,0)');
-  x.fillStyle = grd;
-  if (kind === 'snow') { x.beginPath(); x.arc(32, 32, 32, 0, 6.284); x.fill(); }
-  else { x.save(); x.translate(32, 32); x.rotate(.6); x.scale(1, .52); x.beginPath(); x.arc(0, 0, 31, 0, 6.284); x.fill(); x.restore(); }
+  /* The atlas: 0 in the left half, 1 in the right. Drawn rather than shipped —
+     two characters is not worth a font file, and drawing them means they take
+     the accent rather than whatever colour a file happened to be saved in. */
+  const c = cvs(128, 64), x = c.getContext('2d');
+  x.clearRect(0, 0, 128, 64);
+  x.font = '600 44px ui-monospace, "SF Mono", Menlo, monospace';
+  x.textAlign = 'center';
+  x.textBaseline = 'middle';
+  x.shadowColor = winter ? 'rgba(120,214,255,.95)' : 'rgba(255,178,110,.95)';
+  x.shadowBlur = 10;
+  x.fillStyle = winter ? '#bfeaff' : '#ffd2a6';
+  x.fillText('0', 32, 33);
+  x.fillText('1', 96, 33);
 
   const n = N;
   const pos = new Float32Array(n * 3);
   const seed = new Float32Array(n);
   const size = new Float32Array(n);
+  const glyph = new Float32Array(n);
   for (let i = 0; i < n; i += 1) {
     pos[i * 3] = (Math.random() - .5) * SPREAD;
     pos[i * 3 + 1] = Math.random() * TOP;
     pos[i * 3 + 2] = -Math.random() * 52 + 6;
     seed[i] = Math.random() * 6.283;
-    size[i] = (kind === 'snow' ? .13 : .2) * (.6 + Math.random() * .8);
+    size[i] = (winter ? .17 : .21) * (.62 + Math.random() * .8);
+    glyph[i] = Math.random() < .5 ? 0 : 1;
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   geo.setAttribute('aSeed', new THREE.BufferAttribute(seed, 1));
   geo.setAttribute('aSize', new THREE.BufferAttribute(size, 1));
+  geo.setAttribute('aGlyph', new THREE.BufferAttribute(glyph, 1));
 
-  const fall = kind === 'snow' ? 1.15 : .85;
-  const sway = kind === 'snow' ? .9 : 1.5;
+  const fall = winter ? 1.35 : .8;
+  const sway = winter ? .7 : 1.6;
 
   const mat = new THREE.ShaderMaterial({
     transparent: true, depthWrite: false, fog: false,
-    blending: THREE.NormalBlending,
+    blending: THREE.AdditiveBlending,
     uniforms: { uT: WORLD.uT, uMap: { value: tx(c) }, uPix: { value: Math.min(devicePixelRatio || 1, 2) } },
     vertexShader:
-      'attribute float aSeed; attribute float aSize; uniform float uT; uniform float uPix;\n' +
-      'varying float vA;\n' +
+      'attribute float aSeed; attribute float aSize; attribute float aGlyph;\n' +
+      'uniform float uT; uniform float uPix; varying float vA; varying float vG;\n' +
       'void main(){ vec3 p = position;\n' +
       /* wraps at TOP so the fall has no beginning and no end */
       ' float y = mod(p.y - uT * ' + fall.toFixed(2) + ', 26.0);\n' +
       ' p.y = y;\n' +
-      /* the sideways wander: two frequencies, or it reads as a pendulum */
-      ' p.x += sin(uT * 0.5 + aSeed) * ' + sway.toFixed(2) + ' + sin(uT * 1.3 + aSeed * 2.0) * 0.35;\n' +
+      /* two frequencies of wander, or it reads as a pendulum */
+      ' p.x += sin(uT * 0.5 + aSeed) * ' + sway.toFixed(2) + ' + sin(uT * 1.3 + aSeed * 2.0) * 0.3;\n' +
       ' vA = smoothstep(0.0, 3.0, y) * smoothstep(26.0, 19.0, y);\n' +
+      ' vG = aGlyph;\n' +
       ' vec4 mv = modelViewMatrix * vec4(p, 1.0);\n' +
       ' gl_PointSize = aSize * 300.0 * uPix / max(1.0, -mv.z);\n' +
       ' gl_Position = projectionMatrix * mv; }',
     fragmentShader:
-      'uniform sampler2D uMap; varying float vA;\n' +
-      'void main(){ vec4 t = texture2D(uMap, gl_PointCoord);\n' +
-      ' gl_FragColor = vec4(t.rgb, t.a * vA * ' + (kind === 'snow' ? '0.62' : '0.5') + '); }'
+      'uniform sampler2D uMap; varying float vA; varying float vG;\n' +
+      'void main(){\n' +
+      /* the atlas is two cells wide: vG picks which one this particle is */
+      ' vec2 uv = vec2(gl_PointCoord.x * 0.5 + vG * 0.5, gl_PointCoord.y);\n' +
+      ' vec4 t = texture2D(uMap, uv);\n' +
+      ' gl_FragColor = vec4(t.rgb, t.a * vA * ' + (winter ? '0.75' : '0.6') + '); }'
   });
 
   const pts = new THREE.Points(geo, mat);

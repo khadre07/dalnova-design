@@ -38,7 +38,7 @@ export default function KageMarkup() {
               <path  d="M6 12h32M9.5 17h25M22 8v28" stroke="#dfe7e0" strokeWidth="1.2" />
             </svg>
           </div>
-          <div  className="pre-jp jp">DALNOVA</div>
+          <div  className="pre-jp jp">DALNOVA TECHNOLOGIES</div>
           <div  className="pre-bar"><i  id="pre-fill"></i></div>
           <div  className="pre-meta">
             <span>Chargement de la scène</span><b><span  id="pre-pct">0</span>%</b>
@@ -54,7 +54,7 @@ export default function KageMarkup() {
             <path  d="M5 13h34M9 18.4h26M22 8.5v27" stroke="#dfe7e0" strokeWidth="1.5" />
             <path  d="M14 35.5h16" stroke="#dfe7e0" strokeWidth="1.2" strokeOpacity=".6" />
           </svg>
-          <span  className="brand-tx"><b>DALNOVA</b><i>SERVICES INFORMATIQUES · DAKAR</i></span>
+          <span  className="brand-tx"><b>DALNOVA TECHNOLOGIES</b><i>SERVICES INFORMATIQUES · DAKAR</i></span>
         </a>
         <nav  className="nav-links" id="navlinks">
           <a  className="nav-link" href="#gate" data-cursor><span>Services</span><span  className="alt">SRV</span></a>
@@ -101,13 +101,13 @@ export default function KageMarkup() {
                runs on down behind the caption instead of stopping at the frame */}
           <span  className="peek-fr" data-frame></span>
           <span  className="peek-play"><svg  viewBox="0 0 22 22" fill="none"><path  d="M8 5.6 16.4 11 8 16.4z" fill="#dfe7e0" /></svg></span>
-          <span  className="peek-cap"><b  className="jp">SRV</b><i>Dalnova — sur site à Dakar</i></span>
+          <span  className="peek-cap"><b  className="jp">SRV</b><i>Dalnova Technologies — sur site à Dakar</i></span>
         </a>
 
         <div  className="word-fb" aria-hidden="true">DALNOVA</div>
 
         <div  className="hero-side" data-rv="up">
-          <span  className="v jp">DALNOVA</span>
+          <span  className="v jp">DALNOVA TECHNOLOGIES</span>
         </div>
       </section>
 
@@ -147,7 +147,7 @@ export default function KageMarkup() {
           <div><b>05</b><span>Domaines</span></div>
           <div><b>05</b><span>Étapes</span></div>
           <div><b>2021</b><span>Fondée en</span></div>
-          <div><b>∞</b><span>Dalnova</span></div>
+          <div><b>∞</b><span>Dalnova Technologies</span></div>
         </div>
       </section>
 
