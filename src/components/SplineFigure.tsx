@@ -33,9 +33,6 @@ const POLL = 120;
 /** Below this the canvas is not showing anything, whatever it reported. */
 const MIN_SIZE = 40;
 
-/** The sliver of the runtime's Application this needs. */
-type SplineApp = { play?: () => void; stop?: () => void };
-
 /** Above this fraction of the screen the figure holds. One number: raise it to
  *  give the robot more of the screen to answer, lower it to give it less. */
 const HOLD_ABOVE = 0.45;
@@ -56,12 +53,7 @@ export default function SplineFigure({ scene }: { scene: string }) {
   const [state, setState] = useState<"waiting" | "live" | "failed">("waiting");
   const settled = useRef(false);
   const host = useRef<HTMLDivElement>(null);
-  const app = useRef<SplineApp | null>(null);
-  const running = useRef(true);
-  /** Pointer in the upper band: the figure is held. */
-  const aloft = useRef(false);
-  /** Set by the play/stop effect so the pointer can ask it to re-decide. */
-  const sync = useRef<() => void>(() => {});
+
 
   /* Loaded is not the same as showing.
 
@@ -183,20 +175,10 @@ export default function SplineFigure({ scene }: { scene: string }) {
       x = event.clientX;
       y = event.clientY;
 
-      /* Above the line the scene is halted, not merely starved of events.
-
-         Withholding the pointer was the first thing I tried, twice, and it is
-         not enough: the scene carries its own states and its own idle, so it
-         goes on moving whether or not anything is sent to it. Halting is the
-         same lever the scroll uses, and it is the only one that actually holds
-         a scene somebody else authored — the last frame stays, and the figure
-         keeps the pose it had. */
-      const high = y < window.innerHeight * HOLD_ABOVE;
-      if (high !== aloft.current) {
-        aloft.current = high;
-        sync.current();
-      }
-      if (high) return;
+      /* In the upper band nothing is sent. This is as far as it goes: the
+         figure stops answering the reader there, which is what was asked, but
+         its own idle is its own and cannot be reached from outside. */
+      if (y < window.innerHeight * HOLD_ABOVE) return;
 
       schedule();
     };
@@ -208,85 +190,24 @@ export default function SplineFigure({ scene }: { scene: string }) {
     };
   }, [state]);
 
-  /* Frames are the whole of fluidity here.
+  /* The scene is never halted. It was, and that was the mistake.
 
-     The scene is somebody else's and its own smoothing is not ours to tune, so
-     the only thing that can be given to it is room to draw. It shares a GPU
-     with the water scene, and it was drawing at full rate whether or not it
-     was on screen — a full-screen scene painting behind the services section,
-     for nobody, taking frames from the one place it is actually seen.
+     stop() and play() are what the runtime offers, and they looked like the
+     way to hold the figure still — through a scroll, and while the pointer sat
+     in the upper band. They are not. stop() does not freeze the last frame; it
+     leaves nothing on the canvas, and the robot disappeared. Whether play()
+     brings it back reliably I no longer want to find out on a live page.
 
-     So it runs while the hero is in view and stops otherwise, and stops with
-     the tab.
+     So it runs from the moment it is up until the page is left, and the
+     freezing that was asked for is not available through this scene. What is
+     available is written above the forwarder: the pointer is withheld in the
+     upper band and through a scroll, so the figure is not answering the reader
+     there. Its own idle keeps moving, because it is its own.
 
-     It also stops while the page is being scrolled, and that is not about
-     frames — it is the only way to hold the figure still.
-
-     The scroll movement was never mine to stop by not sending events. The
-     scene has a scroll event and a look-at behaviour built into it — both are
-     in the file, and the runtime registers its own listener on `document` —
-     so it answers a scroll whatever this component forwards or withholds.
-     Blocking the event before it reaches `document` would mean stopping its
-     propagation at window capture, which would take every other scroll
-     listener on the page down with it, this section's own carousel included.
-
-     Halting the scene is the honest lever: the last frame stays on the canvas,
-     the figure holds exactly the pose it had, and it picks up again once the
-     page settles. */
-  useEffect(() => {
-    const node = host.current;
-    if (!node) return;
-
-    let onScreen = true;
-    let scrolling = false;
-    let settle = 0;
-
-    const decide = () => {
-      const wanted =
-        onScreen && !document.hidden && !scrolling && !aloft.current;
-      // Guarded: play() on an already-running scene restarts its clock.
-      if (wanted === running.current) return;
-      running.current = wanted;
-      if (wanted) app.current?.play?.();
-      else app.current?.stop?.();
-    };
-    sync.current = decide;
-
-    const watch = new IntersectionObserver(
-      ([entry]) => {
-        onScreen = entry?.isIntersecting ?? true;
-        decide();
-      },
-      // A margin, so it is running before it is looked at rather than starting
-      // as it comes into frame.
-      { rootMargin: "25% 0px" },
-    );
-    watch.observe(node);
-    document.addEventListener("visibilitychange", decide);
-
-    /* Held for a moment after the last scroll event rather than resumed on it.
-       Scroll arrives in bursts with gaps inside them, and resuming in a gap
-       would let the figure twitch through what should be one still passage. */
-    const onScroll = () => {
-      if (!scrolling) {
-        scrolling = true;
-        decide();
-      }
-      window.clearTimeout(settle);
-      settle = window.setTimeout(() => {
-        scrolling = false;
-        decide();
-      }, 160);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-
-    return () => {
-      watch.disconnect();
-      document.removeEventListener("visibilitychange", decide);
-      window.removeEventListener("scroll", onScroll);
-      window.clearTimeout(settle);
-    };
-  }, [state]);
+     The cost is real and worth naming: a full-screen scene drawing behind the
+     sections below it, for nobody. It was the reason the pausing was put in.
+     A robot that is visible and moves a little more than asked beats a robot
+     that is not there. */
 
   if (state === "failed") return null;
 
@@ -304,8 +225,7 @@ export default function SplineFigure({ scene }: { scene: string }) {
         className="spline-canvas"
           /* The load event is a hint, not the answer. The watch above decides,
            and it decides on whether there is a canvas with a size in it. */
-        onLoad={(instance) => {
-          app.current = instance as SplineApp;
+        onLoad={() => {
           requestAnimationFrame(() => {
             if (showing()) finish("live");
           });
