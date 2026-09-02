@@ -180,15 +180,33 @@
 
   /* Archivo's width axis is the whole point: expanded uppercase reads as
      machined signage rather than another SaaS grotesk. */
+  /* Kage's display, and it is the move that changes everything.
+
+     Its headings are set at weight 400. Not 500, not 600 — 400, at sixty
+     pixels. That is the whole difference in feel between the two pages: a
+     heavy face at display size shouts, a light one at display size is
+     confident. It can afford to be light because it is enormous, and being
+     enormous is already the emphasis.
+
+     Its line-height is 1.055 where this page had 0.92. Tight leading packs
+     display lines into a block; opening it lets them breathe as separate
+     lines, which is what a chapter title wants.
+
+     And the shadow, which is not decoration. Kage sets its type over
+     photographs and lifts it with a wide, dark, almost invisible shadow. This
+     page has exactly the same problem and never solved it — the copy sits over
+     a photographic sky and a moon, and there were places it was competing.
+     Wide and soft so it never reads as a shadow, only as separation. */
   .t-display {
     font-family: var(--font-display);
-    font-variation-settings: "wdth" 112;
-    font-weight: 700;
+    font-variation-settings: "wdth" 104;
+    font-weight: 400;
     text-transform: uppercase;
     letter-spacing: -0.012em;
-    line-height: 0.92;
+    line-height: 1.055;
     color: var(--ink);
     text-wrap: balance;
+    text-shadow: 0 2px 34px color-mix(in oklab, var(--color-void) 72%, transparent);
   }
 
   /* Sized so the written lines keep their breaks in the 50%-width column, and
@@ -224,10 +242,13 @@
   }
 
   /* Mono carries every label, reading, and unit — the telemetry voice */
+  /* Kage tracks its small caps at .24em. This page was tighter, and at ten
+     pixels tight tracking is what makes a label read as abbreviated text
+     rather than as a mark. */
   .t-mono {
     font-family: var(--font-mono);
     font-size: 0.6875rem;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--color-chrome-dim);
     font-weight: 500;
@@ -244,7 +265,9 @@
     letter-spacing: 0;
   }
 
+  /* Lifted off the sky the same way, at the weight the scale asks for. */
   .t-lede {
+    text-shadow: 0 1px 20px color-mix(in oklab, var(--color-void) 88%, transparent);
     font-size: clamp(1.0625rem, 1.35vw, 1.2rem);
     line-height: 1.62;
     color: var(--ink-lede);

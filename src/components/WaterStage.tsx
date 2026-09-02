@@ -34,20 +34,27 @@ const FIGURE_AT = { narrow: 0.5, wide: 0.74 };
    through the stops and sampled at the fractional chapter index, so the travel
    is continuous while the stops stay nameable.
 
-   The shape of the journey: it opens level with the water beside the figure,
-   lifts and turns out over the line of masts as the page talks about what
-   Dalnova installs, comes back down and close for the method, pulls wide for
-   the sectors and the work, and settles low again for the contact — ending
-   near where it started, which is what makes it read as a walk rather than a
-   departure. */
+   The shape of the journey: it walks down the line.
+
+   The first version of these stops barely moved — two units of travel over
+   seven chapters, which is a camera shifting its weight, not a walk. The masts
+   stand every six units down the water, so the camera now runs the length of
+   them: it opens level and looking ahead, swings out beside the line as the
+   page says what Dalnova installs, rides along it, lifts to look down the run
+   for the work, and settles low again for the contact. Forty units of travel
+   past nine masts, so a chapter is a stretch of road rather than a nudge.
+
+   The aim leads the position down the line rather than pointing across it,
+   which is what makes it read as going somewhere: you look where you are
+   walking. */
 const STOPS = [
-  { p: [0, 0, 3.05], t: [0, -0.02, 0], fov: 32 },
-  { p: [0.9, 0.34, 3.5], t: [0.5, -0.1, -1.6], fov: 34 },
-  { p: [1.7, 0.62, 3.9], t: [1.4, -0.16, -3.4], fov: 36 },
-  { p: [1.2, 0.5, 4.4], t: [1.0, -0.14, -2.6], fov: 38 },
-  { p: [0.6, 0.72, 5.0], t: [0.8, -0.2, -4.0], fov: 40 },
-  { p: [0.2, 0.4, 4.2], t: [0.3, -0.12, -2.0], fov: 36 },
-  { p: [0, 0.2, 3.4], t: [0, -0.06, -0.8], fov: 33 },
+  { p: [0.0, 0.0, 3.05], t: [0.6, -0.02, -2.0], fov: 32 },
+  { p: [0.9, 0.22, -1.4], t: [2.2, -0.08, -6.0], fov: 35 },
+  { p: [1.9, 0.44, -7.0], t: [3.0, -0.12, -12.4], fov: 38 },
+  { p: [2.6, 0.34, -13.6], t: [3.4, -0.1, -19.0], fov: 36 },
+  { p: [3.2, 0.66, -20.4], t: [3.0, -0.16, -26.5], fov: 40 },
+  { p: [2.4, 0.5, -27.2], t: [2.2, -0.12, -33.0], fov: 37 },
+  { p: [1.6, 0.28, -33.8], t: [1.2, -0.08, -39.5], fov: 34 },
 ] as const;
 
 export default function WaterStage() {
@@ -104,7 +111,11 @@ export default function WaterStage() {
       /* Depth. Everything past the surface falls away into the page's own
          colour, so the scene has a behind rather than ending at a hard edge.
          Exponential rather than linear: it thickens the way air does. */
-      scene.fog = new THREE.FogExp2(day ? 0xe9eef2 : 0x05070a, 0.34);
+      /* Thinned for the walk. At 0.34 everything past about five units was
+         solid fog — fine when the camera stood still beside one figure, and
+         the reason the masts at the far end would have been invisible. This
+         still closes the run off, just at forty units instead of five. */
+      scene.fog = new THREE.FogExp2(day ? 0xe9eef2 : 0x05070a, 0.028);
 
       const waterUniforms = {
         uTime: { value: 0 },
@@ -196,10 +207,18 @@ export default function WaterStage() {
         const visibleWidth = (1 / frameFill) * camera.aspect;
         water.position.x = (at - 0.5) * visibleWidth;
 
-        const width = visibleWidth * 15;
-        const depth = width;
+        /* Big enough for the whole walk, and seated over it.
+
+           Sized to the frame it was 15 times the visible width, which reached
+           about fourteen units either side of the origin. The camera now runs
+           to minus thirty-four, so it would have walked off the end of its own
+           water. It is one quad; the size costs nothing. */
+        const width = Math.max(visibleWidth * 15, 90);
+        const depth = 110;
         water.scale.set(width, depth, 1);
         waterUniforms.uHalf.value.set(width / 2, depth / 2);
+        // Centred on the middle of the journey rather than on the first stop.
+        water.position.z = -18;
 
         const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
         renderer.setPixelRatio(dpr);
