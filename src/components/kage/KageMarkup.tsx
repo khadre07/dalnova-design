@@ -56,10 +56,10 @@ export default function KageMarkup() {
           <span  className="brand-tx"><b>DALNOVA TECHNOLOGIES</b><i>SERVICES INFORMATIQUES · DAKAR</i></span>
         </a>
         <nav  className="nav-links" id="navlinks">
-          <a  className="nav-link" href="#gate" data-cursor><span>Services</span><span  className="alt">01110011</span></a>
-          <a  className="nav-link" href="#pathways" data-cursor><span>Réalisations</span><span  className="alt">01110010</span></a>
-          <a  className="nav-link" href="#lessons" data-cursor><span>Secteurs</span><span  className="alt">01110011</span></a>
-          <a  className="nav-link" href="#eternity" data-cursor><span>Contact</span><span  className="alt">01100011</span></a>
+          <a  className="nav-link" href="#gate" data-dock-item data-cursor><span  className="nav-face"><span>Services</span><span  className="alt">01110011</span></span></a>
+          <a  className="nav-link" href="#pathways" data-dock-item data-cursor><span  className="nav-face"><span>Réalisations</span><span  className="alt">01110010</span></span></a>
+          <a  className="nav-link" href="#lessons" data-dock-item data-cursor><span  className="nav-face"><span>Secteurs</span><span  className="alt">01110011</span></span></a>
+          <a  className="nav-link" href="#eternity" data-dock-item data-cursor><span  className="nav-face"><span>Contact</span><span  className="alt">01100011</span></span></a>
         </nav>
         <button  className="nav-burger" aria-label="Menu" data-cursor><i></i><i></i></button>
       </header>

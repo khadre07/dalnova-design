@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { customizationCss, type Customization } from "./customization";
+import { createTopDockController, TOP_DOCK_DEFAULTS } from "./topDockController";
 import KageMarkup from "./KageMarkup";
 /* The authored faces. In the source these arrive through a <link> in a <head>
    this port does not have, so the stylesheet is imported instead — the same
@@ -83,6 +84,23 @@ export default function KagePage({ customization }: { customization?: Customizat
     return () => {
       for (const name of Object.keys(layouts)) document.body.removeAttribute(name);
     };
+  }, []);
+
+  /* The dock spring on the nav.
+
+     The bar keeps its own furniture — the wordmark at the left, the burger at
+     the right, the label/binary flip inside each link. What arrives from the
+     dock is the one thing that was asked for: the proximity magnification, and
+     the centred track it needs to be read against. An item that grew where the
+     row sat hard against the right edge would push into the burger and grow
+     off the frame; centred, it grows into air on both sides.
+
+     Attached after the markup is on the page and torn down with it, and the
+     controller measures nothing until the face has loaded — see its own note. */
+  useEffect(() => {
+    const track = document.getElementById("navlinks");
+    if (!track) return;
+    return createTopDockController(track, () => TOP_DOCK_DEFAULTS);
   }, []);
 
   /* The configured props, written into the page the way the package writes

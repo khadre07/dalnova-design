@@ -159,26 +159,112 @@ h1,h2,h3{ font-weight:400; margin:0; letter-spacing:-.005em; }
    in it so nothing shifts as they exchange. */
 .nav-link{
   position:relative; font-size:11px; font-weight:500; letter-spacing:.2em; text-transform:uppercase;
-  color:var(--bone-dim); display:block; height:15px; line-height:15px; overflow:hidden;
-  min-width:76px; text-align:center;
+  color:var(--bone-dim); display:block; text-align:center;
 }
-.nav-link span{ display:block; height:15px; line-height:15px; transition:transform .55s var(--ease-out), color .3s; }
+/* The flip is its own box now.
+
+   It used to be the link itself: fixed height, overflow hidden, the two faces
+   sliding through it. The dock spring writes a height onto the link and grows
+   it by sixteen pixels, and a clip that is also the tile clips the tile. So the
+   clip is a child, the tile is the parent, and the two stop fighting over one
+   box. The min-width moves down with the clip — it was always the width of the
+   widest of the two faces, and the wider face is the binary. */
+.nav-face{ position:relative; display:block; height:15px; overflow:hidden; min-width:76px; }
+.nav-face > span{ display:block; height:15px; line-height:15px; transition:transform .55s var(--ease-out), color .3s; }
 /* Tighter than the label, and monospaced: eight digits at the label's own
    tracking would not fit, and a binary code that is not monospaced reads as a
    number rather than as a code. */
 .nav-link .alt{ position:absolute; inset:0; transform:translate3d(0,100%,0); color:var(--bone);
   letter-spacing:.08em; font-size:10px;
   font-family:ui-monospace,"SF Mono",Menlo,monospace; }
-.nav-link:hover span{ transform:translate3d(0,-100%,0); }
+.nav-link:hover .nav-face > span{ transform:translate3d(0,-100%,0); }
 .nav-link:hover .alt{ transform:none; }
 .nav-link.on{ color:var(--bone); }
 .nav-link.on::after{ content:''; position:absolute; left:0; bottom:0; width:100%; height:1px; background:var(--vermilion); }
-.nav-burger{ margin-left:clamp(18px,2.6vw,42px); width:26px; height:16px; position:relative; flex:0 0 auto; }
+.nav-burger{ margin-left:auto; width:26px; height:16px; position:relative; flex:0 0 auto; }
 .nav-burger i{ position:absolute; right:0; height:1.5px; background:var(--bone); transition:width .45s var(--ease-out), transform .45s var(--ease-out); }
 .nav-burger i:nth-child(1){ top:4px; width:26px; }
 .nav-burger i:nth-child(2){ top:11px; width:17px; }
 .nav-burger:hover i:nth-child(2){ width:26px; }
 .nav-burger:hover i:nth-child(1){ width:17px; }
+
+/* ------------------------------------------------------------ the dock
+
+   Sable's track and tiles, in Dalnova's colours and on this page's nav.
+
+   Only above 820: below it the links leave the bar entirely and become the
+   slide-in sheet, and none of this — a centred pill of fixed-height tiles —
+   describes a full-width column of rows. The controller stops at the same
+   width for the same reason.
+
+   Centred rather than pushed right, because that is what the magnification
+   needs. A tile grows sideways as well as down; hard against the right edge it
+   would grow into the burger and then off the frame. In the middle it has air
+   on both sides and takes it symmetrically.
+
+   The colour is the one the world outside the bar is already lit by: the cyan
+   of the lanterns, the glazing and the antenna heads, used here only as an
+   edge and a glow. The tiles themselves stay the page's own near-black — a bar
+   of filled cyan would out-shout the scene it floats over. */
+@media (min-width:821px){
+  .nav-links{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    margin-left:0; gap:3px; height:38px; padding:4px;
+    align-items:flex-start;
+    border:1px solid rgba(53,210,255,.15); border-radius:11px;
+    background:rgba(6,11,16,.72);
+    box-shadow:0 12px 34px rgba(0,0,0,.48), inset 0 1px rgba(255,255,255,.04);
+    backdrop-filter:blur(18px) saturate(80%); -webkit-backdrop-filter:blur(18px) saturate(80%);
+    isolation:isolate;
+  }
+  .nav-link{
+    z-index:6; display:inline-flex; flex:none; align-items:center; justify-content:center;
+    height:28px; padding:0 14px;
+    border:1px solid transparent; border-radius:7px;
+    color:var(--bone-dim); background:rgba(9,15,21,.9);
+    letter-spacing:.12em;
+    /* it grows downward from its own top edge, so the row keeps one ceiling */
+    transform-origin:50% 0;
+    transition:color .15s, border-color .18s, background .18s, box-shadow .18s;
+    will-change:width, height, transform;
+  }
+  .nav-face{ min-width:66px; }
+  .nav-link[data-dock-near="true"], .nav-link:focus-visible{
+    z-index:7; color:var(--bone);
+    border-color:rgba(53,210,255,.34); background:rgba(13,26,34,.94);
+    box-shadow:0 7px 16px rgba(0,0,0,.28), 0 0 20px -8px rgba(53,210,255,.6);
+  }
+  /* Where you are, as a lit tile rather than as a rule under one.
+
+     The underline was drawn on the link's own bottom edge, which the spring now
+     moves sixteen pixels a frame — so the mark would ride up and down with the
+     magnification instead of staying put. A fill does not care how tall its
+     tile is. */
+  .nav-link.on{
+    color:#eaf7ff;
+    border-color:rgba(158,232,255,.78);
+    background:linear-gradient(180deg, rgba(53,210,255,.40), rgba(53,210,255,.17));
+    box-shadow:inset 0 1px rgba(206,242,255,.44), 0 0 26px -8px rgba(53,210,255,.9);
+  }
+  .nav-link.on::after{ display:none; }
+}
+
+/* Where the lockup and the track meet.
+
+   The track is centred and content-sized — 433px at rest, about 25 more with a
+   tile open — and the lockup runs to x 342 at 1440. Solving (W - 433)/2 against
+   the padding plus that 293 puts the collision just under 1100, and the open
+   tile pushes it higher: the two touch on anything narrower than roughly a
+   large laptop.
+
+   So the words go and the mark stays. The mark is itself a wordmark — the name
+   is inside the image — so nothing about who this is gets lost; what goes is
+   the second line, which is a caption, and captions are the part of a lockup
+   that a narrow bar can afford to drop. Below 821 the links leave the bar for
+   the sheet, the middle is free again, and the full lockup comes back. */
+@media (min-width:821px) and (max-width:1180px){
+  .brand-tx{ display:none; }
+}
 
 /* ============================================================= hero */
 .hero{ position:relative; min-height:100svh; padding:0 var(--pad); display:flex; flex-direction:column; }
@@ -515,6 +601,9 @@ h1,h2,h3{ font-weight:400; margin:0; letter-spacing:-.005em; }
     width:100%; height:auto; padding:17px 0; overflow:visible; border-bottom:1px solid var(--line-soft);
     font-size:17px; line-height:1.2;
   }
+  /* the flip box unclips too: on the sheet the two faces stack rather than
+     exchange, and a 15px clip would cut the code off under the label */
+  .nav-links .nav-face{ height:auto; overflow:visible; min-width:0; }
   .nav-links .nav-link span{ height:auto; line-height:1.2; transform:none !important; }
   .nav-links .nav-link .alt{ position:static; margin-top:6px; font-size:10px; color:var(--muted); }
   /* The links panel leaves the flow to become the slide-in sheet, taking its
