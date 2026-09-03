@@ -1619,7 +1619,7 @@ function buildLantern(x, z, s, y) {
 
   const box = new THREE.Mesh(new THREE.BoxGeometry(.50, .50, .50), dark);
   box.position.y = 1.66; box.castShadow = true; g.add(box);
-  const paneMat = new THREE.MeshBasicMaterial({ color: hdr(2.3, .30, .085), fog: false, toneMapped: false });
+  const paneMat = new THREE.MeshBasicMaterial({ color: hdr(.34, 1.70, 2.60), fog: false, toneMapped: false });
   [[0, 0, .256, 0], [0, 0, -.256, Math.PI], [.256, 0, 0, Math.PI / 2], [-.256, 0, 0, -Math.PI / 2]].forEach(p => {
     const pane = new THREE.Mesh(new THREE.PlaneGeometry(.34, .34), paneMat);
     pane.position.set(p[0], 1.66, p[2]); pane.rotation.y = p[3]; g.add(pane);
@@ -1636,12 +1636,12 @@ function buildLantern(x, z, s, y) {
   tip.position.y = 2.4; g.add(tip);
 
   const glow = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 3.4),
-    new THREE.MeshBasicMaterial({ map: tx(texGlow('rgba(255,120,60,.9)', 'rgba(255,60,24,.28)')),
+    new THREE.MeshBasicMaterial({ map: tx(texGlow('rgba(150,225,255,.92)', 'rgba(40,150,215,.30)')),
       transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, opacity: .5 }));
   glow.position.y = 1.66; glow.renderOrder = 2; g.add(glow);
   glow.userData.billboard = true;
 
-  const lt = new THREE.PointLight(0xff5a24, 2.6, 9, 2);
+  const lt = new THREE.PointLight(0x35d2ff, 2.6, 9, 2);
   lt.position.set(0, 1.66, 0); g.add(lt);
   WORLD.lanternLights = WORLD.lanternLights || [];
   WORLD.lanternLights.push(lt); WORLD.lanternGlows = WORLD.lanternGlows || []; WORLD.lanternGlows.push(glow);
@@ -3443,9 +3443,21 @@ function updateWorld(dt) {
   /* the moon only breathes — the haze in front of it is what actually moves */
   if (WORLD.moonHalo) WORLD.moonHalo.material.opacity = .44 + f * .10 + Math.sin(clock * .34) * .05;
   if (WORLD.lanternLights) WORLD.lanternLights.forEach((l, i) => {
-    l.intensity = 2.6 * (1 + f * .55) * (.86 + .22 * Math.sin(clock * (2.3 + i * .7) + i * 2.1) + .1 * pulse);
+    /* His gutter is a flame breathing; these are lamps, and a lamp
+       scintillates — it catches and lets go faster than a flame. His slow term
+       is kept, because it is what stops the row looking switched on at once,
+       and a fast one is laid over it at a frequency that does not divide into
+       it. Cubed, so the sparkle sits bright and dips sharply. */
+    const slow = .86 + .22 * Math.sin(clock * (2.3 + i * .7) + i * 2.1);
+    const fast = Math.pow(.5 + .5 * Math.sin(clock * (11.3 + i * 1.9) + i * 4.7), 3);
+    l.intensity = 2.6 * (1 + f * .55) * (slow + .30 * fast + .1 * pulse);
   });
   if (WORLD.lanternGlows) WORLD.lanternGlows.forEach(g => { g.quaternion.copy(camera.quaternion); });
+  /* The obstruction lights: a slow pulse rather than the lamps' sparkle, each
+     head on its own phase, because they are timers and not flames. */
+  if (WORLD.antennaHeads) WORLD.antennaHeads.forEach((h, i) => {
+    h.material.opacity = .3 + .62 * Math.pow(.5 + .5 * Math.sin(clock * (1.5 + i * .23) + i * 1.7), 3);
+  });
 
   /* haze slides across the courtyard */
   if (WORLD.haze) WORLD.haze.forEach(h => {
@@ -3579,170 +3591,140 @@ function dalLit(colour, strength) {
   });
 }
 
-/* The building, where the worship hall stood.
+/* The tower, where the worship hall stood.
 
-   A glass slab was the second answer and it was from nowhere. It is the
-   building every render puts at the end of every avenue, and a company in
-   Dakar deserves better than a curtain wall that could be in Frankfurt.
+   A glass tower in the company's own blue. That reverses the claustra that
+   stood here, and the reversal is the client's call rather than a discovery of
+   mine — so it is worth writing what it costs: a concrete screen was from
+   Dakar, and a curtain wall is from everywhere. What survives of that thinking
+   is the one thing that mattered — the building is lit from inside and read
+   through its skin, which is what the temple did through paper and the
+   claustra did through concrete. Here it is glass, and the light is cyan.
 
-   This one is built from Dakar's own architecture. Tropical modernism — what
-   this city did with concrete from the sixties on — has one great device: the
-   claustra, a perforated screen standing clear of the wall behind it. It is
-   not ornament. It shades the facade, it lets the wind through, and at night
-   it turns the whole face into a lantern, because the light inside comes out
-   through several hundred small openings instead of one large window.
-
-   That is why it belongs here and a glass wall did not. The authored temple
-   glowed through paper screens; this glows through a concrete one, which is
-   the same idea in the material this coast actually builds with. The deep roof
-   slab overhanging the face is the other half of the device: shade is the
-   whole problem tropical modernism was solving.
-
-   The drum on the podium is the second reference — the round impluvium plan
-   the Musée des Civilisations Noires took from Casamance. It is here because a
-   long orthogonal box needs one curve to stop being a box, and because that
-   curve should come from somewhere rather than from a menu of shapes. */
+   Sized against the frame, measured rather than judged. At this depth the hero
+   camera renders 20.5 pixels to the world unit and the top of its frame falls
+   at y = 28.3; a twenty-two storey tower put its beacon two hundred and fifty-
+   seven pixels above the screen. So the height comes down until the crown
+   lands inside, and the tower is made narrow instead — nine and a half across
+   against fourteen up. Proportion reads as a tower long before height does. */
 function buildBuilding() {
   const g = new THREE.Group();
-  const W = 27, H = 10, D = 15;
+  const W = 9.5, H = 14, D = 8;
 
-  /* Sand-toned concrete rather than steel. The masts and the cable are the
-     cold things in this frame; the building it all runs to should be warm, or
-     the whole scene is one temperature. */
-  const concrete = new THREE.MeshStandardMaterial({ color: 0x6d6252, roughness: .92, metalness: .04 });
-  const concreteDark = new THREE.MeshStandardMaterial({ color: 0x3e382f, roughness: .95, metalness: .03 });
-
-  const base = new THREE.Mesh(new THREE.BoxGeometry(W + 4, 3.4, D + 3), concreteDark);
-  base.position.y = 1.7;
+  /* The frame, dark enough that the glazing is what is seen. A curtain wall is
+     a grid of glass held in a cage; a bright cage is a bookshelf. */
+  const frame = new THREE.MeshStandardMaterial({ color: 0x1a222a, roughness: .52, metalness: .68 });
+  const base = new THREE.Mesh(new THREE.BoxGeometry(W + 3.4, 2.6, D + 2.6), frame);
+  base.position.y = 1.3;
   g.add(base);
+  const core = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), frame);
+  core.position.y = 2.6 + H / 2;
+  g.add(core);
 
-  const mass = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), concrete);
-  mass.position.y = 3.4 + H / 2;
-  g.add(mass);
+  const FLOORS = 9, BAYS = 7;
+  const stepX = (W - 1.0) / BAYS, stepY = (H - 1.6) / FLOORS;
 
-  /* The lit face behind the screen. One plane, warm, so what shows through the
-     openings is a room and not a row of lamps. */
-  /* Dalnova's ember, and quieter than it was.
+  /* The glazing, merged: one object of one material, and thirty draw calls for
+     it would be paid every frame for the whole page. */
+  const panes = [];
+  for (let f = 0; f < FLOORS; f += 1)
+    for (let b = 0; b < BAYS; b += 1) {
+      const geo = new THREE.PlaneGeometry(stepX * .86, stepY * .74);
+      geo.translate(-(W - 1.0) / 2 + (b + .5) * stepX, 3.4 + (f + .5) * stepY, D / 2 + .04);
+      panes.push(geo);
+    }
+  const glass = new THREE.Mesh(mergeGeos(panes),
+    new THREE.MeshBasicMaterial({ color: 0x35d2ff, transparent: true, opacity: .34,
+                                  depthWrite: false, toneMapped: false }));
+  panes.forEach(x => x.dispose());
+  g.add(glass);
 
-     Measured rather than eyeballed: at half opacity the screen averaged 96,86,76
-     and peaked at 131,127,119, which put body copy crossing it at 1.57:1 — text
-     that is not there. The building is behind the words, so it does not get to
-     be brighter than them. */
-  const inner = new THREE.Mesh(new THREE.PlaneGeometry(W - 1.5, H - 1.6),
-    new THREE.MeshBasicMaterial({ color: 0xff9a45, transparent: true, opacity: .3 }));
-  inner.position.set(0, 3.4 + H / 2, D / 2 + .04);
-  g.add(inner);
+  /* A scatter of brighter rooms over the same grid: a tower where every window
+     matches is a tower nobody works in. Deterministic, so it is the same tower
+     on every load. */
+  let seed = 0x7a17;
+  const rand = () => { seed ^= seed << 13; seed >>>= 0; seed ^= seed >>> 17;
+                       seed ^= seed << 5; seed >>>= 0; return seed / 4294967296; };
+  const lit = [];
+  for (let f = 0; f < FLOORS; f += 1)
+    for (let b = 0; b < BAYS; b += 1) {
+      if (rand() > .3) continue;
+      const geo = new THREE.PlaneGeometry(stepX * .86, stepY * .74);
+      geo.translate(-(W - 1.0) / 2 + (b + .5) * stepX, 3.4 + (f + .5) * stepY, D / 2 + .06);
+      lit.push(geo);
+    }
+  if (lit.length) {
+    const rooms = new THREE.Mesh(mergeGeos(lit),
+      new THREE.MeshBasicMaterial({ color: 0xbfeaff, transparent: true, opacity: .5,
+                                    depthWrite: false, toneMapped: false }));
+    lit.forEach(x => x.dispose());
+    g.add(rooms);
+  }
 
-  /* The claustra. Members, not holes: the screen is built from what is solid,
-     and the openings are what is left between. Standing clear of the wall so
-     it casts on it and reads as a second skin. */
-  const COLS = 26, ROWS = 7;
-  const stepX = (W - 1.2) / COLS, stepY = (H - 1.6) / ROWS;
-  const zScreen = D / 2 + .62;
-  /* Thirty-four members, one mesh.
-
-     Built as separate meshes the screen was thirty-four draw calls for a thing
-     that is one object made of one material — and it is on screen for the whole
-     page. The author shipped mergeGeos for exactly this; baking the transforms
-     into the geometry costs nothing at build time and pays every frame. */
   const bars = [];
-  for (let i = 0; i <= COLS; i += 1) {
-    const geo = new THREE.BoxGeometry(.17, H - 1.6, .5);
-    geo.translate(-(W - 1.2) / 2 + i * stepX, 3.4 + H / 2, zScreen);
+  for (let b = 0; b <= BAYS; b += 1) {
+    const geo = new THREE.BoxGeometry(.11, H - 1.6, .3);
+    geo.translate(-(W - 1.0) / 2 + b * stepX, 3.4 + (H - 1.6) / 2, D / 2 + .16);
     bars.push(geo);
   }
-  for (let j = 0; j <= ROWS; j += 1) {
-    const geo = new THREE.BoxGeometry(W - 1.2, .16, .5);
-    geo.translate(0, 3.4 + .8 + j * stepY, zScreen);
+  for (let f = 0; f <= FLOORS; f += 1) {
+    const geo = new THREE.BoxGeometry(W - 1.0, .1, .3);
+    geo.translate(0, 3.4 + f * stepY, D / 2 + .16);
     bars.push(geo);
   }
-  const screen = new THREE.Mesh(mergeGeos(bars), concrete);
-  bars.forEach(b => b.dispose());
-  g.add(screen);
+  const mullions = new THREE.Mesh(mergeGeos(bars), frame);
+  bars.forEach(x => x.dispose());
+  g.add(mullions);
 
-  /* The sign. A building belonging to a company carries its name, and the one
-     place it goes is the face, above the screen and under the slab.
+  /* The crown. A tower that simply stops is a box stood on end; the setback is
+     what gives it a top. */
+  const setback = new THREE.Mesh(new THREE.BoxGeometry(W - 2.4, 2.0, D - 1.8), frame);
+  setback.position.y = 2.6 + H + 1.0;
+  g.add(setback);
+  const cap = new THREE.Mesh(new THREE.BoxGeometry(W - 1.4, .36, D - .8), frame);
+  cap.position.y = 2.6 + H + 2.2;
+  g.add(cap);
+  const mast = new THREE.Mesh(new THREE.CylinderGeometry(.10, .15, 3.0, 10), frame);
+  mast.position.y = 2.6 + H + 2.9;
+  g.add(mast);
+  const beacon = new THREE.Mesh(new THREE.SphereGeometry(.24, 10, 10),
+    new THREE.MeshBasicMaterial({ color: 0xff5a3c, transparent: true, opacity: .95 }));
+  beacon.position.y = 2.6 + H + 4.2;
+  g.add(beacon);
+  WORLD.beacon = beacon;
 
-     Loaded as a texture rather than drawn: it is the same file the header
-     uses, so the mark on the building and the mark on the page are the same
-     mark. Basic and unlit — a sign is lit from within, not by the moon — and
-     un-tone-mapped so the cyan survives the ACES curve that would otherwise
-     pull it grey. */
-  new THREE.TextureLoader().load('/brand/dalnova.webp', map => {
-    map.colorSpace = THREE.SRGBColorSpace;
-    const sign = new THREE.Mesh(new THREE.PlaneGeometry(9.4, 3.65),
-      new THREE.MeshBasicMaterial({ map: map, transparent: true, opacity: .92,
-                                    depthWrite: false, fog: true, toneMapped: false }));
-    sign.position.set(0, 3.4 + H - .1, D / 2 + .95);
-    g.add(sign);
-    WORLD.sign = sign;
-  });
+  /* The case, read in the tower's material rather than in earth.
 
-  /* The roof slab, overhanging deeply on every side. In this climate that
-     shadow is the point of the building. */
-  const slab = new THREE.Mesh(new THREE.BoxGeometry(W + 5, .55, D + 5), concrete);
-  slab.position.y = 3.4 + H + .28;
-  g.add(slab);
-  /* Its edge beam, so the overhang has a line under it. */
-  const edge = new THREE.Mesh(new THREE.BoxGeometry(W + 5, .3, .22), concreteDark);
-  edge.position.set(0, 3.4 + H - .1, (D + 5) / 2);
-  g.add(edge);
-
-  /* The drum: the impluvium plan, on the podium beside the mass. */
-  const drum = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.2, 5.6, 28, 1, true), concrete);
-  drum.position.set(W / 2 + 3.4, 3.4 + 2.8, 2.2);
+     Its plan is still the Casamance one — a round wall under a deep cone, the
+     impluvium the Musee des Civilisations Noires took from it. What changes is
+     what it is made of: the same dark frame as the curtain wall, and the same
+     cyan behind its openings. The form carries the place; the material carries
+     the company. */
+  const shell = new THREE.MeshStandardMaterial({ color: 0x1a222a, roughness: .54, metalness: .64 });
+  const cone = new THREE.MeshStandardMaterial({ color: 0x18242c, roughness: .68, metalness: .42 });
+  const CX = W / 2 + 4.6, CZ = 3.0;
+  const drum = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.2, 5.6, 28, 1, true), shell);
+  drum.position.set(CX, 2.8, CZ);
   g.add(drum);
-  /* The roof of a case: a cone of thatch over a round plan.
-
-     This is the form the drum was always reaching for. The impluvium houses of
-     Casamance — and the Musée des Civilisations Noires that took its plan from
-     them — are round walls under a deep conical roof, and the roof is the part
-     you actually see from a distance. A flat cap on a cylinder is a silo; the
-     cone is a case.
-
-     Thatch, not concrete: it is the one warm, soft, non-manufactured thing in
-     a frame otherwise made of steel, glass and cable, and that contrast is the
-     whole reason to have it. The overhang is deep because on a real case it is
-     deep — the roof is what keeps the rain off a wall that is not waterproof. */
-  const thatch = new THREE.MeshStandardMaterial({ color: 0x8a6f45, roughness: 1, metalness: 0 });
-  const roof = new THREE.Mesh(new THREE.ConeGeometry(6.1, 4.4, 24, 1), thatch);
-  roof.position.set(W / 2 + 3.4, 3.4 + 7.8, 2.2);
+  const ring = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, .34, 28), shell);
+  ring.position.set(CX, 5.75, CZ);
+  g.add(ring);
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(6.1, 4.4, 24, 1), cone);
+  roof.position.set(CX, 7.8, CZ);
   g.add(roof);
-  /* The ring beam the roof sits on, so it lands on the wall rather than
-     floating over it. */
-  const beam = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, .34, 28), concrete);
-  beam.position.set(W / 2 + 3.4, 3.4 + 5.75, 2.2);
-  g.add(beam);
-  /* The finial. Every case has something at the apex; on one belonging to an
-     IT company it is a lit point, which is also the only place a beacon makes
-     sense on a round roof. */
   const finial = new THREE.Mesh(new THREE.SphereGeometry(.22, 10, 10),
-    new THREE.MeshBasicMaterial({ color: 0xff9a45, transparent: true, opacity: .9 }));
-  finial.position.set(W / 2 + 3.4, 3.4 + 10.2, 2.2);
+    new THREE.MeshBasicMaterial({ color: 0x35d2ff, transparent: true, opacity: .95, toneMapped: false }));
+  finial.position.set(CX, 10.2, CZ);
   g.add(finial);
-  /* Lit from inside, through a ring of openings, the way the screen is. */
   for (let i = 0; i < 16; i += 1) {
     const a = (i / 16) * Math.PI * 2;
-    const slit = new THREE.Mesh(new THREE.PlaneGeometry(.34, 2.6),
-      new THREE.MeshBasicMaterial({ color: 0xff9a45, transparent: true, opacity: .34 }));
-    slit.position.set(W / 2 + 3.4 + Math.sin(a) * 4.24, 3.4 + 2.8, 2.2 + Math.cos(a) * 4.24);
+    const slit = new THREE.Mesh(new THREE.PlaneGeometry(.52, 3.4),
+      new THREE.MeshBasicMaterial({ color: 0x35d2ff, transparent: true, opacity: .42,
+                                    depthWrite: false, toneMapped: false }));
+    slit.position.set(CX + Math.sin(a) * 4.24, 2.8, CZ + Math.cos(a) * 4.24);
     slit.rotation.y = a;
     g.add(slit);
   }
-
-  /* Plant and the mast, kept — a building this size has both, and the beacon
-     is the only warm point in the sky. */
-  const unit = new THREE.Mesh(new THREE.BoxGeometry(4.2, 1.5, 3.6), concreteDark);
-  unit.position.set(-7.5, 3.4 + H + 1.3, -2);
-  g.add(unit);
-  const mast = new THREE.Mesh(new THREE.CylinderGeometry(.13, .2, 6.5, 10), dalMetal(.5));
-  mast.position.y = 3.4 + H + 3.9;
-  g.add(mast);
-  const beacon = new THREE.Mesh(new THREE.SphereGeometry(.26, 10, 10),
-    new THREE.MeshBasicMaterial({ color: 0xff5a3c, transparent: true, opacity: .95 }));
-  beacon.position.y = 3.4 + H + 7.2;
-  g.add(beacon);
-  WORLD.beacon = beacon;
 
   g.position.set(0, PODIUM, TEMPLE_Z);
   scene.add(g);
@@ -3962,12 +3944,12 @@ function buildCabinet(x, z, s, y) {
      set an ember against moonlight; this sets one against the cyan of the
      cable and the panels. The contrast is the point, and it is his. */
   const glow = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 3.4),
-    new THREE.MeshBasicMaterial({ map: tx(texGlow('rgba(255,120,60,.9)', 'rgba(255,60,24,.28)')),
+    new THREE.MeshBasicMaterial({ map: tx(texGlow('rgba(150,225,255,.92)', 'rgba(40,150,215,.30)')),
       transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, opacity: .5 }));
   glow.position.y = 1.15; glow.renderOrder = 2; g.add(glow);
   glow.userData.billboard = true;
 
-  const lamp = new THREE.PointLight(0xff5a24, 2.6, 9, 2);
+  const lamp = new THREE.PointLight(0x35d2ff, 2.6, 9, 2);
   lamp.position.set(0, 1.15, .2); g.add(lamp);
   WORLD.lanternLights = WORLD.lanternLights || [];
   WORLD.lanternGlows = WORLD.lanternGlows || [];
@@ -3979,55 +3961,98 @@ function buildCabinet(x, z, s, y) {
   return g;
 }
 
-/* A mast, where a maple stood, and the cable that leaves it. Five maples put
-   red into every quarter of the frame; five masts put verticals there
-   instead, which is what the composition actually needed them for. */
-function buildMast(seed, x, z, scale) {
+/* An antenna, where a maple stood.
+
+   Masts with cable strung between them said one true thing about this company
+   and only one: that it lays wire. Antennas say the other half, and the half
+   the page opens with — that the wire ends in something that talks. A dish
+   pointed off across the valley is a link; a row of them is a network.
+
+   So the catenary goes with the poles. It was the better drawing — a cable
+   hangs, and drawing it straight is what makes a scene read as a diagram — but
+   it was drawing the wrong sentence, and a good line in the wrong sentence is
+   still the wrong sentence.
+
+   Deterministic per seed: the same five stand in the same places on every
+   load, and each is aimed differently, because a link points at its far end
+   and no two far ends are in the same direction. */
+function buildAntenna(seed, x, z, scale) {
   const g = new THREE.Group();
-  const H = (7.5 + (seed % 5) * .9) * (scale === undefined ? 1 : scale);
+  const sc = scale === undefined ? 1 : scale;
+  const H = (7.8 + (seed % 5) * .95) * sc;
+  const R = .17 * sc;
+  const leg = dalMetal(.62);
 
-  const pole = new THREE.Mesh(new THREE.CylinderGeometry(.16, .26, H, 10), dalMetal(.66));
-  pole.position.y = H / 2;
-  g.add(pole);
+  let n = (seed * 2654435761) >>> 0;
+  const rand = () => { n ^= n << 13; n >>>= 0; n ^= n >>> 17; n ^= n << 5; n >>>= 0;
+                       return n / 4294967296; };
 
-  for (let i = 0; i < 2; i += 1) {
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(2.6, .14, .14), dalMetal(.6));
-    arm.position.y = H - .8 - i * 1.1;
-    arm.rotation.y = i * .5;
+  /* Three legs braced in a lattice rather than one pole: a monopole at this
+     distance is a stick, and the lattice is what reads as a mast. Merged, for
+     the same reason the curtain wall is. */
+  const parts = [];
+  for (let i = 0; i < 3; i += 1) {
+    const a2 = (i / 3) * Math.PI * 2;
+    const geo = new THREE.BoxGeometry(.055, H, .055);
+    geo.translate(Math.sin(a2) * R, H / 2, Math.cos(a2) * R);
+    parts.push(geo);
+  }
+  for (let b2 = 1; b2 < 9; b2 += 1) {
+    const y = (b2 / 9) * H;
+    for (let i = 0; i < 3; i += 1) {
+      const a2 = (i / 3) * Math.PI * 2, a3 = ((i + 1) / 3) * Math.PI * 2;
+      const x1 = Math.sin(a2) * R, z1 = Math.cos(a2) * R;
+      const x2 = Math.sin(a3) * R, z2 = Math.cos(a3) * R;
+      const geo = new THREE.BoxGeometry(Math.hypot(x2 - x1, z2 - z1), .035, .035);
+      geo.rotateY(-Math.atan2(z2 - z1, x2 - x1));
+      geo.translate((x1 + x2) / 2, y, (z1 + z2) / 2);
+      parts.push(geo);
+    }
+  }
+  const tower = new THREE.Mesh(mergeGeos(parts), leg);
+  parts.forEach(q => q.dispose());
+  g.add(tower);
+
+  /* The dishes: two or three, each on its own arm and each aimed elsewhere. An
+     open cylinder is a parabola at this distance. */
+  const dishes = 2 + (seed % 2);
+  for (let i = 0; i < dishes; i += 1) {
+    const y = H * (.52 + i * .17);
+    const aim = rand() * Math.PI * 2;
+    const r = (.42 + rand() * .3) * sc;
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(.5 * sc, .05, .05), leg);
+    arm.position.set(Math.sin(aim) * .25 * sc, y, Math.cos(aim) * .25 * sc);
+    arm.rotation.y = -aim;
     g.add(arm);
+    const dish = new THREE.Mesh(new THREE.CylinderGeometry(r, r * .82, .12, 16, 1, true), leg);
+    dish.position.set(Math.sin(aim) * .5 * sc, y, Math.cos(aim) * .5 * sc);
+    dish.rotation.set(Math.PI / 2, 0, -aim);
+    g.add(dish);
+    /* A link that is up says so. */
+    const face = new THREE.Mesh(new THREE.CircleGeometry(r * .78, 16),
+      new THREE.MeshBasicMaterial({ color: 0x35d2ff, transparent: true, opacity: .22,
+                                    depthWrite: false, toneMapped: false, side: THREE.DoubleSide }));
+    face.position.set(Math.sin(aim) * (.5 * sc + .07), y, Math.cos(aim) * (.5 * sc + .07));
+    face.rotation.y = -aim + Math.PI / 2;
+    g.add(face);
   }
 
-  const lamp = new THREE.Mesh(new THREE.PlaneGeometry(.3, .12), dalLit(DAL.accent, .8));
-  lamp.position.set(0, H - .3, .2);
-  g.add(lamp);
+  for (let i = 0; i < 3; i += 1) {
+    const a2 = (i / 3) * Math.PI * 2;
+    const whip = new THREE.Mesh(new THREE.CylinderGeometry(.018, .012, 1.5 * sc, 6), leg);
+    whip.position.set(Math.sin(a2) * R * .8, H + .75 * sc, Math.cos(a2) * R * .8);
+    g.add(whip);
+  }
+  const head = new THREE.Mesh(new THREE.SphereGeometry(.1 * sc, 8, 8),
+    new THREE.MeshBasicMaterial({ color: 0x35d2ff, transparent: true, opacity: .9, toneMapped: false }));
+  head.position.y = H + 1.6 * sc;
+  g.add(head);
+  WORLD.antennaHeads = WORLD.antennaHeads || [];
+  WORLD.antennaHeads.push(head);
 
   g.position.set(x, 0, z);
   scene.add(g);
-  WORLD.masts = WORLD.masts || [];
-  WORLD.masts.push({ group: g, top: new THREE.Vector3(x, H, z) });
   return g;
-}
-
-/* The cable between the masts. A catenary, because that is what a cable does
-   between two poles, and drawing it straight is the one thing that would make
-   this read as a diagram rather than as a place. */
-function buildCableRun() {
-  const tops = (WORLD.masts || []).map(m => m.top).sort((a, b) => b.z - a.z);
-  if (tops.length < 2) return;
-  const mat = new THREE.LineBasicMaterial({ color: DAL.accent, transparent: true, opacity: .3 });
-  for (let i = 0; i < tops.length - 1; i += 1) {
-    const a = tops[i], b = tops[i + 1];
-    const sag = .5 + (i % 3) * .18;
-    const pts = [];
-    for (let s = 0; s <= 14; s += 1) {
-      const u = s / 14;
-      const p = a.clone().lerp(b, u);
-      p.y -= sag * 4 * u * (1 - u);
-      pts.push(p);
-    }
-    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat);
-    scene.add(line);
-  }
 }
 
 /* ======================================================== 14 · booting */
@@ -4038,8 +4063,13 @@ const JOBS = [
   ['Raising the building', () => buildBuilding()],
   ['Hanging the moon', () => buildMoon()],
   ['Setting the gantry', () => buildGantry()],
-  ['Placing the cabinets', () => {
-    buildCabinet(7.4, -7.0, 1.15); buildCabinet(-7.6, -5.2, 1.0);
+  ['Placing the lanterns', () => {
+    /* Kage's stone lanterns, back at his own coordinates. Taking them out was
+       the wrong cut: a lantern is not a temple, it is a lamp on a post, and
+       what it carries is the light the flight is read by. The cabinets keep
+       their place off to the sides, where equipment belongs. */
+    buildLantern(7.4, -7.0, 1.15); buildLantern(-7.6, -5.2, 1.0);
+    buildCabinet(12.4, -4.2, 1.0); buildCabinet(-12.8, -8.6, 1.05);
     /* Solved from the same constants the treads and cheeks are built from, so
        the pairs stand on the rail rather than beside it — the authored fix,
        kept, because the flight is unchanged. */
@@ -4048,15 +4078,14 @@ const JOBS = [
     const cheekX   = z => (STAIR_W + (STEPS - stepAt(z)) * .052) / 2 + .45;
     [-14.4, -23.5].forEach((z, i) => {
       const sc = i ? .95 : .90;
-      buildCabinet( cheekX(z), z, sc, cheekTop(z));
-      buildCabinet(-cheekX(z), z, sc, cheekTop(z));
+      buildLantern( cheekX(z), z, sc, cheekTop(z));
+      buildLantern(-cheekX(z), z, sc, cheekTop(z));
     });
   }],
-  ['Raising the masts', () => {
-    buildMast(71, 12.6, -13.0, 1.05); buildMast(72, -11.8, -9.4, .95);
-    buildMast(73, 9.2, -19.0, .82);   buildMast(74, -14.5, -17.5, 1.0);
-    buildMast(75, 16.5, -6.0, .88);
-    buildCableRun();
+  ['Raising the antennas', () => {
+    buildAntenna(71, 12.6, -13.0, 1.05); buildAntenna(72, -11.8, -9.4, .95);
+    buildAntenna(73, 9.2, -19.0, .82);   buildAntenna(74, -14.5, -17.5, 1.0);
+    buildAntenna(75, 16.5, -6.0, .88);
   }],
   ['Cutting the word', () => buildWordmark()],
   ['Raising the weather', () => { buildAtmosphere(); buildWisps(); buildWeather(); }],

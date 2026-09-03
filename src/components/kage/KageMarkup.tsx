@@ -100,7 +100,7 @@ export default function KageMarkup() {
                runs on down behind the caption instead of stopping at the frame */}
           <span  className="peek-fr" data-frame></span>
           <span  className="peek-play"><svg  viewBox="0 0 22 22" fill="none"><path  d="M8 5.6 16.4 11 8 16.4z" fill="#dfe7e0" /></svg></span>
-          <span  className="peek-cap"><b  className="jp">SRV</b><i>Dalnova Technologies — sur site à Dakar</i></span>
+          <span  className="peek-cap"><b  className="jp">SRV</b><i>Sur site à Dakar</i></span>
         </a>
 
         <div  className="word-fb" aria-hidden="true">DALNOVA</div>
