@@ -150,12 +150,25 @@ h1,h2,h3{ font-weight:400; margin:0; letter-spacing:-.005em; }
 .brand-tx b{ font-size:12px; font-weight:500; letter-spacing:.26em; }
 .brand-tx i{ font-style:normal; font-size:8px; letter-spacing:.34em; color:var(--muted); }
 .nav-links{ display:flex; gap:clamp(18px,2.6vw,46px); margin-left:auto; }
+/* Wide enough for both faces.
+
+   The flip needs overflow:hidden to clip the outgoing label, and the box was
+   sized by whichever word was in it — so an eight-digit binary code, which is
+   wider than every label here, was cut off at the right edge on hover. The
+   min-width is the width of the widest of the two faces; the label is centred
+   in it so nothing shifts as they exchange. */
 .nav-link{
   position:relative; font-size:11px; font-weight:500; letter-spacing:.2em; text-transform:uppercase;
   color:var(--bone-dim); display:block; height:15px; line-height:15px; overflow:hidden;
+  min-width:76px; text-align:center;
 }
 .nav-link span{ display:block; height:15px; line-height:15px; transition:transform .55s var(--ease-out), color .3s; }
-.nav-link .alt{ position:absolute; inset:0; transform:translate3d(0,100%,0); color:var(--bone); letter-spacing:.32em; }
+/* Tighter than the label, and monospaced: eight digits at the label's own
+   tracking would not fit, and a binary code that is not monospaced reads as a
+   number rather than as a code. */
+.nav-link .alt{ position:absolute; inset:0; transform:translate3d(0,100%,0); color:var(--bone);
+  letter-spacing:.08em; font-size:10px;
+  font-family:ui-monospace,"SF Mono",Menlo,monospace; }
 .nav-link:hover span{ transform:translate3d(0,-100%,0); }
 .nav-link:hover .alt{ transform:none; }
 .nav-link.on{ color:var(--bone); }
