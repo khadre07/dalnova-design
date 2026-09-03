@@ -33,10 +33,7 @@ export default function KageMarkup() {
       <div  id="pre">
         <div  className="pre-in">
           <div  className="pre-mark">
-            <svg  viewBox="0 0 44 44" fill="none" aria-hidden="true">
-              <circle  cx="22" cy="24" r="9.5" stroke="#e0231c" strokeWidth="1.2" />
-              <path  d="M6 12h32M9.5 17h25M22 8v28" stroke="#dfe7e0" strokeWidth="1.2" />
-            </svg>
+            <img  src="/brand/dalnova.webp" alt="" width="458" height="178" className="brand-logo" />
           </div>
           <div  className="pre-jp jp">DALNOVA TECHNOLOGIES</div>
           <div  className="pre-bar"><i  id="pre-fill"></i></div>
@@ -49,18 +46,18 @@ export default function KageMarkup() {
       {/* ============================================================ nav */}
       <header  className="nav" id="nav">
         <a  className="brand" href="#top" data-cursor>
-          <svg  viewBox="0 0 44 44" fill="none" aria-hidden="true">
-            <circle  cx="22" cy="25" r="8.6" fill="#e0231c" fillOpacity=".9" />
-            <path  d="M5 13h34M9 18.4h26M22 8.5v27" stroke="#dfe7e0" strokeWidth="1.5" />
-            <path  d="M14 35.5h16" stroke="#dfe7e0" strokeWidth="1.2" strokeOpacity=".6" />
-          </svg>
+          {/* The mark was a torii over a red disc — a gate and a sun, drawn in
+              the authored palette. It is the real logo now, and a picture
+              rather than a path: the file is what the company actually uses,
+              and redrawing it as SVG would be a redrawing, not the logo. */}
+          <img  src="/brand/dalnova.webp" alt="" width="458" height="178" className="brand-logo" />
           <span  className="brand-tx"><b>DALNOVA TECHNOLOGIES</b><i>SERVICES INFORMATIQUES · DAKAR</i></span>
         </a>
         <nav  className="nav-links" id="navlinks">
-          <a  className="nav-link" href="#gate" data-cursor><span>Services</span><span  className="alt">SRV</span></a>
-          <a  className="nav-link" href="#pathways" data-cursor><span>Méthode</span><span  className="alt">MTH</span></a>
-          <a  className="nav-link" href="#lessons" data-cursor><span>Secteurs</span><span  className="alt">SEC</span></a>
-          <a  className="nav-link" href="#eternity" data-cursor><span>Contact</span><span  className="alt">CTC</span></a>
+          <a  className="nav-link" href="#gate" data-cursor><span>Services</span><span  className="alt">0001</span></a>
+          <a  className="nav-link" href="#pathways" data-cursor><span>Méthode</span><span  className="alt">0010</span></a>
+          <a  className="nav-link" href="#lessons" data-cursor><span>Secteurs</span><span  className="alt">0011</span></a>
+          <a  className="nav-link" href="#eternity" data-cursor><span>Contact</span><span  className="alt">0100</span></a>
         </nav>
         <button  className="nav-burger" aria-label="Menu" data-cursor><i></i><i></i></button>
       </header>
@@ -298,10 +295,7 @@ export default function KageMarkup() {
         </div>
         <div  className="foot-grid">
           <div  className="foot-brand">
-            <svg  viewBox="0 0 44 44" fill="none" width="34" height="34" aria-hidden="true">
-              <circle  cx="22" cy="25" r="8.6" fill="#e0231c" fillOpacity=".9" />
-              <path  d="M5 13h34M9 18.4h26M22 8.5v27" stroke="#dfe7e0" strokeWidth="1.5" />
-            </svg>
+            <img  src="/brand/dalnova.webp" alt="" width="458" height="178" className="brand-logo" />
             <p>Dalnova Technologies SARL — solutions informatiques pour les entreprises, les administrations et
               les organisations, à Dakar.</p>
           </div>

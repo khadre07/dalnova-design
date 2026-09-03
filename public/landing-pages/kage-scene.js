@@ -2074,6 +2074,21 @@ function updateLeaves(dt) {
    spaced string of beads at every speed. */
 const WISP_D = 3.4;
 const WISP = { list: [], i: 0, acc: 0, ex: 0, ey: 0, lx: 0, ly: 0, idle: 0, seen: false };
+/* The glyph atlas the pointer sheds: 0 on the left, 1 on the right.
+   Drawn rather than shipped — two characters is not worth a file, and drawing
+   them means they take the accent rather than whatever a file was saved at. */
+function texBinary(hex, glow) {
+  const c = cvs(128, 64), x = c.getContext('2d');
+  x.clearRect(0, 0, 128, 64);
+  x.font = '600 42px ui-monospace, "SF Mono", Menlo, monospace';
+  x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.shadowColor = glow; x.shadowBlur = 12;
+  x.fillStyle = hex;
+  x.fillText('0', 32, 33);
+  x.fillText('1', 96, 33);
+  return c;
+}
+
 function buildWisps() {
   if (COARSE) return;
   /* The motes are round, so nothing here is oriented: no per-particle angle,
@@ -2085,21 +2100,29 @@ function buildWisps() {
   g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * 3), 3));
   g.setAttribute('aA', new THREE.BufferAttribute(new Float32Array(N), 1));
   g.setAttribute('aS', new THREE.BufferAttribute(new Float32Array(N), 1));
+  /* Which of the two glyphs each mote is. Fixed per slot rather than rolled at
+     every emit: a slot is reused constantly, and re-rolling would make a mote
+     flicker between 0 and 1 while you watch it. */
+  const glyphs = new Float32Array(N);
+  for (let i = 0; i < N; i++) glyphs[i] = i % 2;
+  g.setAttribute('aG', new THREE.BufferAttribute(glyphs, 1));
   const pts = new THREE.Points(g, new THREE.ShaderMaterial({
-    uniforms: { uTex: { value: tx(texWisp()) }, uPx: { value: vpH() } },
+    uniforms: { uTex: { value: tx(texBinary('#bfeaff', 'rgba(53,210,255,.95)')) }, uPx: { value: vpH() } },
     transparent: true, blending: THREE.AdditiveBlending,
     depthWrite: false, depthTest: false, fog: false,
     vertexShader:
-      'attribute float aA; attribute float aS;\n' +
-      'uniform float uPx; varying float vA;\n' +
-      'void main(){ vA = aA;\n' +
+      'attribute float aA; attribute float aS; attribute float aG;\n' +
+      'uniform float uPx; varying float vA; varying float vG;\n' +
+      'void main(){ vA = aA; vG = aG;\n' +
       ' vec4 mv = modelViewMatrix * vec4(position,1.0);\n' +
       ' gl_PointSize = uPx * aS / max(-mv.z, 0.4);\n' +
       ' gl_Position = projectionMatrix * mv; }',
     fragmentShader:
-      'uniform sampler2D uTex; varying float vA;\n' +
+      'uniform sampler2D uTex; varying float vA; varying float vG;\n' +
       'void main(){ if (vA <= 0.0) discard;\n' +
-      ' vec4 t = texture2D(uTex, gl_PointCoord);\n' +
+      /* the atlas is two cells wide: vG picks which digit this mote is */
+      ' vec2 uv = vec2(gl_PointCoord.x * 0.5 + vG * 0.5, gl_PointCoord.y);\n' +
+      ' vec4 t = texture2D(uTex, uv);\n' +
       ' gl_FragColor = vec4(t.rgb, t.a * vA); }'
   }));
   pts.frustumCulled = false; pts.renderOrder = 9;
@@ -3610,18 +3633,26 @@ function buildBuilding() {
   const COLS = 26, ROWS = 7;
   const stepX = (W - 1.2) / COLS, stepY = (H - 1.6) / ROWS;
   const zScreen = D / 2 + .62;
-  const vertGeo = new THREE.BoxGeometry(.17, H - 1.6, .5);
-  const horzGeo = new THREE.BoxGeometry(W - 1.2, .16, .5);
+  /* Thirty-four members, one mesh.
+
+     Built as separate meshes the screen was thirty-four draw calls for a thing
+     that is one object made of one material — and it is on screen for the whole
+     page. The author shipped mergeGeos for exactly this; baking the transforms
+     into the geometry costs nothing at build time and pays every frame. */
+  const bars = [];
   for (let i = 0; i <= COLS; i += 1) {
-    const m = new THREE.Mesh(vertGeo, concrete);
-    m.position.set(-(W - 1.2) / 2 + i * stepX, 3.4 + H / 2, zScreen);
-    g.add(m);
+    const geo = new THREE.BoxGeometry(.17, H - 1.6, .5);
+    geo.translate(-(W - 1.2) / 2 + i * stepX, 3.4 + H / 2, zScreen);
+    bars.push(geo);
   }
   for (let j = 0; j <= ROWS; j += 1) {
-    const m = new THREE.Mesh(horzGeo, concrete);
-    m.position.set(0, 3.4 + .8 + j * stepY, zScreen);
-    g.add(m);
+    const geo = new THREE.BoxGeometry(W - 1.2, .16, .5);
+    geo.translate(0, 3.4 + .8 + j * stepY, zScreen);
+    bars.push(geo);
   }
+  const screen = new THREE.Mesh(mergeGeos(bars), concrete);
+  bars.forEach(b => b.dispose());
+  g.add(screen);
 
   /* The roof slab, overhanging deeply on every side. In this climate that
      shadow is the point of the building. */
@@ -3637,9 +3668,34 @@ function buildBuilding() {
   const drum = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.2, 5.6, 28, 1, true), concrete);
   drum.position.set(W / 2 + 3.4, 3.4 + 2.8, 2.2);
   g.add(drum);
-  const drumCap = new THREE.Mesh(new THREE.CylinderGeometry(4.9, 4.9, .4, 28), concrete);
-  drumCap.position.set(W / 2 + 3.4, 3.4 + 5.8, 2.2);
-  g.add(drumCap);
+  /* The roof of a case: a cone of thatch over a round plan.
+
+     This is the form the drum was always reaching for. The impluvium houses of
+     Casamance — and the Musée des Civilisations Noires that took its plan from
+     them — are round walls under a deep conical roof, and the roof is the part
+     you actually see from a distance. A flat cap on a cylinder is a silo; the
+     cone is a case.
+
+     Thatch, not concrete: it is the one warm, soft, non-manufactured thing in
+     a frame otherwise made of steel, glass and cable, and that contrast is the
+     whole reason to have it. The overhang is deep because on a real case it is
+     deep — the roof is what keeps the rain off a wall that is not waterproof. */
+  const thatch = new THREE.MeshStandardMaterial({ color: 0x8a6f45, roughness: 1, metalness: 0 });
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(6.1, 4.4, 24, 1), thatch);
+  roof.position.set(W / 2 + 3.4, 3.4 + 7.8, 2.2);
+  g.add(roof);
+  /* The ring beam the roof sits on, so it lands on the wall rather than
+     floating over it. */
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, .34, 28), concrete);
+  beam.position.set(W / 2 + 3.4, 3.4 + 5.75, 2.2);
+  g.add(beam);
+  /* The finial. Every case has something at the apex; on one belonging to an
+     IT company it is a lit point, which is also the only place a beacon makes
+     sense on a round roof. */
+  const finial = new THREE.Mesh(new THREE.SphereGeometry(.22, 10, 10),
+    new THREE.MeshBasicMaterial({ color: 0xff9a45, transparent: true, opacity: .9 }));
+  finial.position.set(W / 2 + 3.4, 3.4 + 10.2, 2.2);
+  g.add(finial);
   /* Lit from inside, through a ring of openings, the way the screen is. */
   for (let i = 0; i < 16; i += 1) {
     const a = (i / 16) * Math.PI * 2;
@@ -3852,13 +3908,21 @@ function buildCabinet(x, z, s, y) {
   const face = new THREE.Mesh(new THREE.PlaneGeometry(.86, 1.3), new THREE.MeshBasicMaterial({ color: DAL.panel }));
   face.position.set(0, 1.15, .48);
   g.add(face);
+  /* Twelve indicators, one mesh. Same reasoning as the screen, and there are
+     six cabinets: seventy-two draw calls saved for a row of lights nobody
+     inspects individually. They lose their per-lamp brightness in the merge,
+     which is a fair trade — at this distance the row reads as a row. */
+  const leds = [];
   for (let r = 0; r < 3; r += 1) {
     for (let c = 0; c < 4; c += 1) {
-      const led = new THREE.Mesh(new THREE.PlaneGeometry(.09, .05), dalLit(DAL.accent, .4 + Math.random() * .55));
-      led.position.set(-.3 + c * .2, .72 + r * .38, .49);
-      g.add(led);
+      const geo = new THREE.PlaneGeometry(.09, .05);
+      geo.translate(-.3 + c * .2, .72 + r * .38, .49);
+      leds.push(geo);
     }
   }
+  const panel = new THREE.Mesh(mergeGeos(leds), dalLit(DAL.accent, .72));
+  leds.forEach(l => l.dispose());
+  g.add(panel);
 
   g.scale.setScalar(scale);
   g.position.set(x, y === undefined ? 0 : y, z);

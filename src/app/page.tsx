@@ -36,7 +36,9 @@ export default function Page() {
         bodyFont: "Onest",
         headingWeight: "400",
         bodyWeight: "300",
-        primaryColor: "#0056d6",
+        /* Dalnova's own arc cyan, the colour the rest of the company's material
+           already uses — not the blue the brief happened to be configured with. */
+        primaryColor: "#35d2ff",
         headingSize: 46,
         bodySize: 17,
         headingLetterSpacing: 0.028,

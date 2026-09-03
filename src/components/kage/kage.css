@@ -100,7 +100,7 @@ h1,h2,h3{ font-weight:400; margin:0; letter-spacing:-.005em; }
 }
 #pre.done{ opacity:0; visibility:hidden; pointer-events:none; }
 .pre-in{ width:min(420px,74vw); text-align:center; }
-.pre-mark{ margin:0 auto 26px; width:44px; height:44px; opacity:.9; }
+.pre-mark{ margin:0 auto 26px; width:auto; height:34px; opacity:.9; display:flex; justify-content:center; }
 .pre-mark svg{ width:100%; height:100%; display:block; }
 .pre-jp{ font-size:12px; letter-spacing:.5em; color:var(--bone-dim); margin-bottom:20px; }
 .pre-bar{ position:relative; height:1px; background:rgba(223,231,224,.14); overflow:hidden; }
@@ -140,6 +140,12 @@ h1,h2,h3{ font-weight:400; margin:0; letter-spacing:-.005em; }
 .nav.hide{ transform:translate3d(0,-101%,0); }
 .brand{ display:flex; align-items:center; gap:11px; flex:0 0 auto; }
 .brand svg{ width:34px; height:34px; display:block; }
+/* The logo is a wordmark, not a glyph: it is wide, not square. Sized by its
+   height and left to find its own width, where the authored mark was a 34px
+   square and would have squashed it. */
+.brand-logo{ height:26px; width:auto; display:block; }
+.pre-mark .brand-logo{ height:34px; margin:0 auto; }
+.foot-brand .brand-logo{ height:24px; margin-bottom:10px; }
 .brand-tx{ display:flex; flex-direction:column; line-height:1; gap:3px; }
 .brand-tx b{ font-size:12px; font-weight:500; letter-spacing:.26em; }
 .brand-tx i{ font-style:normal; font-size:8px; letter-spacing:.34em; color:var(--muted); }
