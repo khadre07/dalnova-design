@@ -3480,11 +3480,27 @@ function updateWorld(dt) {
   /* the type rises from behind the grass, then dissolves as you close on it */
   if (WORD.group) {
     const near = smooth(0.02, 0.92, RIG.smooth);
+    /* A signal crossing the word.
+
+       The letters are cut through the scene and they are the largest thing in
+       the frame, so whatever moves in them has to be almost nothing or it
+       becomes the subject. This is one bright point travelling left to right,
+       a letter at a time, then a pause longer than the crossing before it
+       comes again — a packet going through, which is the one animation this
+       company's name has a reason to carry.
+
+       Gaussian rather than a step, so the light is on two letters at once at
+       the handover and never blinks. Multiplied by each letter's own reveal,
+       so nothing lights before it has arrived. */
+    const span = WORD.glyphs.length + 5;
+    const head = (clock * 1.5) % span - 2.5;
     WORD.glyphs.forEach((g, i) => {
       const st = clamp((WORD.reveal - i * .075) / .62, 0, 1);
       const e = easeOut(st);
       g.position.y = g.userData.baseY - (1 - e) * (WORD.ink.asc * 1.15);
       g.material.opacity = e * (1 - near * .96);
+      const d = i - head;
+      g.material.color.setScalar(1 + 1.5 * Math.exp(-(d * d) / .55) * e);
       g.visible = g.material.opacity > .004;
     });
   }

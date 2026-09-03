@@ -1,7 +1,26 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, Geist, Geist_Mono, Martian_Mono } from "next/font/google";
 import { SiteProvider } from "@/lib/site-state";
-import "./globals.css";
+/* Dalnova's own stylesheet is deliberately not imported here.
+
+   This worktree serves one page, and that page is Kage — which arrives with a
+   complete authored stylesheet of its own. Loading the site's 2789-line sheet
+   alongside it puts two designs in one cascade under the same class names, and
+   they collide: .hero, .card, .chip, .page all exist in both.
+
+   One collision was measured rather than suspected. The site indents its hero
+   to clear the orbit ring —
+
+     @media (min-width: 1024px) { .hero { padding-left: 9.5vw;
+                                          margin-right: calc(-1 * 9.5vw) } }
+
+   — and at 1440 that negative margin made Kage's hero 1576.8 pixels wide
+   inside a 1440 body. Everything positioned from its right edge went with it:
+   the preview card landed at 1528 and lost its caption off the screen. The
+   document reported a scroll width of 1577 against a viewport of 1440.
+
+   Kage's sheet carries its own reset — box-sizing on everything, its own body
+   rule — so nothing is lost by leaving the site's out. */
 
 /* Archivo is here for its width axis. Set expanded and uppercase it reads as
    machined signage, which is the register we want, and it is not the grotesk

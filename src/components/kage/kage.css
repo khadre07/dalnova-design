@@ -234,12 +234,14 @@ h1,h2,h3{ font-weight:400; margin:0; letter-spacing:-.005em; }
 .peek-cap{ display:flex; align-items:baseline; gap:9px; margin-top:9px; min-width:0; }
 /* The caption must not widen the card.
 
-   The author's is four words on a 230px preview — 山門 beside "Sanmon, before
-   the bell" — and it fits with room to spare, so nothing here needed a guard.
-   Translated captions are longer, and a flex row with no min-width refuses to
-   shrink below its content: the caption pushed the card, the card pushed the
-   hero, and the document went 137 pixels wider than the screen. The text now
-   wraps inside the card instead of taking the page with it. */
+   The author's is four words on a 230px preview and fits with room to spare,
+   so nothing here needed a guard. Translated captions are longer, and a flex
+   row with no min-width refuses to shrink below its content.
+
+   This is a guard and not the fix: the 137 pixels the document was overflowing
+   came from the site's own .hero rule leaking into this page through a shared
+   class name, which is dealt with where the stylesheet is imported. The guard
+   stays because a long caption would still stretch the card on its own. */
 .peek-cap i{ min-width:0; overflow-wrap:anywhere; }
 .peek-cap b{ font-size:11px; font-weight:400; letter-spacing:.24em; color:var(--bone-dim); }
 .peek-cap i{ font-style:normal; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); }
