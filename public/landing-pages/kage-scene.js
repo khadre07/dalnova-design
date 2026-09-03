@@ -1503,6 +1503,8 @@ function buildTemple() {
    against the buildings when the rig drifts.                             */
 const MOON = { x: 17.9, y: 31.9, z: -72, r: 8.6 };
 function buildMoon() {
+  const moonCanvas = texMoon();
+  const moonTex = tx(moonCanvas);
   const disc = new THREE.Mesh(new THREE.PlaneGeometry(MOON.r * 2, MOON.r * 2),
     /* The grade lives here, on a near-neutral albedo, and it is linear rather
        than display — the map is decoded out of sRGB before this multiplies it,
@@ -1512,15 +1514,91 @@ function buildMoon() {
        Turned from blood to cold. A red moon is the one thing in the sky that
        could only ever have been Kage's; a pale one leaning to the page's own
        cyan belongs to the water underneath it. */
-    new THREE.MeshBasicMaterial({ map: tx(texMoon()), color: hdr(2.35, 2.95, 3.45),
+    new THREE.MeshBasicMaterial({ map: moonTex, color: hdr(2.35, 2.95, 3.45),
       transparent: true, depthWrite: false, fog: false, toneMapped: false }));
   disc.position.set(MOON.x, MOON.y, MOON.z); disc.renderOrder = 1;
   scene.add(disc); WORLD.moon = disc;
 
+  /* The mark, written into the moon as one of its seas.
+
+     Not laid over the disc and not lit: composited into the same canvas the
+     maria are drawn on, before the material ever samples it, so it weathers
+     with everything else — the ray systems cross it, the crater field sits on
+     top of it, the terminator darkens it, and the one-pixel feather at the
+     limb cuts it off if it reaches that far. A logo pasted on the front of a
+     moon is a sticker; a logo drawn into its albedo is a marking.
+
+     Dark rather than bright, because that is what a marking on a moon is. The
+     file's ink is pale, so multiplying it would do nothing — its alpha is
+     taken as a silhouette instead and filled with black, and that shape is
+     laid in at a tenth of an opacity through a blur wide enough that no edge
+     of it is a printed edge.
+
+     Placed off-centre and turned slightly: the real seas are a lopsided
+     cluster, and anything centred and level on a sphere reads as applied.
+
+     Asynchronous, and that is the whole reason the canvas and the texture are
+     held here rather than passed straight into the material. The moon is
+     correct without it; when the file lands the texture is marked dirty and
+     the disc picks it up on the next frame. If it never lands, nobody sees a
+     gap. */
+  const mark = new Image();
+  mark.onload = () => {
+    const S = moonCanvas.width, R = S / 2 - 1, x = moonCanvas.getContext('2d');
+
+    /* The silhouette: the file's own alpha, filled black. */
+    const sil = cvs(mark.width, mark.height), sx = sil.getContext('2d');
+    sx.drawImage(mark, 0, 0);
+    sx.globalCompositeOperation = 'source-in';
+    sx.fillStyle = '#000';
+    sx.fillRect(0, 0, sil.width, sil.height);
+
+    /* Feathered, because the dosage was never the problem.
+
+       A flat wash of the mark reads as printing however faint it is: the
+       letters all carry the same weight and they stop at an edge, which is
+       the one thing nothing on a moon does. So the silhouette is thinned by
+       a radial falloff before it is laid down — dense through the middle,
+       gone by the ends of the word — and what lands is a patch of darker
+       ground that happens to be shaped like the name.
+
+       It is composited into the albedo and not over the disc, so the rays,
+       the crater field, the terminator and the limb all fall on top of it. */
+    const g = sx.createRadialGradient(
+      sil.width / 2, sil.height / 2, 0,
+      sil.width / 2, sil.height / 2, sil.width * .60);
+    g.addColorStop(0, 'rgba(0,0,0,1)');
+    g.addColorStop(.52, 'rgba(0,0,0,.92)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    sx.globalCompositeOperation = 'destination-in';
+    sx.fillStyle = g;
+    sx.fillRect(0, 0, sil.width, sil.height);
+
+    /* Placed in the lower right: the one broad stretch of highland the maria
+       on this plate leave alone. In the middle it sat on Procellarum and
+       Imbrium and was simply gone, and subtle has to mean quiet, not absent. */
+    const w = S * .60, h = w * (mark.height / mark.width);
+    x.save();
+    x.beginPath(); x.arc(S / 2, S / 2, R * .94, 0, TAU); x.clip();
+    x.globalAlpha = .23;
+    x.filter = 'blur(2.4px)';
+    x.translate(S * .60, S * .63);
+    x.rotate(-.11);
+    x.drawImage(sil, -w / 2, -h / 2, w, h);
+    x.restore();
+
+    moonTex.needsUpdate = true;
+  };
+  mark.onerror = () => {};
+  mark.src = '/brand/dalnova.webp';
+
   /* the air around it — a wide, weak corona that the bloom picks up */
   const halo = new THREE.Mesh(new THREE.PlaneGeometry(MOON.r * 6.4, MOON.r * 6.4),
-    new THREE.MeshBasicMaterial({ map: tx(texGlow('rgba(255,124,112,.90)', 'rgba(206,52,48,.26)')),
-      transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, opacity: .44 }));
+    /* The corona follows the disc. It was left at the blood moon's red when
+       the moon itself went cold, which put a warm halo around a white light —
+       two different nights in one sky. */
+    new THREE.MeshBasicMaterial({ map: tx(texGlow('rgba(186,224,246,.88)', 'rgba(96,150,196,.24)')),
+      transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, opacity: .40 }));
   halo.position.set(MOON.x, MOON.y, MOON.z - .3); halo.renderOrder = 0;
   scene.add(halo); WORLD.moonHalo = halo;
 }
