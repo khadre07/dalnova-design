@@ -2199,7 +2199,13 @@ function buildWisps() {
       'uniform sampler2D uTex; varying float vA; varying float vG;\n' +
       'void main(){ if (vA <= 0.0) discard;\n' +
       /* the atlas is two cells wide: vG picks which digit this mote is */
-      ' vec2 uv = vec2(gl_PointCoord.x * 0.5 + vG * 0.5, gl_PointCoord.y);\n' +
+      /* 1.0 - y, because the atlas arrives flipped. A CanvasTexture uploads
+         with flipY on, so its first row lands at v = 1, while gl_PointCoord
+         starts at 0 at the top of the sprite — the two run opposite ways and
+         every glyph came out upside down. The 0 is symmetric and survived it;
+         the 1 did not, and at cursor size an inverted 1 beside a round 0 is
+         exactly what a snowflake looks like. */
+      ' vec2 uv = vec2(gl_PointCoord.x * 0.5 + vG * 0.5, 1.0 - gl_PointCoord.y);\n' +
       ' vec4 t = texture2D(uTex, uv);\n' +
       ' gl_FragColor = vec4(t.rgb, t.a * vA); }'
   }));
@@ -2245,7 +2251,11 @@ function updateWisps(dt) {
     w.life = 0; w.max = (weak ? 2.1 : 1.45) + Math.random() * 1.3;
     w.vx = -Math.cos(a) * .09 + (Math.random() - .5) * .38;
     w.vy = -Math.sin(a) * .09 + (Math.random() - .5) * .32 + .02;
-    w.sz = (weak ? .018 : .024) + Math.random() * .026;
+    /* Sized to be read, not just seen. At the old scale a mote came out
+       around seven to fourteen pixels — enough for a speck of light, not
+       enough for a character, which is the whole point of them being ones
+       and zeros. Roughly doubled: they now land near a legible body size. */
+    w.sz = (weak ? .034 : .046) + Math.random() * .042;
     w.ph = Math.random() * TAU;
   };
 
@@ -3924,7 +3934,13 @@ function buildDrift(kind) {
       'uniform sampler2D uMap; varying float vA; varying float vG;\n' +
       'void main(){\n' +
       /* the atlas is two cells wide: vG picks which one this particle is */
-      ' vec2 uv = vec2(gl_PointCoord.x * 0.5 + vG * 0.5, gl_PointCoord.y);\n' +
+      /* 1.0 - y, because the atlas arrives flipped. A CanvasTexture uploads
+         with flipY on, so its first row lands at v = 1, while gl_PointCoord
+         starts at 0 at the top of the sprite — the two run opposite ways and
+         every glyph came out upside down. The 0 is symmetric and survived it;
+         the 1 did not, and at cursor size an inverted 1 beside a round 0 is
+         exactly what a snowflake looks like. */
+      ' vec2 uv = vec2(gl_PointCoord.x * 0.5 + vG * 0.5, 1.0 - gl_PointCoord.y);\n' +
       ' vec4 t = texture2D(uMap, uv);\n' +
       ' gl_FragColor = vec4(t.rgb, t.a * vA * ' + (winter ? '0.75' : '0.6') + '); }'
   });

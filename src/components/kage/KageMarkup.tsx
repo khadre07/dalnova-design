@@ -61,6 +61,51 @@ export default function KageMarkup() {
           <a  className="nav-link" href="#lessons" data-dock-item data-cursor><span  className="nav-face"><span>Secteurs</span><span  className="alt">01110011</span></span></a>
           <a  className="nav-link" href="#eternity" data-dock-item data-cursor><span  className="nav-face"><span>Contact</span><span  className="alt">01100011</span></span></a>
         </nav>
+        {/* ------------------------------------------------------- les réseaux
+
+            Les adresses sont à compléter. Aucun compte n'est renseigné dans le
+            projet et je n'en invente pas : une URL plausible mais fausse mène
+            au compte de quelqu'un d'autre, ce qui est pire qu'un lien mort.
+            Remplacer chaque href="#" par l'adresse réelle du compte.
+
+            Dessinés en traits plutôt qu'en aplats, comme le reste de la barre :
+            à seize pixels un logo plein devient une tache, et un contour garde
+            la silhouette qui rend la plateforme reconnaissable. */}
+        <nav  className="nav-social" aria-label="Réseaux sociaux">
+          <a href="#" className="nav-soc" aria-label="LinkedIn" data-cursor>
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <rect x="1.6" y="1.6" width="12.8" height="12.8" rx="2.2" />
+              <path d="M4.7 6.9v4.4M4.7 4.7v.02M7.6 11.3V6.9M7.6 8.7c0-1.1.8-1.8 1.8-1.8s1.8.7 1.8 1.8v2.6" />
+            </svg>
+          </a>
+          <a href="#" className="nav-soc" aria-label="X (Twitter)" data-cursor>
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M2.6 2.6h2.9l7.9 10.8H10.5z" />
+              <path d="M12.9 2.6 9.4 6.6M6.4 9.5l-3.3 3.9" />
+            </svg>
+          </a>
+          <a href="#" className="nav-soc" aria-label="Facebook" data-cursor>
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M9.9 3.3h1.9M9.9 3.3C8.8 3.3 8.2 4 8.2 5.1v8.4M6.4 7.6h3.9" />
+              <rect x="1.6" y="1.6" width="12.8" height="12.8" rx="2.2" />
+            </svg>
+          </a>
+          <a href="#" className="nav-soc" aria-label="Instagram" data-cursor>
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <rect x="1.6" y="1.6" width="12.8" height="12.8" rx="3.8" />
+              <circle cx="8" cy="8" r="3.1" />
+              <path d="M11.7 4.3v.02" />
+            </svg>
+          </a>
+          {/* WhatsApp plutôt qu'une cinquième plateforme occidentale : à Dakar
+              c'est par là que le premier contact arrive. */}
+          <a href="#" className="nav-soc" aria-label="WhatsApp" data-cursor>
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M2.4 13.6l.9-3a5.6 5.6 0 1 1 2.1 2.1z" />
+              <path d="M6 6.1c.3 1.9 1.9 3.5 3.8 3.8l.8-1 1.2.6-.2 1.2c-2.6.5-5.6-2.4-5.1-5.1l1.2-.2.6 1.2z" />
+            </svg>
+          </a>
+        </nav>
         <button  className="nav-burger" aria-label="Menu" data-cursor><i></i><i></i></button>
       </header>
 
