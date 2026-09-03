@@ -25,6 +25,8 @@ export default function KageMarkup() {
   return (
     <>
       <canvas  id="gl" aria-hidden="true"></canvas>
+      {/* The reading scrim. Over the canvas, under everything the page says. */}
+      <div  className="read-scrim" aria-hidden="true"></div>
       <div  id="vignette"></div>
       <div  id="grain"></div>
       <div  className="cur-dot" id="cursor"></div>

@@ -887,3 +887,34 @@ body[data-layout-footer="b"] .foot-base span:last-child{ text-align:right; }
   [data-rv]{ opacity:1 !important; transform:none !important; }
   .mask-line > span,.word{ opacity:1 !important; transform:none !important; }
 }
+
+/* ---------------------------------------------------------------- the scrim
+
+   Measured, not guessed. Body copy crossing the lit face of the building came
+   out at 1.57:1 against the brightest part of the screen and 2.82:1 against
+   its average — the first is text that is not there, the second fails AA for
+   anything but display sizes. The authored text-shadow was doing what it could,
+   but it was written for a temple lit through paper, and a concrete screen with
+   a room behind it is a brighter thing.
+
+   A scrim rather than a dimmer. Darkening the whole scene would pay for the
+   copy with the picture; this pays only where the copy is. It runs down the
+   left, where every chapter puts its text, and dies out before the middle so
+   the building is never behind a curtain.
+
+   Under the copy and over the canvas, and it takes no pointer events: the
+   cards behind it are still hoverable. */
+.read-scrim{
+  position:fixed; inset:0; z-index:1; pointer-events:none;
+  background:linear-gradient(100deg,
+    rgba(3,6,9,.88) 0%,
+    rgba(3,6,9,.72) 24%,
+    rgba(3,6,9,.34) 44%,
+    rgba(3,6,9,0)   62%);
+}
+@media (max-width:900px){
+  /* On a narrow screen the copy is over the middle of the scene, not beside
+     it, so the gradient has to cover rather than flank. */
+  .read-scrim{ background:linear-gradient(180deg,
+    rgba(3,6,9,.86) 0%, rgba(3,6,9,.62) 46%, rgba(3,6,9,.34) 100%); }
+}

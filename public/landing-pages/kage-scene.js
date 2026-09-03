@@ -3622,8 +3622,14 @@ function buildBuilding() {
 
   /* The lit face behind the screen. One plane, warm, so what shows through the
      openings is a room and not a row of lamps. */
+  /* Dalnova's ember, and quieter than it was.
+
+     Measured rather than eyeballed: at half opacity the screen averaged 96,86,76
+     and peaked at 131,127,119, which put body copy crossing it at 1.57:1 — text
+     that is not there. The building is behind the words, so it does not get to
+     be brighter than them. */
   const inner = new THREE.Mesh(new THREE.PlaneGeometry(W - 1.5, H - 1.6),
-    new THREE.MeshBasicMaterial({ color: 0xffc98a, transparent: true, opacity: .5 }));
+    new THREE.MeshBasicMaterial({ color: 0xff9a45, transparent: true, opacity: .3 }));
   inner.position.set(0, 3.4 + H / 2, D / 2 + .04);
   g.add(inner);
 
@@ -3653,6 +3659,24 @@ function buildBuilding() {
   const screen = new THREE.Mesh(mergeGeos(bars), concrete);
   bars.forEach(b => b.dispose());
   g.add(screen);
+
+  /* The sign. A building belonging to a company carries its name, and the one
+     place it goes is the face, above the screen and under the slab.
+
+     Loaded as a texture rather than drawn: it is the same file the header
+     uses, so the mark on the building and the mark on the page are the same
+     mark. Basic and unlit — a sign is lit from within, not by the moon — and
+     un-tone-mapped so the cyan survives the ACES curve that would otherwise
+     pull it grey. */
+  new THREE.TextureLoader().load('/brand/dalnova.webp', map => {
+    map.colorSpace = THREE.SRGBColorSpace;
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(9.4, 3.65),
+      new THREE.MeshBasicMaterial({ map: map, transparent: true, opacity: .92,
+                                    depthWrite: false, fog: true, toneMapped: false }));
+    sign.position.set(0, 3.4 + H - .1, D / 2 + .95);
+    g.add(sign);
+    WORLD.sign = sign;
+  });
 
   /* The roof slab, overhanging deeply on every side. In this climate that
      shadow is the point of the building. */
@@ -3700,7 +3724,7 @@ function buildBuilding() {
   for (let i = 0; i < 16; i += 1) {
     const a = (i / 16) * Math.PI * 2;
     const slit = new THREE.Mesh(new THREE.PlaneGeometry(.34, 2.6),
-      new THREE.MeshBasicMaterial({ color: 0xffc98a, transparent: true, opacity: .42 }));
+      new THREE.MeshBasicMaterial({ color: 0xff9a45, transparent: true, opacity: .34 }));
     slit.position.set(W / 2 + 3.4 + Math.sin(a) * 4.24, 3.4 + 2.8, 2.2 + Math.cos(a) * 4.24);
     slit.rotation.y = a;
     g.add(slit);
