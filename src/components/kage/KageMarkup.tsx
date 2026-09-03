@@ -114,12 +114,6 @@ export default function KageMarkup() {
       <section  className="sec" id="gate" data-cam="1">
         {/* foreground: the wall arrives first, the pine at the edge, the grass last */}
         <div  className="fg" data-fg="gate" aria-hidden="true">
-          <span  className="fg-el fg-wall" data-fg-in="left">
-            <img  src="secret-pathways-assets/foreground/png/temple-wall.webp" alt="" width="1536" height="884" loading="lazy" decoding="async" />
-          </span>
-          <span  className="fg-el fg-pine" data-fg-in="right">
-            <img  src="secret-pathways-assets/foreground/png/pine-tree.webp" alt="" width="1024" height="1438" loading="lazy" decoding="async" />
-          </span>
           <span  className="fg-el fg-grass" data-fg-in="up">
             <img  src="secret-pathways-assets/foreground/png/tall-grass.webp" alt="" width="1717" height="916" loading="lazy" decoding="async" />
           </span>
@@ -137,13 +131,13 @@ export default function KageMarkup() {
               caméras, un pour le réseau, un autre pour les logiciels. Une équipe unique, un interlocuteur unique,
               une facture unique. Huit domaines couverts de bout en bout, à Dakar, sur site et à distance.</p>
             <a  className="arrowlink" href="#pathways" data-rv="fade" data-cursor>
-              <span>Découvrir nos services</span>
+              <span>Voir comment nous travaillons</span>
               <span  className="ar"><svg  viewBox="0 0 14 14" fill="none"><path  d="M3 11 11 3M5 3h6v6" stroke="#dfe7e0" strokeWidth="1.3" /></svg></span>
             </a>
           </div>
         </div>
         <div  className="gate-stats" data-rv="up">
-          <div><b>05</b><span>Domaines</span></div>
+          <div><b>08</b><span>Domaines</span></div>
           <div><b>05</b><span>Étapes</span></div>
           <div><b>2021</b><span>Fondée en</span></div>
           <div><b>∞</b><span>Dalnova Technologies</span></div>
@@ -154,15 +148,6 @@ export default function KageMarkup() {
       <section  className="sec" id="pathways" data-cam="2">
         {/* foreground: the garden frames the mosaic from the sides and the two lower corners */}
         <div  className="fg" data-fg="pathways" aria-hidden="true">
-          <span  className="fg-el fg-sakura fg-el--sway" data-fg-in="left">
-            <img  src="secret-pathways-assets/foreground/png/sakura-branch.webp" alt="" width="1536" height="1024" loading="lazy" decoding="async" />
-          </span>
-          <span  className="fg-el fg-leaves fg-el--sway" data-fg-in="right">
-            <img  src="secret-pathways-assets/foreground/png/maple-leaves.webp" alt="" width="1536" height="1024" loading="lazy" decoding="async" />
-          </span>
-          <span  className="fg-el fg-lantern" data-fg-in="up">
-            <img  src="secret-pathways-assets/foreground/png/stone-lantern.webp" alt="" width="1024" height="1499" loading="lazy" decoding="async" />
-          </span>
           <span  className="fg-el fg-bush" data-fg-in="up">
             <img  src="secret-pathways-assets/foreground/png/garden-bush.webp" alt="" width="1717" height="876" loading="lazy" decoding="async" />
           </span>
@@ -202,9 +187,6 @@ export default function KageMarkup() {
       <section  className="sec" id="lessons" data-cam="3">
         {/* foreground: a low periphery for the atlas — wall fragment, basalt, one stand of grass */}
         <div  className="fg" data-fg="lessons" aria-hidden="true">
-          <span  className="fg-el fg-wall fg-el--flip" data-fg-in="right">
-            <img  src="secret-pathways-assets/foreground/png/temple-wall.webp" alt="" width="1536" height="884" loading="lazy" decoding="async" />
-          </span>
           <span  className="fg-el fg-stones" data-fg-in="up">
             <img  src="secret-pathways-assets/foreground/png/basalt-stones.webp" alt="" width="1536" height="996" loading="lazy" decoding="async" />
           </span>
@@ -213,7 +195,7 @@ export default function KageMarkup() {
           </span>
         </div>
         <div  className="sec-head" data-rv="fade">
-          <span  className="k"><b>03</b> — Nos domaines</span><span  className="rule"></span><span  className="k jp">REF</span>
+          <span  className="k"><b>03</b> — Nos domaines</span><span  className="rule"></span><span  className="k jp">CAT</span>
         </div>
         <div  className="cur-head">
           <h2  className="display h-sec" data-rv="up">Huit domaines. Un interlocuteur. Une facture.</h2>
@@ -223,33 +205,51 @@ export default function KageMarkup() {
         <div  className="cur" id="cur">
           <div  className="les" data-les="0" data-cursor>
             <span  className="k">01</span>
-            <h3>Réseaux et systèmes<em  className="jp">SRV</em></h3>
+            <h3>Réseaux et systèmes</h3>
             <p>Infrastructures LAN et WAN, câblage structuré, VPN et liaison radio, administration Windows et Linux.</p>
             <span  className="t">NET</span><i  className="bar"></i>
           </div>
           <div  className="les" data-les="1" data-cursor>
             <span  className="k">02</span>
-            <h3>Cloud et messagerie<em  className="jp">NET</em></h3>
-            <p>Hébergement, messagerie professionnelle, noms de domaine, migration et sauvegarde.</p>
-            <span  className="t">CLD</span><i  className="bar"></i>
+            <h3>Développement d’applications</h3>
+            <p>Applications web, mobiles et métier, de la conception à la mise en production.</p>
+            <span  className="t">DEV</span><i  className="bar"></i>
           </div>
           <div  className="les" data-les="2" data-cursor>
             <span  className="k">03</span>
-            <h3>Téléphonie IP<em  className="jp">CLD</em></h3>
-            <p>IPBX, déploiement VoIP, portabilité des numéros, communications unifiées.</p>
-            <span  className="t">TEL</span><i  className="bar"></i>
+            <h3>Cloud, hébergement et messagerie</h3>
+            <p>Hébergement, messagerie professionnelle, noms de domaine, migration et sauvegarde.</p>
+            <span  className="t">CLD</span><i  className="bar"></i>
           </div>
           <div  className="les" data-les="3" data-cursor>
             <span  className="k">04</span>
-            <h3>IA appliquée<em  className="jp">02</em></h3>
-            <p>Serveurs MCP et IA métier, mises au service de vos processus réels.</p>
-            <span  className="t">IA</span><i  className="bar"></i>
+            <h3>Téléphonie IP</h3>
+            <p>IPBX, déploiement VoIP, portabilité des numéros, communications unifiées.</p>
+            <span  className="t">TEL</span><i  className="bar"></i>
           </div>
           <div  className="les" data-les="4" data-cursor>
             <span  className="k">05</span>
-            <h3>Sécurité physique<em  className="jp">IA</em></h3>
+            <h3>Sécurité physique</h3>
             <p>Vidéosurveillance, contrôle d’accès, protection des locaux et supervision.</p>
             <span  className="t">SEC</span><i  className="bar"></i>
+          </div>
+          <div  className="les" data-les="5" data-cursor>
+            <span  className="k">06</span>
+            <h3>IA appliquée</h3>
+            <p>Serveurs MCP et IA métier, branchés sur vos données et vos outils réels.</p>
+            <span  className="t">IA</span><i  className="bar"></i>
+          </div>
+          <div  className="les" data-les="6" data-cursor>
+            <span  className="k">07</span>
+            <h3>Support IT et infogérance</h3>
+            <p>Maintenance, assistance sur site et à distance, supervision du parc.</p>
+            <span  className="t">SUP</span><i  className="bar"></i>
+          </div>
+          <div  className="les" data-les="7" data-cursor>
+            <span  className="k">08</span>
+            <h3>Équipements et licences</h3>
+            <p>Choix, fourniture, installation et intégration du matériel et des licences.</p>
+            <span  className="t">EQP</span><i  className="bar"></i>
           </div>
         </div>
       </section>
@@ -261,14 +261,8 @@ export default function KageMarkup() {
           <span  className="fg-el fg-hill" data-fg-in="up">
             <img  src="secret-pathways-assets/foreground/png/hill.webp" alt="" width="1774" height="887" loading="lazy" decoding="async" />
           </span>
-          <span  className="fg-el fg-ruins" data-fg-in="left">
-            <img  src="secret-pathways-assets/foreground/png/shrine-ruins.webp" alt="" width="1536" height="1001" loading="lazy" decoding="async" />
-          </span>
           <span  className="fg-el fg-grass" data-fg-in="up">
             <img  src="secret-pathways-assets/foreground/png/tall-grass.webp" alt="" width="1717" height="916" loading="lazy" decoding="async" />
-          </span>
-          <span  className="fg-el fg-sakura" data-fg-in="left">
-            <img  src="secret-pathways-assets/foreground/png/sakura-branch.webp" alt="" width="1536" height="1024" loading="lazy" decoding="async" />
           </span>
         </div>
         <div  className="eyebrow" data-rv="fade">Chapitre 04 — Contact</div>
