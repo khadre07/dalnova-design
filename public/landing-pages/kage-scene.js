@@ -3948,6 +3948,31 @@ function buildCabinet(x, z, s, y) {
   leds.forEach(l => l.dispose());
   g.add(panel);
 
+  /* Kage's lamp, kept whole.
+
+     The stone lantern was the one lit object on the approach, and what made it
+     read was never the stone: it was a warm point light at 2.6 over a range of
+     nine, a glow sprite that turns to face the camera every frame, and a
+     flicker written per lamp so no two gutter together. All three are the
+     author's, and all three are registered in the same WORLD arrays his frame
+     loop drives — so the flicker code in updateWorld runs unchanged over these
+     without knowing the lantern became a cabinet.
+
+     Warm, deliberately, and the only warm thing at this end of the frame. Kage
+     set an ember against moonlight; this sets one against the cyan of the
+     cable and the panels. The contrast is the point, and it is his. */
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 3.4),
+    new THREE.MeshBasicMaterial({ map: tx(texGlow('rgba(255,120,60,.9)', 'rgba(255,60,24,.28)')),
+      transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, opacity: .5 }));
+  glow.position.y = 1.15; glow.renderOrder = 2; g.add(glow);
+  glow.userData.billboard = true;
+
+  const lamp = new THREE.PointLight(0xff5a24, 2.6, 9, 2);
+  lamp.position.set(0, 1.15, .2); g.add(lamp);
+  WORLD.lanternLights = WORLD.lanternLights || [];
+  WORLD.lanternGlows = WORLD.lanternGlows || [];
+  WORLD.lanternLights.push(lamp); WORLD.lanternGlows.push(glow);
+
   g.scale.setScalar(scale);
   g.position.set(x, y === undefined ? 0 : y, z);
   scene.add(g);

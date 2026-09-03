@@ -50,6 +50,41 @@ function load(src: string) {
 }
 
 export default function KagePage({ customization }: { customization?: Customization }) {
+  /* The six compositions, which live on the <body> and not in the markup.
+
+     The authored document opens with them declared as attributes on its own
+     body tag — data-layout-hero="b" and five siblings — and eighty-five rules
+     in its stylesheet are gated on them: the hero's split, the story's spread,
+     the gardens' mosaic, the chapter atlas, the closing gallery, the footer
+     manifesto. They are not variants in the sense of alternatives; they are
+     the compositions the page was actually designed in.
+
+     A Next.js port has no body tag of its own to write them on, and this one
+     did not write them anywhere, so every one of those rules had been inert
+     since the port: the three garden cards sat in an equal three-column grid
+     instead of one tall window beside two, and the hero chips showed copy the
+     split layout hides. Measured, not guessed — the cards reported 434x542
+     apiece where the mosaic calls for one at 72vh.
+
+     Set on the body on mount and taken off with the page, so nothing leaks
+     into another route. */
+  useEffect(() => {
+    const layouts = {
+      "data-layout-hero": "b",
+      "data-layout-story": "b",
+      "data-layout-gallery": "b",
+      "data-layout-curriculum": "b",
+      "data-layout-closing": "b",
+      "data-layout-footer": "b",
+    };
+    for (const [name, value] of Object.entries(layouts)) {
+      document.body.setAttribute(name, value);
+    }
+    return () => {
+      for (const name of Object.keys(layouts)) document.body.removeAttribute(name);
+    };
+  }, []);
+
   /* The configured props, written into the page the way the package writes
      them into its frame: one stylesheet, appended after the authored rules so
      it wins, and removed with the page. */

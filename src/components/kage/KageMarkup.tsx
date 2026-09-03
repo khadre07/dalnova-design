@@ -57,7 +57,7 @@ export default function KageMarkup() {
         </a>
         <nav  className="nav-links" id="navlinks">
           <a  className="nav-link" href="#gate" data-cursor><span>Services</span><span  className="alt">01110011</span></a>
-          <a  className="nav-link" href="#pathways" data-cursor><span>Méthode</span><span  className="alt">01101101</span></a>
+          <a  className="nav-link" href="#pathways" data-cursor><span>Réalisations</span><span  className="alt">01110010</span></a>
           <a  className="nav-link" href="#lessons" data-cursor><span>Secteurs</span><span  className="alt">01110011</span></a>
           <a  className="nav-link" href="#eternity" data-cursor><span>Contact</span><span  className="alt">01100011</span></a>
         </nav>
@@ -122,14 +122,14 @@ export default function KageMarkup() {
           <span  className="k"><b>01</b> — Nos services</span><span  className="rule"></span><span  className="k jp">SRV</span>
         </div>
         <div  className="gate-grid">
-          <h2  className="display h-sec" data-rv="up">Huit domaines, un seul prestataire.</h2>
+          <h2  className="display h-sec" data-rv="up">Sept domaines, un seul prestataire.</h2>
           <div  className="gate-copy">
             <p  className="lead" data-rv="up">Dalnova commence là où votre métier s’arrête : le câble dans le mur, le
               serveur dans le local, l’application que vos équipes ouvrent chaque matin. Rien de tout cela n’est
               décoratif. C’est ce qui fait qu’une entreprise tient debout un lundi de panne.</p>
             <p  className="body" data-rv="up">Vous perdez du temps à jongler entre trois prestataires — un pour les
               caméras, un pour le réseau, un autre pour les logiciels. Une équipe unique, un interlocuteur unique,
-              une facture unique. Huit domaines couverts de bout en bout, à Dakar, sur site et à distance.</p>
+              une facture unique. Sept domaines couverts de bout en bout, à Dakar, sur site et à distance.</p>
             <a  className="arrowlink" href="#pathways" data-rv="fade" data-cursor>
               <span>Voir comment nous travaillons</span>
               <span  className="ar"><svg  viewBox="0 0 14 14" fill="none"><path  d="M3 11 11 3M5 3h6v6" stroke="#dfe7e0" strokeWidth="1.3" /></svg></span>
@@ -137,7 +137,7 @@ export default function KageMarkup() {
           </div>
         </div>
         <div  className="gate-stats" data-rv="up">
-          <div><b>08</b><span>Domaines</span></div>
+          <div><b>07</b><span>Domaines</span></div>
           <div><b>05</b><span>Étapes</span></div>
           <div><b>2021</b><span>Fondée en</span></div>
           <div><b>∞</b><span>Dalnova Technologies</span></div>
@@ -153,32 +153,32 @@ export default function KageMarkup() {
           </span>
         </div>
         <div  className="sec-head" data-rv="fade">
-          <span  className="k"><b>02</b> — Notre méthode</span><span  className="rule"></span><span  className="k jp">MTH</span>
+          <span  className="k"><b>02</b> — Nos réalisations</span><span  className="rule"></span><span  className="k jp">REF</span>
         </div>
         <div  className="cards" id="cards">
           <article  className="card" data-rv="up" data-view="0" data-cursor>
             <div  className="card-fr" data-frame>
-                      <span  className="card-ar"><svg  viewBox="0 0 14 14" fill="none"><path  d="M3 11 11 3M5 3h6v6" stroke="#dfe7e0" strokeWidth="1.3" /></svg></span>
-              <i  className="glow" style={{ "--gx": "80.2%", "--gy": "23.9%", "--gr": "22%", "--gt": "6.1s", "--gt2": "9.7s", "--gc1": "rgba(255,142,108,.50)", "--gc2": "rgba(212,56,38,.24)" } as React.CSSProperties}></i>
-              <div  className="card-lab"><b>Analyse des besoins</b><span  className="jp">01</span></div>
+              <span  className="card-ar"><svg  viewBox="0 0 14 14" fill="none"><path  d="M3 11 11 3M5 3h6v6" stroke="#dfe7e0" strokeWidth="1.3" /></svg></span>
+              <i  className="glow" style={{ "--gx": "26.0%", "--gy": "79.0%", "--gr": "20%", "--gt": "6.1s", "--gt2": "9.7s", "--gc1": "rgba(53,210,255,.52)", "--gc2": "rgba(20,120,168,.26)" } as React.CSSProperties}></i>
+              <div  className="card-lab"><b>Supervision et infogérance</b><span  className="jp">SUP</span></div>
             </div>
-            <div  className="card-meta"><span>Comprendre votre contexte</span><span>01 / 03</span></div>
+            <div  className="card-meta"><span>Le parc sous surveillance</span><span>01 / 03</span></div>
           </article>
           <article  className="card" data-rv="up" data-view="1" data-cursor>
             <div  className="card-fr" data-frame>
-                      <span  className="card-ar"><svg  viewBox="0 0 14 14" fill="none"><path  d="M3 11 11 3M5 3h6v6" stroke="#dfe7e0" strokeWidth="1.3" /></svg></span>
-              <i  className="glow glow--flame" style={{ "--gx": "70.5%", "--gy": "47.2%", "--gr": "14%", "--gt": "3.7s", "--gt2": "5.3s", "--gc1": "rgba(255,198,124,.62)", "--gc2": "rgba(226,118,40,.30)" } as React.CSSProperties}></i>
-              <div  className="card-lab"><b>Conseil et conception</b><span  className="jp">02</span></div>
+              <span  className="card-ar"><svg  viewBox="0 0 14 14" fill="none"><path  d="M3 11 11 3M5 3h6v6" stroke="#dfe7e0" strokeWidth="1.3" /></svg></span>
+              <i  className="glow glow--flame" style={{ "--gx": "72.0%", "--gy": "82.0%", "--gr": "13%", "--gt": "3.7s", "--gt2": "5.3s", "--gc1": "rgba(255,198,124,.62)", "--gc2": "rgba(226,118,40,.30)" } as React.CSSProperties}></i>
+              <div  className="card-lab"><b>Vidéosurveillance</b><span  className="jp">SEC</span></div>
             </div>
-            <div  className="card-meta"><span>Concevoir la solution</span><span>02 / 03</span></div>
+            <div  className="card-meta"><span>Les locaux sous l’œil</span><span>02 / 03</span></div>
           </article>
           <article  className="card" data-rv="up" data-view="2" data-cursor>
             <div  className="card-fr" data-frame>
-                      <span  className="card-ar"><svg  viewBox="0 0 14 14" fill="none"><path  d="M3 11 11 3M5 3h6v6" stroke="#dfe7e0" strokeWidth="1.3" /></svg></span>
-              <i  className="glow" style={{ "--gx": "48.0%", "--gy": "16.8%", "--gr": "20%", "--gt": "7.3s", "--gt2": "11.2s", "--gc1": "rgba(255,138,104,.52)", "--gc2": "rgba(208,54,36,.24)" } as React.CSSProperties}></i>
-              <div  className="card-lab"><b>Déploiement</b><span  className="jp">03</span></div>
+              <span  className="card-ar"><svg  viewBox="0 0 14 14" fill="none"><path  d="M3 11 11 3M5 3h6v6" stroke="#dfe7e0" strokeWidth="1.3" /></svg></span>
+              <i  className="glow" style={{ "--gx": "47.0%", "--gy": "77.0%", "--gr": "18%", "--gt": "7.3s", "--gt2": "11.2s", "--gc1": "rgba(53,210,255,.50)", "--gc2": "rgba(18,110,158,.24)" } as React.CSSProperties}></i>
+              <div  className="card-lab"><b>Réseau et Active Directory</b><span  className="jp">NET</span></div>
             </div>
-            <div  className="card-meta"><span>Mettre en œuvre</span><span>03 / 03</span></div>
+            <div  className="card-meta"><span>Le parc annuaire</span><span>03 / 03</span></div>
           </article>
         </div>
       </section>
@@ -198,7 +198,7 @@ export default function KageMarkup() {
           <span  className="k"><b>03</b> — Nos domaines</span><span  className="rule"></span><span  className="k jp">CAT</span>
         </div>
         <div  className="cur-head">
-          <h2  className="display h-sec" data-rv="up">Huit domaines. Un interlocuteur. Une facture.</h2>
+          <h2  className="display h-sec" data-rv="up">Sept domaines. Un interlocuteur. Une facture.</h2>
           <p  className="body-lg" data-rv="up">Chaque domaine est un métier, pas une ligne de catalogue. On installe, on
             configure, on supervise, et on reste joignable après la mise en service.</p>
         </div>
@@ -217,39 +217,33 @@ export default function KageMarkup() {
           </div>
           <div  className="les" data-les="2" data-cursor>
             <span  className="k">03</span>
-            <h3>Cloud, hébergement et messagerie</h3>
-            <p>Hébergement, messagerie professionnelle, noms de domaine, migration et sauvegarde.</p>
-            <span  className="t">CLD</span><i  className="bar"></i>
-          </div>
-          <div  className="les" data-les="3" data-cursor>
-            <span  className="k">04</span>
-            <h3>Téléphonie IP</h3>
-            <p>IPBX, déploiement VoIP, portabilité des numéros, communications unifiées.</p>
-            <span  className="t">TEL</span><i  className="bar"></i>
-          </div>
-          <div  className="les" data-les="4" data-cursor>
-            <span  className="k">05</span>
             <h3>Sécurité physique</h3>
             <p>Vidéosurveillance, contrôle d’accès, protection des locaux et supervision.</p>
             <span  className="t">SEC</span><i  className="bar"></i>
           </div>
-          <div  className="les" data-les="5" data-cursor>
-            <span  className="k">06</span>
+          <div  className="les" data-les="3" data-cursor>
+            <span  className="k">04</span>
             <h3>IA appliquée</h3>
             <p>Serveurs MCP et IA métier, branchés sur vos données et vos outils réels.</p>
             <span  className="t">IA</span><i  className="bar"></i>
           </div>
-          <div  className="les" data-les="6" data-cursor>
-            <span  className="k">07</span>
+          <div  className="les" data-les="4" data-cursor>
+            <span  className="k">05</span>
             <h3>Support IT et infogérance</h3>
             <p>Maintenance, assistance sur site et à distance, supervision du parc.</p>
             <span  className="t">SUP</span><i  className="bar"></i>
           </div>
-          <div  className="les" data-les="7" data-cursor>
-            <span  className="k">08</span>
+          <div  className="les" data-les="5" data-cursor>
+            <span  className="k">06</span>
             <h3>Équipements et licences</h3>
             <p>Choix, fourniture, installation et intégration du matériel et des licences.</p>
             <span  className="t">EQP</span><i  className="bar"></i>
+          </div>
+          <div  className="les" data-les="6" data-cursor>
+            <span  className="k">07</span>
+            <h3>Blockchain et finance</h3>
+            <p>Recherche appliquée sur les registres distribués et leurs usages financiers. Le plus jeune de nos domaines — nous le proposons, et nous le disons.</p>
+            <span  className="t">R&amp;D</span><i  className="bar"></i>
           </div>
         </div>
       </section>
@@ -301,11 +295,11 @@ export default function KageMarkup() {
             <li><a  href="#lessons" data-cursor>Sécurité physique</a></li>
             <li><a  href="#eternity" data-cursor>Contact</a></li>
           </ul></div>
-          <div><h4>Méthode</h4><ul>
-            <li><a  href="#lessons" data-cursor>Cloud et messagerie</a></li>
+          <div><h4>Domaines</h4><ul>
             <li><a  href="#lessons" data-cursor>IA appliquée</a></li>
-            <li><a  href="#lessons" data-cursor>Téléphonie IP</a></li>
-            <li><a  href="#lessons" data-cursor>Sécurité physique</a></li>
+            <li><a  href="#lessons" data-cursor>Support et infogérance</a></li>
+            <li><a  href="#lessons" data-cursor>Équipements et licences</a></li>
+            <li><a  href="#lessons" data-cursor>Blockchain et finance</a></li>
           </ul></div>
           <div><h4>Ailleurs</h4><ul>
             <li><a  href="#top" data-cursor>Réalisations</a></li>

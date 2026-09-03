@@ -314,7 +314,7 @@ h1,h2,h3{ font-weight:400; margin:0; letter-spacing:-.005em; }
 .card:nth-child(3) .card-fr{
   background:
     linear-gradient(180deg,rgba(3,6,9,.05) 36%,rgba(3,6,9,.74) 100%),
-    url('/work/telephonie-ip.webp') center / cover no-repeat;
+    url('/work/reseau-active-directory.webp') center / cover no-repeat;
 }
 .card-fr::after{ content:''; position:absolute; inset:0;
   background:linear-gradient(transparent 46%, rgba(4,6,9,.80)); pointer-events:none; }
@@ -617,6 +617,10 @@ body[data-layout-curriculum="b"] .les{
 }
 body[data-layout-curriculum="b"] .les:nth-child(-n+2){ grid-column:span 3; }
 body[data-layout-curriculum="b"] .les:nth-child(n+3){ grid-column:span 2; }
+/* Two wide, three medium, two wide. Seven plates in a six-column grid divide
+   as 3+3, 2+2+2, 3+3 — every row filled, and the chapter closes on the same
+   width it opened with. */
+body[data-layout-curriculum="b"] .les:nth-child(n+6){ grid-column:span 3; }
 body[data-layout-curriculum="b"] .les::before{ left:0; background:linear-gradient(145deg,rgba(224,35,28,.13),transparent 58%); }
 body[data-layout-curriculum="b"] .les:hover{ padding-left:32px; }
 body[data-layout-curriculum="b"] .les h3{ font-size:clamp(20px,2vw,30px); }
