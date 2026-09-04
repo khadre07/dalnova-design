@@ -2684,6 +2684,7 @@ function createCloth(output, plate, options) {
   }
 
   let raf = 0, last = performance.now(), debt = 0, running = false, visible = false, dead = false;
+  let painted = false;
   function frame(now) {
     if (dead) return;
     if (!visible) { running = false; return; }
@@ -2708,6 +2709,10 @@ function createCloth(output, plate, options) {
     }
     compose(width, height);
     draw();
+    /* Once, and only after the first real frame is on the canvas. The caller
+       uses this to decide when its own painting can be taken away; announcing
+       it at construction would be announcing an intention. */
+    if (!painted) { painted = true; if (config.onPaint) config.onPaint(); }
     if (REDUCE || (config.wind <= .001 && energy < .004 && touch.s < .01)) { running = false; return; }
     raf = requestAnimationFrame(frame);
   }
@@ -2774,12 +2779,27 @@ function buildCardCloth() {
       const out = document.createElement('canvas');
       out.className = 'cloth-out'; out.setAttribute('aria-hidden', 'true');
       fr.appendChild(out);
-      const inst = createCloth(out, get, { wind: 3, speed: .5, amplitude: 30, drape: 40,
+      const inst = createCloth(out, get, {
+        onPaint: () => fr.classList.add('on-cloth'),
+        wind: 3, speed: .5, amplitude: 30, drape: 40,
         brush: 2.05, brushSize: 150, damping: 1, light: .5, sheen: .1, shadow: .25,
         cornerRadius: 20, perspective: 1200, pin: 'top' });
-      /* only hide the card's own painting once the fabric is really carrying it */
+      /* Only hide the card's own painting once the fabric is really carrying it.
+
+         This is what the line above always claimed and never did: the class
+         went on as soon as createCloth returned a context, which is a promise
+         that a frame will arrive, not a frame. And .on-cloth is destructive —
+         it takes away the background and the outline with !important — so
+         anything that went wrong after construction left the card as a
+         transparent hole with a caption under it. Which is what was happening:
+         the fabric built, never painted, and three cards showed the scene
+         straight through.
+
+         Now the canvas has to prove it. The CSS painting is the floor: if the
+         fabric never draws a frame — a lost context, a starved rAF, an
+         observer that never fires — the card is simply a card with a picture
+         on it, which is the whole point of it. */
       if (!inst) { out.remove(); return; }
-      fr.classList.add('on-cloth');
       const card = fr.closest('.card') || fr;
       card.addEventListener('pointerenter', () => inst.setEdge(.185), { passive: true });
       card.addEventListener('pointerleave', () => inst.setEdge(.048), { passive: true });
