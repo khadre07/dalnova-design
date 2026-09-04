@@ -108,6 +108,7 @@ export function createTopDockController(
     dirty = false;
     root.dataset.dockState = enabled ? "idle" : "static";
     root.dataset.dockMax = "0.00";
+    placeIndicator();
   };
 
   const setTargets = (clientX: number) => {
@@ -156,6 +157,27 @@ export function createTopDockController(
     });
   };
 
+  /* The link bar, under the port you are on.
+
+     Written here rather than only when the chapter changes, because the port's
+     own width moves while the pointer approaches it: set once, the bar would
+     sit beside what it points at for as long as the spring ran. offsetLeft is
+     measured against the track, which is positioned, so it is already the
+     coordinate the bar is drawn in. */
+  const indicator = root.querySelector<HTMLElement>(".nav-ind");
+  const placeIndicator = () => {
+    if (!indicator) return;
+    const active = items.find((state) => state.element.classList.contains("on"));
+    if (!active) {
+      root.style.setProperty("--ind-o", "0");
+      return;
+    }
+    const el = active.element;
+    root.style.setProperty("--ind-x", `${el.offsetLeft}px`);
+    root.style.setProperty("--ind-w", `${el.offsetWidth}px`);
+    root.style.setProperty("--ind-o", "1");
+  };
+
   /* The only place item geometry is written. */
   const applyLayout = () => {
     const options = getOptions();
@@ -169,6 +191,7 @@ export function createTopDockController(
       state.element.style.height = `${(state.baseHeight + options.heightGrowth * value).toFixed(2)}px`;
       state.element.style.transform = `translateY(${(value * options.drop).toFixed(2)}px)`;
     }
+    placeIndicator();
   };
 
   const draw = () => {
@@ -252,13 +275,24 @@ export function createTopDockController(
   window.addEventListener("pointermove", onWindowPointerMove, { passive: true });
   reducedQuery.addEventListener("change", measure);
   precisionQuery.addEventListener("change", measure);
+  /* The scene script owns the "on" class — it reads which chapter the scroll is
+     in — so the bar has to be told when that changes. While the spring is
+     running applyLayout already places it every frame; this is for the far more
+     common case of scrolling with the pointer nowhere near the bar. */
+  const chapterWatch = new MutationObserver(placeIndicator);
+  for (const state of items) {
+    chapterWatch.observe(state.element, { attributes: true, attributeFilter: ["class"] });
+  }
+
   measure();
+  placeIndicator();
   frame = requestAnimationFrame(draw);
 
   return () => {
     released = true;
     cancelAnimationFrame(frame);
     resizeObserver.disconnect();
+    chapterWatch.disconnect();
     root.removeEventListener("pointermove", onPointerMove);
     root.removeEventListener("pointerleave", reset);
     root.removeEventListener("focusin", onFocusIn);
@@ -273,6 +307,7 @@ export function createTopDockController(
       state.element.style.transform = "";
       delete state.element.dataset.dockNear;
     }
+    for (const name of ["--ind-x", "--ind-w", "--ind-o"]) root.style.removeProperty(name);
     delete root.dataset.dockState;
     delete root.dataset.dockMax;
   };

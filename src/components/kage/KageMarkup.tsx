@@ -56,6 +56,8 @@ export default function KageMarkup() {
           <span  className="brand-tx"><b>DALNOVA TECHNOLOGIES</b><i>SERVICES INFORMATIQUES · DAKAR</i></span>
         </a>
         <nav  className="nav-links" id="navlinks">
+          {/* la barre de lien : placée par le contrôleur, pas par le markup */}
+          <span  className="nav-ind" aria-hidden="true"></span>
           <a  className="nav-link" href="#gate" data-dock-item data-cursor><span  className="nav-face"><span>Services</span><span  className="alt">01110011</span></span></a>
           <a  className="nav-link" href="#pathways" data-dock-item data-cursor><span  className="nav-face"><span>Réalisations</span><span  className="alt">01110010</span></span></a>
           <a  className="nav-link" href="#lessons" data-dock-item data-cursor><span  className="nav-face"><span>Secteurs</span><span  className="alt">01110011</span></span></a>

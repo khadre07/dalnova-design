@@ -242,46 +242,91 @@ h1,h2,h3{ font-weight:400; margin:0; letter-spacing:-.005em; }
    edge and a glow. The tiles themselves stay the page's own near-black — a bar
    of filled cyan would out-shout the scene it floats over. */
 @media (min-width:821px){
+  /* Un bandeau de brassage, pas une pilule.
+
+     Le reproche était juste : des coins arrondis, un fond flouté et une rangée
+     de tuiles séparées par du vide, c'est l'idiome qu'on trouve sur la moitié
+     des sites — il vient d'ailleurs et ça se voit. Le flou en était le premier
+     signe, et il tombe ici : ce bandeau est opaque.
+
+     Ce qui le remplace vient du métier. Dalnova installe des baies, et un
+     bandeau de brassage est une réglette : arêtes vives, une plaque sombre,
+     des ports séparés par un filet et non par un écart, une étiquette par
+     port et une diode de lien à côté. Le ressort devient alors ce qu'il
+     raconte déjà — le port qu'on vient patcher avance d'un cran. */
   .nav-links{
     position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-    margin-left:0; gap:3px; height:38px; padding:4px;
+    margin-left:0; gap:0; height:36px; padding:3px;
     align-items:flex-start;
-    border:1px solid rgba(53,210,255,.15); border-radius:11px;
-    background:rgba(6,11,16,.72);
-    box-shadow:0 12px 34px rgba(0,0,0,.48), inset 0 1px rgba(255,255,255,.04);
-    backdrop-filter:blur(18px) saturate(80%); -webkit-backdrop-filter:blur(18px) saturate(80%);
+    border:1px solid rgba(223,231,224,.10); border-radius:2px;
+    background:linear-gradient(180deg, rgba(13,20,26,.95), rgba(6,10,14,.97));
+    box-shadow:0 16px 38px -16px rgba(0,0,0,.92),
+               inset 0 1px rgba(196,236,255,.11),
+               inset 0 -1px rgba(0,0,0,.5);
     isolation:isolate;
   }
   .nav-link{
-    z-index:6; display:inline-flex; flex:none; align-items:center; justify-content:center;
-    height:28px; padding:0 14px;
-    border:1px solid transparent; border-radius:7px;
-    color:var(--bone-dim); background:rgba(9,15,21,.9);
-    letter-spacing:.12em;
-    /* it grows downward from its own top edge, so the row keeps one ceiling */
+    position:relative; z-index:6;
+    display:inline-flex; flex:none; align-items:center; justify-content:center;
+    height:30px; padding:0 15px;
+    border:0; border-radius:0; background:transparent;
+    color:var(--bone-dim); letter-spacing:.12em;
+    /* il avance depuis sa propre arête haute, donc la réglette garde un plafond */
     transform-origin:50% 0;
-    transition:color .15s, border-color .18s, background .18s, box-shadow .18s;
+    transition:color .2s, background .2s, box-shadow .2s;
     will-change:width, height, transform;
   }
-  .nav-face{ min-width:66px; }
-  .nav-link[data-dock-near="true"], .nav-link:focus-visible{
-    z-index:7; color:var(--bone);
-    border-color:rgba(53,210,255,.34); background:rgba(13,26,34,.94);
-    box-shadow:0 7px 16px rgba(0,0,0,.28), 0 0 20px -8px rgba(53,210,255,.6);
-  }
-  /* Where you are, as a lit tile rather than as a rule under one.
+  /* Le filet entre deux ports. Un écart aurait redonné la rangée de pastilles ;
+     un filet fait une réglette continue, ce qui est ce qu'on visse dans une baie.
+     En bordure et non en ombre portée : l'ombre sert plus bas à la face avant du
+     port qui avance, et les deux ne peuvent pas tenir sur la même propriété. */
+  .nav-link + .nav-link{ border-left:1px solid rgba(223,231,224,.10); }
+  /* La diode de lien.
 
-     The underline was drawn on the link's own bottom edge, which the spring now
-     moves sixteen pixels a frame — so the mark would ride up and down with the
-     magnification instead of staying put. A fill does not care how tall its
-     tile is. */
-  .nav-link.on{
-    color:#eaf7ff;
-    border-color:rgba(158,232,255,.78);
-    background:linear-gradient(180deg, rgba(53,210,255,.40), rgba(53,210,255,.17));
-    box-shadow:inset 0 1px rgba(206,242,255,.44), 0 0 26px -8px rgba(53,210,255,.9);
+     Éteinte au repos, allumée à l'approche, fixe là où vous êtes. C'est la
+     langue que la scène parle déjà — les lanternes et les têtes d'antenne
+     scintillent du même cyan — et c'est ce qui fait qu'un port est un port
+     plutôt qu'un bouton. */
+  .nav-link::before{
+    content:''; flex:0 0 auto; width:4px; height:4px; margin-right:9px;
+    border-radius:50%; background:rgba(53,210,255,.20);
+    transition:background .25s, box-shadow .25s;
   }
+  .nav-face{ min-width:66px; }
+  /* Le port qui avance sort de la réglette par le bas, et il lui faut une face
+     avant sinon il ne sort pas : il pend. Un liseré cyan sur l'arête basse lui
+     en donne une, et une ombre sous elle le met devant la plaque plutôt qu'en
+     train d'en tomber. Le fond reste très bas — c'est la diode et l'étiquette
+     qui disent où vous êtes, pas un aplat. */
+  .nav-link[data-dock-near="true"], .nav-link:focus-visible{
+    z-index:7; color:var(--bone); background:rgba(146,214,240,.05);
+    box-shadow:inset 0 -1px rgba(53,210,255,.42), 0 14px 24px -14px rgba(0,0,0,.95);
+  }
+  .nav-link[data-dock-near="true"]::before, .nav-link:focus-visible::before{
+    background:#7fdcff; box-shadow:0 0 9px rgba(53,210,255,.85);
+  }
+  .nav-link.on{ color:#eaf7ff; }
+  .nav-link.on::before{ background:#bdefff; box-shadow:0 0 11px rgba(120,224,255,1); }
   .nav-link.on::after{ display:none; }
+
+  /* Le lien établi.
+
+     Là où la version d'avant remplissait la tuile active de cyan — ce qui
+     criait plus fort que la scène derrière — une barre court sous la réglette
+     et se déplace jusqu'au port où vous êtes. Le déplacement est le propos :
+     la page est une suite de chapitres et la barre dit lequel est branché.
+
+     Sa position est écrite par le contrôleur à chaque frame du ressort, parce
+     que la largeur du port change pendant qu'on l'approche : la caler une
+     seule fois au changement de chapitre l'aurait laissée à côté. */
+  .nav-ind{
+    position:absolute; left:0; bottom:-1px; height:2px; width:var(--ind-w, 0px);
+    transform:translateX(var(--ind-x, 0px));
+    background:linear-gradient(90deg, rgba(53,210,255,0), #7fdcff 22%, #7fdcff 78%, rgba(53,210,255,0));
+    box-shadow:0 0 12px rgba(53,210,255,.75);
+    opacity:var(--ind-o, 0); pointer-events:none;
+    transition:transform .5s var(--ease-out), width .5s var(--ease-out), opacity .35s;
+  }
 }
 
 /* Where the lockup and the track meet.
@@ -315,6 +360,9 @@ h1,h2,h3{ font-weight:400; margin:0; letter-spacing:-.005em; }
 @media (min-width:821px) and (max-width:990px){
   .nav-soc:nth-child(2), .nav-soc:nth-child(4){ display:none; }
   .nav-link{ padding:0 8px; }
+  /* la diode se rapproche de son étiquette : quatre ports à trois pixels près,
+     c'est douze pixels rendus à l'air entre la réglette et les réseaux */
+  .nav-link::before{ margin-right:6px; }
   .nav-face{ min-width:52px; }
   .nav-social{ gap:0; }
 }
@@ -657,6 +705,7 @@ h1,h2,h3{ font-weight:400; margin:0; letter-spacing:-.005em; }
   /* the flip box unclips too: on the sheet the two faces stack rather than
      exchange, and a 15px clip would cut the code off under the label */
   .nav-links .nav-face{ height:auto; overflow:visible; min-width:0; }
+  .nav-ind{ display:none; }
   /* On a sheet the réseaux stop being a corner of the bar and become the row
      you land on at the end of the list — bigger targets, spread across the
      panel, under everything else. Moved by order rather than by position so
