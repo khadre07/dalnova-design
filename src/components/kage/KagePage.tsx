@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { customizationCss, type Customization } from "./customization";
 import { createTopDockController, TOP_DOCK_DEFAULTS } from "./topDockController";
+import { mountPeekVideo } from "./peekVideo";
 import KageMarkup from "./KageMarkup";
 /* The authored faces. In the source these arrive through a <link> in a <head>
    this port does not have, so the stylesheet is imported instead — the same
@@ -101,6 +102,16 @@ export default function KagePage({ customization }: { customization?: Customizat
     const track = document.getElementById("navlinks");
     if (!track) return;
     return createTopDockController(track, () => TOP_DOCK_DEFAULTS);
+  }, []);
+
+  /* L'aperçu du héros, qui devient un lecteur s'il y a quelque chose à lire.
+
+     Rien n'est décidé ici : le module sonde la source et se règle dessus. Sans
+     fichier la page est exactement celle d'avant, à la marque près. */
+  useEffect(() => {
+    const peek = document.querySelector<HTMLAnchorElement>("a.peek");
+    if (!peek) return;
+    return mountPeekVideo(peek);
   }, []);
 
   /* The configured props, written into the page the way the package writes

@@ -142,11 +142,23 @@ export default function KageMarkup() {
           </div>
         </div>
 
-        <a  className="peek" href="#pathways" data-view="3" data-rv="fade" data-cursor aria-label="Aperçu : Dalnova sur site à Dakar">
+        <a  className="peek" href="#pathways" data-view="3" data-rv="fade" data-cursor
+            data-peek-video="/work/intervention-dakar.mp4"
+            aria-label="Aperçu : Dalnova sur site à Dakar">
           {/* data-frame, or the live view is blitted over the whole anchor and
                runs on down behind the caption instead of stopping at the frame */}
           <span  className="peek-fr" data-frame></span>
-          <span  className="peek-play"><svg  viewBox="0 0 22 22" fill="none"><path  d="M8 5.6 16.4 11 8 16.4z" fill="#dfe7e0" /></svg></span>
+          {/* Les deux marques, et le script choisit laquelle vaut.
+
+              Tant qu'aucun fichier n'est déposé, c'est la flèche qui s'affiche
+              — la même que sur les cartes — parce qu'elle dit « ouvrir », ce
+              que cet élément fait réellement. Le triangle ne revient que si la
+              vidéo existe. Un bouton lecture qui ne lit rien est une promesse
+              que la page ne tient pas, et c'était le cas jusqu'ici. */}
+          <span  className="peek-play">
+            <svg  className="peek-tri" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path  d="M8 5.6 16.4 11 8 16.4z" fill="#dfe7e0" /></svg>
+            <svg  className="peek-arr" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path  d="M6.5 15.5 15.5 6.5M9 6.5h6.5V13" stroke="#dfe7e0" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </span>
           <span  className="peek-cap"><b  className="jp">SRV</b><i>Sur site à Dakar</i></span>
         </a>
 

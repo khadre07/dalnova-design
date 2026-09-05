@@ -418,6 +418,76 @@ h1,h2,h3{ font-weight:400; margin:0; letter-spacing:-.005em; }
 .peek-play svg{ width:clamp(30px,3.2vw,46px); height:auto; filter:drop-shadow(0 2px 12px rgba(0,0,0,.7));
   transition:transform .55s var(--ease-out); }
 .peek:hover .peek-play svg{ transform:scale(1.14); }
+/* Une marque ou l'autre, jamais les deux.
+
+   La flèche par défaut, parce que c'est ce que l'élément fait tant qu'aucune
+   vidéo n'est déposée : il ouvre une section. Le triangle n'apparaît que si le
+   script a trouvé le fichier. Un bouton lecture qui ne lit rien est une
+   promesse que la page ne tient pas. */
+.peek-play svg{ grid-area:1 / 1; }
+.peek-tri{ display:none; }
+.peek[data-video="ready"] .peek-tri{ display:block; }
+.peek[data-video="ready"] .peek-arr{ display:none; }
+.peek[data-video="ready"] .peek-fr{ cursor:pointer; }
+
+/* La serrure du lecteur, hors de toute requête de média.
+
+   J'avais emprunté .nav-open, qui fait bien ce qu'il faut — sauf qu'elle est
+   déclarée à l'intérieur du bloc max-width:820px et ne vaut donc que sur le
+   panneau du téléphone. Sur un écran large elle ne verrouillait rien et la
+   page continuait de défiler derrière le lecteur. */
+html.video-open, html.video-open body{ overflow:hidden; }
+
+/* ------------------------------------------------------------- le lecteur
+
+   Pleine trame : l'aperçu fait 262 pixels au plus large, et une vidéo
+   d'intervention est une preuve — une preuve doit se lire. Le fond est le noir
+   de la page et non un gris de visionneuse, pour qu'on reste dans le site
+   plutôt que dans un composant. */
+.vwrap{
+  position:fixed; inset:0; z-index:200;
+  display:grid; place-items:center; padding:clamp(16px,4vw,64px);
+  background:rgba(3,6,9,.94);
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  /* Le calque n'a aucune animation, et c'est délibéré.
+
+     Il couvre la page et il la verrouille : tant qu'il est là, le document ne
+     défile plus. Un calque comme celui-là ne doit jamais pouvoir être
+     invisible, or faire dépendre son opacité d'une animation, c'est exactement
+     ça — mesuré ici à zéro tant qu'elle n'avait pas tourné. C'est le même
+     motif qui laissait les cartes en trous : ne pas faire dépendre ce qu'on
+     voit de ce qui doit s'exécuter.
+
+     L'entrée se joue donc sur la vidéo, où rater l'animation ne coûte qu'un
+     centième de taille. */
+}
+@keyframes vwrap-in{ from{ transform:scale(.985) } to{ transform:none } }
+.vwrap-v{
+  animation:vwrap-in .3s var(--ease-out);
+  /* Un rapport par défaut, sinon le cadre est un bandeau.
+
+     Mesuré : avant l'arrivée des métadonnées la boîte fait 1280 par 150 — la
+     hauteur qu'un navigateur donne à une vidéo dont il ne sait encore rien —
+     puis elle saute à sa vraie forme. Le rapport la pose d'emblée ; celui du
+     fichier prend le relais dès qu'il est connu. */
+  aspect-ratio:16 / 9;
+  display:block; width:min(100%,1280px); max-height:82vh;
+  background:#000; outline:1px solid var(--line-soft); outline-offset:-1px;
+  box-shadow:0 40px 90px -40px rgba(0,0,0,.95);
+}
+.vwrap-x{
+  position:absolute; top:clamp(14px,2.4vw,32px); right:clamp(14px,2.4vw,32px);
+  width:42px; height:42px; display:grid; place-items:center;
+  border:1px solid rgba(223,231,224,.16); border-radius:2px;
+  color:var(--bone-dim); background:rgba(9,15,21,.8);
+  transition:color .2s, border-color .2s, background .2s;
+}
+.vwrap-x:hover, .vwrap-x:focus-visible{
+  color:#eaf7ff; border-color:rgba(53,210,255,.42); background:rgba(13,26,34,.92);
+}
+.vwrap-x svg{ width:17px; height:17px; fill:none; stroke:currentColor;
+  stroke-width:1.5; stroke-linecap:round; }
+@media (prefers-reduced-motion:reduce){ .vwrap-v{ animation:none } }
 .peek-cap{ display:flex; align-items:baseline; gap:9px; margin-top:9px; min-width:0; }
 /* The caption must not widen the card.
 
