@@ -1062,7 +1062,13 @@ const HI = qs('q', COARSE ? 'low' : 'high');
 const LOW = HI === 'low';
 const WANT_POST    = qs('post', '1') !== '0';
 const WANT_SHADOW  = qs('shadow', LOW ? '0' : '1') !== '0';
-const DPR_CAP      = qn('dpr', LOW ? 1.4 : 1.8);
+/* De 1,8 à 1,6.
+
+   Le coût de remplissage va avec le carré du rapport : (1,6/1,8)² fait 79 %
+   des pixels, soit un cinquième de travail en moins par frame, pour un écart
+   qu'on ne distingue pas à ces tailles. C'est le levier le plus direct sur une
+   page dont le coût est le remplissage et non la géométrie. */
+const DPR_CAP      = qn('dpr', LOW ? 1.3 : 1.6);
 /* the renderer trades resolution for frame rate on its own — the scene is
    fill-bound (five big alpha-blended veils plus a bloom chain), so pixels
    are the only knob worth turning on unknown hardware */
@@ -2004,7 +2010,9 @@ function buildAtmosphere() {
   }
 
   /* embers around the lantern and the disc */
-  const N = LOW ? 220 : 460;
+  /* Moitié moins. C'étaient les braises du temple : quatre cent soixante
+     points additifs, et chacun coûte un mélange plein écran là où il tombe. */
+  const N = LOW ? 130 : 240;
   const pos = new Float32Array(N * 3), seed = new Float32Array(N);
   for (let i = 0; i < N; i++) {
     pos[i * 3] = (rnd() - .5) * 30; pos[i * 3 + 1] = rnd() * 11; pos[i * 3 + 2] = -26 + rnd() * 36;
@@ -2030,7 +2038,7 @@ function buildAtmosphere() {
     fragmentShader:
       'uniform sampler2D uTex; varying float vA;\n' +
       'void main(){ vec4 t=texture2D(uTex, gl_PointCoord);\n' +
-      ' gl_FragColor = vec4(t.rgb*vec3(1.6,0.78,0.42), t.a*vA*0.75); }'
+      ' gl_FragColor = vec4(t.rgb*vec3(0.52,1.18,1.55), t.a*vA*0.62); }'
   }));
   emb.frustumCulled = false; emb.renderOrder = 5;
   scene.add(emb); WORLD.embers = emb;
@@ -2942,7 +2950,13 @@ function initPost() {
   POST.comp = new THREE.ShaderMaterial({
     uniforms: {
       tS: { value: null }, tB: { value: null }, uRes: { value: new THREE.Vector2(w, h) },
-      uT: { value: 0 }, uBloom: { value: .34 }, uCA: { value: 1 }, uGrain: { value: .020 },
+      /* Le grain à zéro.
+
+         Il était réensemencé à chaque frame — uT*137.0 dans le hash — donc il
+         ne grainait pas l'image, il grouillait dessus. Sur une scène presque
+         noire ça se voyait à peine ; sur la scène éclaircie, ce sont les
+         grains qu'on voit tomber. Le calcul par pixel part avec. */
+      uT: { value: 0 }, uBloom: { value: .34 }, uCA: { value: 1 }, uGrain: { value: 0 },
       uVig: { value: .72 }, uExp: { value: .86 }, uFade: { value: 1 }, uSat: { value: 1.05 }
     },
     vertexShader: QUAD_VS,
@@ -3685,9 +3699,13 @@ function frame(now) {
 
   if (!PERF.locked && clock > 2.2) {
     PERF.acc += raw; PERF.n++;      /* … but the governor reads the truth */
-    if (PERF.n >= 40 || PERF.acc > .9) {
+    if (PERF.n >= 24 || PERF.acc > .6) {
       const avg = PERF.acc / PERF.n; PERF.acc = 0; PERF.n = 0;
-      if (avg > .0230 && PERF.scale > .55) { PERF.scale = Math.max(.55, PERF.scale * (avg > .05 ? .64 : .85)); resize(); }
+      /* Le seuil descend de 23 à 19 millisecondes, et la fenêtre de 40 frames
+         à 24 : il attendait de tomber sous 43 images par seconde et mettait
+         près d'une seconde à s'en apercevoir. À 19 ms il agit vers 52 images
+         par seconde, c'est-à-dire avant qu'on sente le hachage plutôt qu'après. */
+      if (avg > .0190 && PERF.scale > .55) { PERF.scale = Math.max(.55, PERF.scale * (avg > .05 ? .64 : .85)); resize(); }
       else if (avg < .0138 && PERF.scale < 1) { PERF.scale = Math.min(1, PERF.scale + .08); resize(); }
     }
   }
