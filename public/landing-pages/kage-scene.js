@@ -1090,8 +1090,16 @@ function initGL() {
      moved the hall by 0.18 of a luminance unit, the fog colour moves it
      properly. And it reaches by distance, so the foreground does not
      follow it down. */
-  scene.fog = new THREE.FogExp2(0x050a0e, 0.0168);
-  scene.background = new THREE.Color(0x060a0d);
+  /* Le brouillard prend la couleur de l'horizon du ciel, et non plus un noir
+     à part. Devant un ciel clair, des lointains qui se dissolvent dans du noir
+     font une bande sombre en travers de l'image : ils doivent se dissoudre
+     dans ce qu'il y a derrière eux. Sa densité baisse aussi — la valeur
+     d'origine avalait le haut de l'immeuble. */
+  scene.fog = new THREE.FogExp2(0x0e335f, 0.0132);
+  /* Un aplat, et rien de plus : la scène a son propre ciel, un plan tendu
+     derrière tout le frustum, et c'est lui qu'on voit. Le fond n'est que ce
+     qui resterait si ce plan manquait. */
+  scene.background = new THREE.Color(0x0a1220);
   camera = new THREE.PerspectiveCamera(36, vpW() / vpH(), .35, 220);
   scene.add(camera);
 }
@@ -1297,6 +1305,31 @@ function buildShell() {
       depthWrite: false, fog: false, toneMapped: false }));
   sky.position.set(0, 62, -108); sky.renderOrder = 0; scene.add(sky);
   WORLD.sky = sky;
+
+  /* La vraie photographie de ciel, posée par-dessus la texture dessinée.
+
+     Le ciel généré était un dégradé, des nuages en bruit, et une lueur orange
+     en bas à droite — la vallée derrière la crête de Kyoto. Cette lueur est
+     restée orange dans une page devenue bleue, et le tout plafonnait très bas :
+     le pixel médian de l'image relevait 0,007 de luminance, ce que le client a
+     appelé sombre à juste titre.
+
+     La photo vient du site sur 3000. Recadrée pour en sortir la lune, parce
+     que la scène a la sienne — celle qui porte le logo — et que deux lunes
+     dans un même ciel, c'est une de trop.
+
+     Posée en second, jamais à la place : si l'image n'arrive pas, le ciel
+     dessiné reste. C'est le même principe que les cartes — ne pas faire
+     dépendre ce qu'on voit de ce qui doit encore se charger. */
+  new THREE.TextureLoader().load('/sky/ciel-nuit.webp', t => {
+    t.encoding = THREE.sRGBEncoding;
+    t.needsUpdate = true;
+    sky.material.map = t;
+    /* le multiplicateur remonte : il tempérait une texture déjà pâle, et il
+       éteignait une photographie */
+    sky.material.color.copy(hdr(1.06, 1.10, 1.18));
+    sky.material.needsUpdate = true;
+  }, undefined, () => {});
 
   /* the wooded ridge that closes the valley — three-quarters eaten by fog,
      which is the only reason the ground plane can just stop out there */
@@ -2810,7 +2843,11 @@ function buildCardCloth() {
 }
 
 function buildLights() {
-  scene.add(new THREE.HemisphereLight(0x53838f, 0x060a08, .13));
+  /* Le client trouvait la page sombre, et il avait raison : la luminance
+     médiane de l'image relevait 0,007 — le pixel médian à moins d'un pour cent.
+     L'ambiante remonte, et le sol cesse d'être un noir pour devenir un bleu de
+     nuit : c'est lui qui rend visible tout ce que la clé ne touche pas. */
+  scene.add(new THREE.HemisphereLight(0x6fa3b4, 0x101c26, .34));
 
   const key = new THREE.DirectionalLight(0xb6dbe4, 1.22);
   key.position.set(2.6, 21, 2.5);
@@ -2906,7 +2943,7 @@ function initPost() {
     uniforms: {
       tS: { value: null }, tB: { value: null }, uRes: { value: new THREE.Vector2(w, h) },
       uT: { value: 0 }, uBloom: { value: .34 }, uCA: { value: 1 }, uGrain: { value: .020 },
-      uVig: { value: 1 }, uExp: { value: .62 }, uFade: { value: 1 }, uSat: { value: 1.05 }
+      uVig: { value: .72 }, uExp: { value: .86 }, uFade: { value: 1 }, uSat: { value: 1.05 }
     },
     vertexShader: QUAD_VS,
     fragmentShader:
@@ -3981,12 +4018,21 @@ function buildWeather() {
   document.documentElement.setAttribute('data-season', season);
   if (season === 'winter') buildDrift('snow');
   else if (season === 'spring') buildDrift('petals');
-  /* summer and autumn keep the rain the author wrote, which buildAtmosphere
-     has already put in the scene */
-  else if (WORLD.rain) WORLD.rain.visible = true;
-  if (season === 'winter' || season === 'spring') {
-    if (WORLD.rain) WORLD.rain.visible = false;
-  }
+  /* Plus de pluie, en aucune saison.
+
+     L'été et l'automne gardaient les traits de pluie que l'auteur avait
+     écrits — c'était juste pour Dakar, dont les pluies vont de juin à octobre,
+     et c'est justement ce qu'on ne veut plus voir : elle assombrit l'image et
+     elle raye tout ce qu'il y a derrière. WORLD.rain n'est écrit qu'ici et à sa
+     construction — rien d'autre ne le rallume.
+
+     Le maillage reste bâti et simplement caché : c'est buildAtmosphere qui le
+     monte, et le sortir de là pour une ligne d'affichage serait défaire son
+     travail. Ce qui reste en revanche, ce sont les stries et les plaques
+     humides cuites dans les textures du sol et des colonnes. Elles ne
+     dépendent pas de ce maillage, et elles gardent au sol l'air d'un sol de
+     Dakar après l'averse plutôt qu'un sol sec. */
+  if (WORLD.rain) WORLD.rain.visible = false;
 }
 
 /* The gantry, where the gate stood. A torii is two posts and a crossbeam, and

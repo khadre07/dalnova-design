@@ -174,7 +174,7 @@ export default function KageMarkup() {
         {/* foreground: the wall arrives first, the pine at the edge, the grass last */}
         <div  className="fg" data-fg="gate" aria-hidden="true">
           <span  className="fg-el fg-grass" data-fg-in="up">
-            <img  src="secret-pathways-assets/foreground/png/tall-grass.webp" alt="" width="1717" height="916" loading="lazy" decoding="async" />
+            <img  src="/landing-pages/secret-pathways-assets/foreground/png/tall-grass.webp" alt="" width="1717" height="916" loading="lazy" decoding="async" />
           </span>
         </div>
         <div  className="sec-head" data-rv="fade">
@@ -208,7 +208,7 @@ export default function KageMarkup() {
         {/* foreground: the garden frames the mosaic from the sides and the two lower corners */}
         <div  className="fg" data-fg="pathways" aria-hidden="true">
           <span  className="fg-el fg-bush" data-fg-in="up">
-            <img  src="secret-pathways-assets/foreground/png/garden-bush.webp" alt="" width="1717" height="876" loading="lazy" decoding="async" />
+            <img  src="/landing-pages/secret-pathways-assets/foreground/png/garden-bush.webp" alt="" width="1717" height="876" loading="lazy" decoding="async" />
           </span>
         </div>
         <div  className="sec-head" data-rv="fade">
@@ -247,10 +247,10 @@ export default function KageMarkup() {
         {/* foreground: a low periphery for the atlas — wall fragment, basalt, one stand of grass */}
         <div  className="fg" data-fg="lessons" aria-hidden="true">
           <span  className="fg-el fg-stones" data-fg-in="up">
-            <img  src="secret-pathways-assets/foreground/png/basalt-stones.webp" alt="" width="1536" height="996" loading="lazy" decoding="async" />
+            <img  src="/landing-pages/secret-pathways-assets/foreground/png/basalt-stones.webp" alt="" width="1536" height="996" loading="lazy" decoding="async" />
           </span>
           <span  className="fg-el fg-grass" data-fg-in="up">
-            <img  src="secret-pathways-assets/foreground/png/tall-grass.webp" alt="" width="1717" height="916" loading="lazy" decoding="async" />
+            <img  src="/landing-pages/secret-pathways-assets/foreground/png/tall-grass.webp" alt="" width="1717" height="916" loading="lazy" decoding="async" />
           </span>
         </div>
         <div  className="sec-head" data-rv="fade">
@@ -312,10 +312,10 @@ export default function KageMarkup() {
         {/* foreground: the closing horizon: hill, ruins, grass, and the last branch */}
         <div  className="fg" data-fg="eternity" aria-hidden="true">
           <span  className="fg-el fg-hill" data-fg-in="up">
-            <img  src="secret-pathways-assets/foreground/png/hill.webp" alt="" width="1774" height="887" loading="lazy" decoding="async" />
+            <img  src="/landing-pages/secret-pathways-assets/foreground/png/hill.webp" alt="" width="1774" height="887" loading="lazy" decoding="async" />
           </span>
           <span  className="fg-el fg-grass" data-fg-in="up">
-            <img  src="secret-pathways-assets/foreground/png/tall-grass.webp" alt="" width="1717" height="916" loading="lazy" decoding="async" />
+            <img  src="/landing-pages/secret-pathways-assets/foreground/png/tall-grass.webp" alt="" width="1717" height="916" loading="lazy" decoding="async" />
           </span>
         </div>
         <div  className="eyebrow" data-rv="fade">Chapitre 04 — Contact</div>
@@ -333,13 +333,13 @@ export default function KageMarkup() {
         {/* foreground: one planting along the lower edge of the colophon */}
         <div  className="fg" data-fg="foot" aria-hidden="true">
           <span  className="fg-el fg-bush" data-fg-in="up">
-            <img  src="secret-pathways-assets/foreground/png/garden-bush.webp" alt="" width="1717" height="876" loading="lazy" decoding="async" />
+            <img  src="/landing-pages/secret-pathways-assets/foreground/png/garden-bush.webp" alt="" width="1717" height="876" loading="lazy" decoding="async" />
           </span>
           <span  className="fg-el fg-grass" data-fg-in="up">
-            <img  src="secret-pathways-assets/foreground/png/tall-grass.webp" alt="" width="1717" height="916" loading="lazy" decoding="async" />
+            <img  src="/landing-pages/secret-pathways-assets/foreground/png/tall-grass.webp" alt="" width="1717" height="916" loading="lazy" decoding="async" />
           </span>
           <span  className="fg-el fg-stones" data-fg-in="up">
-            <img  src="secret-pathways-assets/foreground/png/basalt-stones.webp" alt="" width="1536" height="996" loading="lazy" decoding="async" />
+            <img  src="/landing-pages/secret-pathways-assets/foreground/png/basalt-stones.webp" alt="" width="1536" height="996" loading="lazy" decoding="async" />
           </span>
         </div>
         <div  className="foot-grid">
