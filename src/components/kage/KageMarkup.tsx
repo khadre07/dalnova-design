@@ -243,6 +243,60 @@ export default function KageMarkup() {
       </section>
 
       {/* ============================================================ chapter III */}
+      {/* ==================================================== partenaires
+
+          Pas de bandeau défilant.
+
+          Le composant du site sur 3000 fait défiler la liste en boucle, et
+          c'est justement ce qu'on ne veut pas ici : le client trouve la page
+          encombrée, et une marquise ajoute du mouvement à une page qui en a
+          déjà beaucoup. Quatre noms tiennent largement sur une ligne — les
+          poser et les espacer dit la même chose plus calmement.
+
+          Pas de data-cam non plus : le rig ne recense que les sections qui en
+          portent un, et ce bandeau est une respiration entre deux chapitres,
+          pas un arrêt de caméra.
+
+          La plaque claire derrière chaque marque n'est pas une décoration.
+          Elle est vérifiée dans le projet d'origine : sur fond sombre,
+          E4Impact perd la moitié de son mot, qui est dessiné en presque noir,
+          et ISRA — BAME arrive avec un fond blanc opaque qui se lirait comme
+          un rectangle. La plaque est la façon dont la page traite déjà les
+          documents qui viennent d'ailleurs que de sa palette. */}
+      <section  className="pband" aria-labelledby="pband-t">
+        <div  className="pband-head" data-rv="fade">
+          <span  className="pband-k" id="pband-t">Partenaires</span>
+          <span  className="pband-rule" aria-hidden="true"></span>
+          <span  className="pband-n" aria-hidden="true">04</span>
+        </div>
+        <ul  className="pband-row" data-rv="up">
+          <li>
+            <a  href="https://wikistartup.tn" target="_blank" rel="noreferrer noopener" className="pband-item" data-cursor>
+              <span  className="pband-plate"><img  src="/partners/wikistartup.webp" alt="Wikistartup" width="300" height="70" loading="lazy" decoding="async" /></span>
+              <span  className="pband-place">Tunisie</span>
+            </a>
+          </li>
+          <li>
+            <a  href="https://www.isra-bame.sn" target="_blank" rel="noreferrer noopener" className="pband-item" data-cursor>
+              <span  className="pband-plate"><img  src="/partners/isra-bame.webp" alt="ISRA — BAME" width="304" height="149" loading="lazy" decoding="async" /></span>
+              <span  className="pband-place">Sénégal</span>
+            </a>
+          </li>
+          <li>
+            <a  href="https://enactus-morocco.org" target="_blank" rel="noreferrer noopener" className="pband-item" data-cursor>
+              <span  className="pband-plate"><img  src="/partners/enactus-morocco.svg" alt="Enactus Morocco" width="300" height="100" loading="lazy" decoding="async" /></span>
+              <span  className="pband-place">Maroc</span>
+            </a>
+          </li>
+          <li>
+            <a  href="https://e4impact.org" target="_blank" rel="noreferrer noopener" className="pband-item" data-cursor>
+              <span  className="pband-plate"><img  src="/partners/e4impact.webp" alt="E4Impact" width="360" height="101" loading="lazy" decoding="async" /></span>
+              <span  className="pband-place">International</span>
+            </a>
+          </li>
+        </ul>
+      </section>
+
       <section  className="sec" id="lessons" data-cam="3">
         {/* foreground: a low periphery for the atlas — wall fragment, basalt, one stand of grass */}
         <div  className="fg" data-fg="lessons" aria-hidden="true">
