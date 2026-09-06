@@ -20,7 +20,7 @@ export default function Backdrop() {
 
       <Stars />
 
-      <div className="grid-field absolute inset-0 opacity-[0.34]" aria-hidden="true" />
+      <div className="grid-field absolute inset-0 opacity-[0.42]" aria-hidden="true" />
 
       {/* Full bleed, not a column. The figure keeps its place on the right —
           it is offset inside the scene rather than confined by a box — and
