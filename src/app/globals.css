@@ -638,13 +638,16 @@
        A long one here would lag behind the reader's own hand. Anchored right,
        so the figure retreats toward its own edge rather than drifting inward
        across the copy. */
+    /* Le robot ne se dégrade plus au défilement.
+
+       Son opacité et son échelle suivaient --presence, une fonction continue
+       du défilement : il s'effaçait jusqu'à un quart et rapetissait d'un
+       huitième dès qu'on quittait le héros. Il reste entier. --presence
+       continue d'être écrit et de servir ailleurs ; c'est seulement la figure
+       qui cesse d'en dépendre. */
     .stage-slot {
-      opacity: calc(0.24 + 0.76 * var(--presence, 1));
-      transform: scale(calc(0.88 + 0.12 * var(--presence, 1)));
+      opacity: 1;
       transform-origin: 78% 50%;
-      transition:
-        opacity 180ms linear,
-        transform 180ms linear;
     }
 
   .stage-scrim {
