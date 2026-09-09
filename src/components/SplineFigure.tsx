@@ -52,7 +52,6 @@ export default function SplineFigure({ scene }: { scene: string }) {
   const { accent, sky } = useSite();
   const [state, setState] = useState<"waiting" | "live" | "failed">("waiting");
   const settled = useRef(false);
-  const frozen = useRef<HTMLImageElement>(null);
   const host = useRef<HTMLDivElement>(null);
 
 
@@ -210,69 +209,6 @@ export default function SplineFigure({ scene }: { scene: string }) {
      A robot that is visible and moves a little more than asked beats a robot
      that is not there. */
 
-  /* Le robot tenu immobile pendant le défilement.
-
-     Ce qui bougeait encore n'était plus la page : --presence ne pilote plus ni
-     l'opacité ni l'échelle de la figure. C'était l'animation propre de la
-     scène, son ralenti d'attente, et le runtime n'offre pas de quoi la figer :
-     il a stop() et play(), et la note ci-dessus dit ce que stop() fait — il ne
-     garde pas la dernière image, il vide le canvas et le robot disparaît.
-
-     Donc on ne touche pas au runtime. On pose par-dessus une capture de la
-     dernière image, le temps du défilement, et on la retire ensuite. La scène
-     continue de tourner dessous : c'est du travail pour personne pendant une
-     seconde, et c'est le prix d'un robot qui ne bouge pas là où on l'a demandé.
-
-     Le garde-fou est la partie qui compte. Un canvas WebGL rendu sans
-     preserveDrawingBuffer rend une image vide dès qu'on le lit hors de sa
-     propre frame — et une image vide posée sur le robot, c'est un robot
-     effacé, exactement le défaut que stop() causait. La capture est donc
-     prise dans une frame d'animation, puis vérifiée : si elle est trop courte
-     pour contenir une image, on ne montre rien et la figure reste comme avant.
-     Elle ne peut pas rendre les choses pires. */
-  useEffect(() => {
-    const layer = frozen.current;
-    if (!layer || state !== "live") return;
-
-    let timer: number | undefined;
-    let held = false;
-
-    const release = () => {
-      held = false;
-      layer.removeAttribute("src");
-      layer.dataset.on = "false";
-    };
-
-    const hold = () => {
-      const canvas = host.current?.querySelector("canvas");
-      if (!canvas) return;
-      requestAnimationFrame(() => {
-        try {
-          const shot = canvas.toDataURL("image/png");
-          /* un data-url d'une image vide tient en quelques dizaines d'octets */
-          if (shot.length < 4096) return;
-          layer.src = shot;
-          layer.dataset.on = "true";
-        } catch {
-          /* canvas taint ou contexte perdu : on ne montre rien */
-        }
-      });
-    };
-
-    const onScroll = () => {
-      if (!held) { held = true; hold(); }
-      window.clearTimeout(timer);
-      timer = window.setTimeout(release, 180);
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.clearTimeout(timer);
-      release();
-    };
-  }, [state]);
-
   if (state === "failed") return null;
 
   return (
@@ -296,8 +232,6 @@ export default function SplineFigure({ scene }: { scene: string }) {
         }}
         onError={() => finish("failed")}
       />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img ref={frozen} className="spline-hold" alt="" data-on="false" aria-hidden="true" />
     </div>
   );
 }

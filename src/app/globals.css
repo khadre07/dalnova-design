@@ -1562,22 +1562,6 @@
     height: 100%;
   }
 
-  /* La dernière image, posée sur la vivante le temps d'un défilement. Elle
-     couvre exactement le canvas, donc la substitution ne déplace rien. */
-  .spline-hold {
-    position: absolute;
-    inset: 0;
-    display: block;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    opacity: 0;
-  }
-
-  .spline-hold[data-on="true"] {
-    opacity: 1;
-  }
-
   /* On phones the figure sits behind the copy, as the model does, and the
      copy wins. */
   @media (max-width: 1023px) {
