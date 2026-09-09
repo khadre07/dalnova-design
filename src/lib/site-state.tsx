@@ -151,6 +151,16 @@ export function SiteProvider({ children }: { children: ReactNode }) {
         lastPresence = presence;
         document.documentElement.style.setProperty("--presence", presence.toFixed(3));
       }
+      /* La position de défilement elle-même, pour la figure.
+         Écrite ici plutôt que dans un second écouteur : celui-ci est déjà
+         limité à une frame d'animation, et deux écouteurs de défilement sur la
+         même page sont deux fois le même travail. Sans seuil, contrairement à
+         --presence : une figure qui ne suit le défilement qu'un pixel sur
+         quatre saccade. */
+      document.documentElement.style.setProperty(
+        "--scroll-y",
+        `${Math.round(window.scrollY)}px`,
+      );
     };
     const onScroll = () => {
       if (frame.current) return;

@@ -1496,8 +1496,22 @@
        the waist and called it water. One number, so it can be moved to follow
        the scene instead of being hunted for. */
     --waterline: 82%;
+    /* Fixe, mais remontée du défilement — donc elle s'en va avec le héros.
+
+       La couche reste position:fixed parce que c'est ce qui lui donne le
+       cadre de l'écran et sa ligne d'eau ; la translation lui rend le
+       comportement d'un élément qui appartient à la première page. Le client
+       la voyait suivre le contenu sur toute la hauteur du site, ce qui est
+       exactement ce que fait un élément fixe, et n'est pas ce qu'on veut d'une
+       figure qui pose pour le héros.
+
+       Mesuré avant d'y toucher : le défilement n'ajoutait aucun mouvement à la
+       figure — 18 % de ses pixels changent pendant qu'on défile contre 26 % à
+       l'arrêt. Ce qu'on voyait bouger, c'était elle qui restait pendant que
+       tout le reste partait. */
     position: fixed;
     inset: 0;
+    transform: translate3d(0, calc(var(--scroll-y, 0px) * -1), 0);
     z-index: 0;
     pointer-events: none;
     opacity: 0;
