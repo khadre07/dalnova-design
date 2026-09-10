@@ -1511,7 +1511,18 @@
        tout le reste partait. */
     position: fixed;
     inset: 0;
-    transform: translate3d(0, calc(var(--scroll-y, 0px) * -1), 0);
+    /* Décalée par « top », surtout pas par une transformation.
+
+       Le premier essai posait un translate3d ici, et le robot disparaissait.
+       Mesuré plutôt que deviné : la variance de la zone où il se tient tombait
+       de 1701 à 373, c'est-à-dire du robot à un ciel vide. Cette couche porte
+       un masque et un filtre ; une transformation lui crée son propre plan de
+       composition et le canvas WebGL n'en ressort pas. Déplacer le bord haut
+       ne crée aucun plan et laisse le rendu intact — 1640 de variance, le
+       robot est là. */
+    top: calc(var(--scroll-y, 0px) * -1);
+    bottom: auto;
+    height: 100svh;
     z-index: 0;
     pointer-events: none;
     opacity: 0;
@@ -1544,7 +1555,10 @@
      has. */
   @media (min-width: 1024px) {
     .spline-figure {
-      inset: 0 0 0 48%;
+      /* left et right seulement : « inset » remettrait top à zéro et
+         reprendrait à la figure le décalage qui la fait partir avec le héros. */
+      left: 48%;
+      right: 0;
     }
   }
 
