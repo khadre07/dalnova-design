@@ -16,31 +16,6 @@ import Stars from "./Stars";
 export default function Backdrop() {
   return (
     <div className="pointer-events-none fixed inset-0 z-0">
-      {/* Le flux, sous tout le reste.
-
-          Une boucle de quatre secondes : des particules qui filent et une ligne
-          d'horizon lumineuse. Le sujet tombe juste — c'est du trafic, et la
-          page parle de réseau — et la palette est déjà celle de la maison.
-
-          Hébergée ici plutôt qu'appelée chez le CDN d'origine : un fond de page
-          qui dépend d'un domaine tiers est un fond qui disparaît le jour où ce
-          domaine change d'avis. Ré-encodée en 1280 par 720 à un débit de fond,
-          610 kilo-octets au lieu de 2,8 méga — 5,8 mégabits par seconde pour
-          une toile de fond, c'était dix fois ce qu'il faut.
-
-          Muette, en boucle, et jouée en ligne sur iOS. Sans « controls » ni
-          piste audio : ce n'est pas un lecteur, c'est une texture. */}
-      <video
-        className="flux-video"
-        src="/video/flux.mp4"
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
-        aria-hidden="true"
-      />
-
       <Sky />
 
       <Stars />
@@ -54,6 +29,35 @@ export default function Backdrop() {
       <div className="stage-slot absolute inset-0">
         <Stage />
       </div>
+
+
+      {/* Le flux, devant la figure et non plus derrière.
+
+          Derrière, il n'était qu'une texture de plus sous une pile qui en
+          comptait déjà quatre. Devant, et masqué en dégradé, il fait ce qu'on
+          lui demande : ses traînées passent sur le bas de la figure et
+          s'effacent avant sa tête, de sorte qu'elle n'est plus posée sur le
+          flux mais dedans, en train d'en sortir.
+
+          Le masque est ce qui rend la chose possible sans couvrir la lune : au
+          sommet le calque est transparent, donc le ciel, les étoiles et la
+          lune restent au premier plan de leur propre moitié d'écran.
+
+          Une seule balise video, et pas deux. Un second exemplaire au fond
+          aurait doublé le décodage pour une texture que la pile fournit déjà.
+
+          Muette, en boucle, jouée en ligne sur iOS. Sans « controls » ni piste
+          audio : ce n'est pas un lecteur, c'est une matière. */}
+      <video
+        className="flux-video"
+        src="/video/flux.mp4"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        aria-hidden="true"
+      />
 
       {/* On narrow screens the figure sits behind the copy, so the left edge is
           darkened enough to keep body text at AA contrast. */}

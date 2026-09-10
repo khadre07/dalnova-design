@@ -289,28 +289,59 @@
     border-block: 1px solid color-mix(in oklab, var(--color-steel) 45%, transparent);
   }
 
-  /* Le flux vidéo, tout au fond.
+  /* Le flux, devant la figure.
 
-     Sous le ciel, la grille, la figure et le voile : c'est le sol animé sur
-     lequel tout le reste se pose. Assez discret pour rester une texture —
-     à pleine force il concurrencerait la lune et le robot, qui sont les deux
-     choses que la page a à montrer.
+     Masqué en dégradé : rien en haut, tout en bas. C'est ce qui fait que la
+     figure paraît sortir du flux plutôt que se tenir devant — ses traînées lui
+     passent sur les jambes et se sont éteintes avant sa tête — et c'est aussi
+     ce qui laisse la lune et les étoiles au premier plan de leur propre moitié
+     d'écran, puisque le calque y est transparent.
 
-     Coupé en plein jour. C'est un champ bleu nuit ; sur le thème clair il
-     serait une tache sombre au milieu d'une page pâle.
+     Le point de bascule est calé sur la ligne de flottaison de la figure,
+     laquelle vaut 82 %. Le flux prend la main un peu avant : sinon, on verrait
+     l'endroit où elle est coupée, au lieu de voir le flux la couper.
 
-     Coupé aussi quand on demande moins de mouvement. Une vidéo en boucle est
+     Le mélange par écran plutôt qu'une simple opacité. La vidéo est faite de
+     traits clairs sur un noir : en « screen », le noir ne dépose rien et seuls
+     les traits arrivent. En opacité simple, son fond noir grisait tout ce qu'il
+     recouvrait, y compris la figure.
+
+     Coupé en plein jour, où un champ bleu nuit serait une tache sur une page
+     pâle. Coupé aussi quand on demande moins de mouvement : une boucle est
      exactement ce que ce réglage veut voir s'arrêter, et la page garde son
-     sol : c'est une texture en plus, jamais un fond dont elle dépend. */
+     décor — le flux est une matière en plus, jamais un fond dont elle dépend. */
   .flux-video {
     position: absolute;
     inset: 0;
-    z-index: 0;
+    z-index: 1;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    opacity: 0.34;
+    opacity: 0.72;
+    mix-blend-mode: screen;
     pointer-events: none;
+    /* Deux masques, croisés.
+
+       Le premier est vertical et fait le sujet : rien en haut, tout en bas,
+       donc la figure sort du flux.
+
+       Le second est horizontal et n'est pas une préférence, c'est une
+       correction. Mesuré après coup : sous le seul masque vertical, les
+       traînées passaient dans la colonne de gauche et le bloc du périmètre
+       tombait à 1,58 contre 1 dans le pire décile — le chiffre « 8 » était
+       traversé de traits clairs. Le flux s'arrête donc avant la copie, ce que
+       le voile de scène fait déjà pour la même raison et sur le même bord.
+
+       Croisés par intersection : un point n'est peint que s'il est bas *et* à
+       droite. */
+    -webkit-mask-image:
+      linear-gradient(to bottom, transparent 34%, rgba(0, 0, 0, 0.45) 62%, #000 78%),
+      linear-gradient(96deg, transparent 30%, rgba(0, 0, 0, 0.5) 44%, #000 58%);
+    -webkit-mask-composite: source-in;
+    mask-image:
+      linear-gradient(to bottom, transparent 34%, rgba(0, 0, 0, 0.45) 62%, #000 78%),
+      linear-gradient(96deg, transparent 30%, rgba(0, 0, 0, 0.5) 44%, #000 58%);
+    mask-composite: intersect;
   }
 
   [data-sky="day"] .flux-video {
@@ -2350,6 +2381,14 @@
   ---------------------------------------------------------------- */
   .carousel--partners {
     height: clamp(20rem, 34vh, 26rem);
+    /* Plus courte que celle des réalisations, qui est à 1800.
+
+       Une perspective longue aplatit : c'est ce qu'il faut à des plaques
+       hautes et proches, qui sinon se déforment en entonnoir. Des plaques
+       basses et larges disposées sur le même anneau y perdent au contraire
+       toute fuyante et se lisent comme des vignettes alignées. Raccourcie, la
+       fuite redevient visible et le rectangle redevient un objet. */
+    perspective: 1050px;
   }
 
   .carousel--partners .carousel-seat {
@@ -2359,20 +2398,23 @@
     margin-top: -66px;
   }
 
-  /* Contre-tournée, donc toujours face au lecteur.
+  /* Les plaques gardent l'angle de leur siège : c'est ce qui fait le volume.
 
-     Sur l'anneau des réalisations, une plaque vue de dos montre le revers d'un
-     plan et cela ne gêne personne. Une marque vue de dos est une marque en
-     miroir, et ce n'est plus la marque de personne. La plaque reprend donc à
-     son siège une part de la rotation qu'il lui applique.
+     J'avais commencé par leur reprendre cette rotation pour tenir les marques
+     de face — un logo vu de dos est un logo en miroir. Mais reprendre la
+     rotation, c'est reprendre le relief : des rectangles tous parallèles à
+     l'écran ne sont plus un anneau, ce sont des vignettes alignées. L'anneau
+     est ce qu'on demandait.
 
-     Une part, et non la totalité. Annulée entièrement, la rotation emporte
-     avec elle l'éventail : deux plaques symétriques par rapport au quart de
-     tour tombent à la même abscisse — le sinus de soixante degrés vaut celui
-     de cent vingt — et se recouvrent au lieu de se ranger. Aux six dixièmes,
-     les marques se lisent et l'anneau reste un anneau. */
+     Le miroir est réglé autrement, et mieux : une plaque tournée au-delà du
+     quart de tour ne montre plus rien du tout. On ne voit jamais l'envers
+     d'une marque, et l'anneau garde ses fuyantes. */
+  .carousel--partners .carousel-seat {
+    backface-visibility: hidden;
+  }
+
   .carousel--partners .carousel-plate {
-    transform: rotateY(calc(-0.62 * (var(--seat, 0deg) + var(--turn, 0deg))));
+    backface-visibility: hidden;
     display: grid;
     place-items: center;
     padding: 0 22px;
