@@ -1520,7 +1520,7 @@
        composition et le canvas WebGL n'en ressort pas. Déplacer le bord haut
        ne crée aucun plan et laisse le rendu intact — 1640 de variance, le
        robot est là. */
-    top: calc(var(--scroll-y, 0px) * -1);
+    top: 0;   /* la figure écrit elle-même son décalage, sur elle-même */
     bottom: auto;
     height: 100svh;
     z-index: 0;

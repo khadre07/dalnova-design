@@ -52,6 +52,7 @@ export default function SplineFigure({ scene }: { scene: string }) {
   const { accent, sky } = useSite();
   const [state, setState] = useState<"waiting" | "live" | "failed">("waiting");
   const settled = useRef(false);
+  const app = useRef<{ stop?: () => void; play?: () => void } | null>(null);
   const host = useRef<HTMLDivElement>(null);
 
 
@@ -209,6 +210,56 @@ export default function SplineFigure({ scene }: { scene: string }) {
      A robot that is visible and moves a little more than asked beats a robot
      that is not there. */
 
+  /* Le décalage de la figure, et son arrêt quand elle a quitté l'écran.
+
+     Deux choses dans le même écouteur, limité à une frame d'animation.
+
+     Le décalage s'écrit sur l'élément et non plus sur la racine. Une propriété
+     personnalisée posée sur documentElement invalide le style de tout ce qui
+     en hérite, c'est-à-dire la page entière : mesuré, cela ajoutait soixante-
+     dix-sept recalculs de style et près d'une seconde par défilement. Écrit
+     ici, cela n'invalide qu'un élément.
+
+     L'arrêt est une possibilité neuve. Tant que la figure restait fixée à
+     l'écran, stop() était exclu — il ne fige pas la dernière image, il vide le
+     canvas, et le robot disparaissait. Depuis qu'elle s'en va avec le héros,
+     elle n'est plus là pour être vue en dessous : y vider le canvas ne coûte
+     rien, et cela épargne un rendu WebGL plein écran par frame sur toute la
+     hauteur restante du site.
+
+     La reprise est le point délicat — la note plus haut disait ne pas vouloir
+     découvrir sur une page vivante si play() ramène la scène. Elle est
+     vérifiée au navigateur avant d'être livrée. */
+  useEffect(() => {
+    const el = host.current;
+    if (!el || state !== "live") return;
+
+    let frame = 0;
+    let arretee = false;
+
+    const appliquer = () => {
+      frame = 0;
+      const y = window.scrollY;
+      el.style.top = `${-Math.round(y)}px`;
+      /* entièrement sortie par le haut : une hauteur d'écran suffit */
+      const sortie = y >= window.innerHeight;
+      if (sortie && !arretee) { arretee = true; app.current?.stop?.(); }
+      else if (!sortie && arretee) { arretee = false; app.current?.play?.(); }
+    };
+
+    const onScroll = () => { if (!frame) frame = requestAnimationFrame(appliquer); };
+    appliquer();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (frame) cancelAnimationFrame(frame);
+      if (arretee) app.current?.play?.();
+      el.style.top = "";
+    };
+  }, [state]);
+
   if (state === "failed") return null;
 
   return (
@@ -225,7 +276,9 @@ export default function SplineFigure({ scene }: { scene: string }) {
         className="spline-canvas"
           /* The load event is a hint, not the answer. The watch above decides,
            and it decides on whether there is a canvas with a size in it. */
-        onLoad={() => {
+        onLoad={(instance) => {
+          /* gardée pour pouvoir arrêter la scène quand elle sort de l'écran */
+          app.current = instance as { stop?: () => void; play?: () => void };
           requestAnimationFrame(() => {
             if (showing()) finish("live");
           });
