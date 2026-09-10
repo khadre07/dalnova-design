@@ -334,13 +334,26 @@
 
        Croisés par intersection : un point n'est peint que s'il est bas *et* à
        droite. */
+    /* Étendu à toute la page.
+
+       Il ne couvrait que le quart bas-droit : c'était ce qu'il fallait pour
+       que la figure paraisse en sortir, et trop peu pour qu'il soit le fond du
+       site. Le masque vertical commence donc beaucoup plus haut et le masque
+       horizontal se contente d'épargner la colonne de texte au lieu de céder
+       la moitié de l'écran.
+
+       Ce qui rend l'extension possible sans coûter à la lecture, c'est le
+       mélange par écran : la vidéo est faite de traits clairs sur du noir, et
+       en « screen » le noir ne dépose rien. Là où il n'y a pas de traînée, il
+       n'y a rien de posé — donc étendre la surface n'ajoute pas un voile, cela
+       ajoute seulement des traits. Vérifié par mesure après coup. */
     -webkit-mask-image:
-      linear-gradient(to bottom, transparent 34%, rgba(0, 0, 0, 0.45) 62%, #000 78%),
-      linear-gradient(96deg, transparent 30%, rgba(0, 0, 0, 0.5) 44%, #000 58%);
+      linear-gradient(to bottom, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.7) 30%, #000 62%),
+      linear-gradient(96deg, rgba(0, 0, 0, 0.25) 12%, rgba(0, 0, 0, 0.7) 34%, #000 52%);
     -webkit-mask-composite: source-in;
     mask-image:
-      linear-gradient(to bottom, transparent 34%, rgba(0, 0, 0, 0.45) 62%, #000 78%),
-      linear-gradient(96deg, transparent 30%, rgba(0, 0, 0, 0.5) 44%, #000 58%);
+      linear-gradient(to bottom, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.7) 30%, #000 62%),
+      linear-gradient(96deg, rgba(0, 0, 0, 0.25) 12%, rgba(0, 0, 0, 0.7) 34%, #000 52%);
     mask-composite: intersect;
   }
 
@@ -2366,6 +2379,71 @@
 
   .partners-label {
     margin-bottom: 1.6rem;
+  }
+
+  /* ---------------------------------------------------------------
+     La flotte
+
+     Une bande de figures qui traverse. Même mécanique que le registre des
+     partenaires — trois rangées pour une boucle sans couture, arrêt au survol
+     — et le même masque aux deux bouts, pour qu'elles entrent et sortent au
+     lieu d'être coupées.
+
+     Plus lente que le registre : les partenaires sont une information qu'on
+     lit, la flotte est une atmosphère qu'on regarde, et une atmosphère qui
+     presse n'en est plus une.
+  ---------------------------------------------------------------- */
+  .fleet {
+    display: flex;
+    gap: 3.5rem;
+    overflow: hidden;
+    padding-block: clamp(2rem, 5vh, 4rem);
+    mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  }
+
+  .fleet-row {
+    display: flex;
+    flex: none;
+    gap: 3.5rem;
+    align-items: flex-end;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    animation: fleet-run 74s linear infinite;
+  }
+
+  .fleet:hover .fleet-row {
+    animation-play-state: paused;
+  }
+
+  @keyframes fleet-run {
+    to {
+      transform: translateX(calc(-100% - 3.5rem));
+    }
+  }
+
+  .fleet-row li {
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .fleet-row img {
+    display: block;
+    width: auto;
+    /* Les figures sont sombres sur une page sombre : sans ce filet de lumière
+       elles se fondent dans le fond au lieu de le traverser. */
+    filter: brightness(1.35) drop-shadow(0 8px 18px rgba(0, 0, 0, 0.6));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fleet-row {
+      animation: none;
+    }
+
+    .fleet > .fleet-row[aria-hidden="true"] {
+      display: none;
+    }
   }
 
   .partners-rail {

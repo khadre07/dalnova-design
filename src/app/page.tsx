@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import Gallery from "@/components/Gallery";
 import Hero from "@/components/Hero";
 import Method from "@/components/Method";
+import Fleet from "@/components/Fleet";
 import Partners from "@/components/Partners";
 import Sectors from "@/components/Sectors";
 import SiteNav from "@/components/SiteNav";
@@ -81,6 +82,13 @@ export default function Page() {
             <Contact />
           </Column>
         </Shell>
+
+        {/* La flotte, entre le contact et les partenaires.
+
+            Hors d'une Shell : elle traverse toute la largeur, et une bande qui
+            s'arrête à la mesure du texte n'est plus une bande, c'est une
+            vignette. */}
+        <Fleet />
 
         <Shell>
           <Partners />
