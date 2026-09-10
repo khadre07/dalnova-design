@@ -7,7 +7,6 @@ import { reportReady, reportStage } from "@/lib/boot";
 import { figureIsUp } from "@/lib/cue";
 import { WATER_FRAG, WATER_VERT } from "@/lib/water";
 import { presenceValue } from "@/lib/stage";
-import { Conduits, type Box } from "./Conduits";
 
 /* What is left when the model is taken out: the water, and the light on it.
 
@@ -28,8 +27,6 @@ const FIGURE_AT = { narrow: 0.5, wide: 0.74 };
 export default function WaterStage() {
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const frontRef = useRef<HTMLDivElement>(null);
-  const [box, setBox] = useState<Box | null>(null);
   const [failed, setFailed] = useState(false);
   const { accent, sky, progressRef } = useSite();
 
@@ -111,7 +108,6 @@ export default function WaterStage() {
       reportStage("scene", 0.8);
 
       let baseDistance = 1;
-      let unitPx = 1;
 
       const layout = () => {
         const stage = { w: host.clientWidth, h: host.clientHeight };
@@ -132,7 +128,6 @@ export default function WaterStage() {
         const baseY = narrow ? 0.03 : 0.06;
         water.position.y = baseY - 0.502;
         baseDistance = distance;
-        unitPx = stage.h * frameFill;
 
         /* The pool of light sits under the figure rather than in the middle of
            the screen, and the surface is wide enough that its ends are off the
@@ -150,15 +145,8 @@ export default function WaterStage() {
         renderer.setPixelRatio(dpr);
         renderer.setSize(stage.w, stage.h, false);
 
-        const boxH = stage.h * frameFill;
-        const boxShift = stage.w * (at - 0.5);
-        const boxW = boxH * 0.62;
-        setBox({
-          left: (stage.w - boxW) / 2 + boxShift,
-          top: (stage.h - boxH) / 2 - baseY * unitPx,
-          width: boxW,
-          height: boxH,
-        });
+        /* La boîte de la figure n'est plus mesurée : elle n'existait que pour
+           ancrer les conduits, et il n'y a plus de conduits à ancrer. */
       };
 
       layout();
@@ -174,7 +162,6 @@ export default function WaterStage() {
       const currentAccent = new THREE.Color(ACCENT_HEX.arc);
       const nextAccent = new THREE.Color();
       let easedProgress = 0;
-      let overlayIntro = 0;
       let raf = 0;
       let running = true;
       let started = performance.now();
@@ -182,10 +169,9 @@ export default function WaterStage() {
       let last = performance.now();
       let cued = false;
 
-      const trackDolly = (dolly: number, lift: number) => {
-        const correction = `scale(${(1 / dolly).toFixed(4)}) translateY(${(lift * unitPx).toFixed(1)}px)`;
-        if (frontRef.current) frontRef.current.style.transform = correction;
-      };
+      /* trackDolly corrigeait la perspective du calque des conduits pour qu'il
+         suive le travelling de la caméra. Deux écritures de style par frame,
+         sur un calque qui n'existe plus. */
 
       const frame = () => {
         raf = window.requestAnimationFrame(frame);
@@ -219,9 +205,6 @@ export default function WaterStage() {
           reportReady();
         }
 
-        overlayIntro = Math.max(0, Math.min(1, (elapsed - 0.62) / 0.45));
-        if (frontRef.current) frontRef.current.style.opacity = String(overlayIntro);
-
         easedProgress += (progressRef.current - easedProgress) * 0.07;
 
         /* The shot, not the subject. The camera pulls back and lifts as the
@@ -230,7 +213,6 @@ export default function WaterStage() {
         camera.position.set(0, easedProgress * 0.26, baseDistance * dolly);
         camera.lookAt(0, -easedProgress * 0.06, 0);
 
-        trackDolly(dolly, easedProgress * 0.26);
         renderer.render(scene, camera);
       };
 
@@ -304,11 +286,18 @@ export default function WaterStage() {
         }}
       />
 
-      {box ? (
-        <div ref={frontRef} className="absolute inset-0 z-0" style={{ opacity: 0 }}>
-          <Conduits box={box} accent={ACCENT_HEX[accent]} reduced={reduced} />
-        </div>
-      ) : null}
+      {/* Les conduits retirés.
+
+          C'étaient quatre traits de lumière partant du réacteur de la figure
+          vers les quatre disciplines — l'idée que le robot est le foyer et que
+          les sections sont ce qu'il alimente. Elle se défendait tant que la
+          figure restait à l'écran d'un bout à l'autre de la page ; elle ne se
+          défend plus depuis qu'elle s'en va avec le héros, puisque les traits
+          pointaient vers des sections que le foyer ne surplombe plus.
+
+          Le composant reste dans l'arbre des fichiers : c'est un dessin abouti
+          et le rebrancher tient à une ligne, si l'on revenait à une figure
+          fixe. */}
 
       <canvas
         ref={canvasRef}

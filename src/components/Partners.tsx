@@ -1,21 +1,36 @@
 "use client";
 
 import { useSite } from "@/lib/site-state";
+import { CircularGallery } from "./ui/circular-gallery";
 
-/* The partner ticker.
+/* Les partenaires, sur l'anneau.
 
-   Each mark sits on a pale plate. Checked rather than assumed: on the dark
-   page E4Impact loses half its wordmark, which is drawn in near-black, and
-   ISRA — BAME arrives with an opaque white backing that would have shown as a
-   rectangle. A light plate is how the page already treats documents from
-   outside its own palette — the architecture drawings sit on one too.
+   Ils défilaient en boucle sur un rail. L'anneau est le même dispositif que
+   les réalisations emploient déjà — des plaques assises à angles égaux,
+   poussées sur leur rayon, la moitié lointaine estompée pour que la proche se
+   lise comme proche — et c'est du 3D en CSS, pas un troisième contexte WebGL.
+   Le commentaire de ce composant le dit mieux que moi : il y a déjà un robot
+   et une surface d'eau, et un troisième contexte serait celui qui casse la
+   fréquence d'images.
 
-   The list is repeated so the loop has no seam. Only the first copy carries
-   links; the repeats are plain text, because a link inside an aria-hidden
-   element is still reachable by keyboard and would put the same four
-   destinations in the tab order three times over. */
+   Il tourne au passage de la section et non tout seul, donc le mouvement
+   répond au lecteur au lieu de s'imposer à lui.
+
+   Ce qui reste de l'ancien rail : la plaque claire derrière chaque marque.
+   Vérifié à l'écran plutôt que supposé — sur fond sombre, E4Impact perd la
+   moitié de son mot, qui est dessiné en presque noir, et ISRA — BAME arrive
+   avec un fond blanc opaque qui se lirait comme un rectangle.
+
+   Et la liste sous l'anneau, qui n'est pas une redite. Un anneau cache la
+   moitié de ce qu'il porte : la liste est par où l'on atteint un partenaire
+   au clavier, et par où on l'entend quand la page est lue à voix haute. */
 export default function Partners() {
   const { t } = useSite();
+
+  const ouvrir = (index: number) => {
+    const partenaire = t.partners.items[index];
+    if (partenaire) window.open(partenaire.href, "_blank", "noreferrer,noopener");
+  };
 
   return (
     <section className="partners" aria-labelledby="partners-label">
@@ -23,74 +38,35 @@ export default function Partners() {
         {t.partners.label}
       </p>
 
-      <div className="partners-rail">
-        <ul className="partners-row">
-          {t.partners.items.map((partner) => (
-            <li key={partner.name}>
-              <a
-                className="partner"
-                href={partner.href}
-                target="_blank"
-                rel="noreferrer noopener"
-              >
-                <span className="partner-plate">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={partner.logo}
-                    alt={partner.name}
-                    width={partner.w}
-                    height={partner.h}
-                    loading="lazy"
-                    decoding="async"
-                    data-fade
-                    onLoad={(event) => {
-                      event.currentTarget.dataset.in = "true";
-                    }}
-                    ref={(node) => {
-                      // Already in the cache: load fired before this handler
-                      // existed, so nothing would ever mark it in.
-                      if (node?.complete) node.dataset.in = "true";
-                    }}
-                  />
-                </span>
-                <span className="partner-place t-mono">{partner.place}</span>
-              </a>
-            </li>
-          ))}
-        </ul>
+      <CircularGallery
+        className="carousel--partners"
+        items={t.partners.items.map((partenaire) => ({
+          src: partenaire.logo,
+          alt: partenaire.name,
+          caption: partenaire.place,
+          w: partenaire.w,
+          h: partenaire.h,
+        }))}
+        radius={360}
+        onPick={ouvrir}
+        openLabel={t.partners.label}
+      />
 
-        {/* Two repeats, not one: with four names a single repeat is narrower
-            than a wide screen, and the loop shows a gap at the far edge. */}
-        {[1, 2].map((copy) => (
-          <ul className="partners-row" aria-hidden="true" key={copy}>
-            {t.partners.items.map((partner) => (
-              <li key={partner.name}>
-                <span className="partner">
-                  <span className="partner-plate">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={partner.logo}
-                      alt=""
-                      width={partner.w}
-                      height={partner.h}
-                      loading="lazy"
-                      decoding="async"
-                      data-fade
-                      onLoad={(event) => {
-                        event.currentTarget.dataset.in = "true";
-                      }}
-                      ref={(node) => {
-                        if (node?.complete) node.dataset.in = "true";
-                      }}
-                    />
-                  </span>
-                  <span className="partner-place t-mono">{partner.place}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
+      <ul className="partner-list">
+        {t.partners.items.map((partenaire) => (
+          <li key={partenaire.name}>
+            <a
+              className="partner-list-link"
+              href={partenaire.href}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              <span className="partner-list-name">{partenaire.name}</span>
+              <span className="partner-list-place t-mono">{partenaire.place}</span>
+            </a>
+          </li>
         ))}
-      </div>
+      </ul>
     </section>
   );
 }

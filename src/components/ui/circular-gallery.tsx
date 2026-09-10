@@ -117,6 +117,13 @@ const CircularGallery = React.forwardRef<HTMLDivElement, CircularGalleryProps>(
                 key={item.src}
                 className="carousel-seat"
                 style={{
+                  /* L'assise et le tour de l'anneau, publiés pour qui en a
+                     besoin. Une variante peut ainsi contre-tourner sa plaque
+                     pour la tenir face au lecteur — ce dont les logotypes ont
+                     besoin, un logo vu de dos étant un logo en miroir, et un
+                     logo en miroir n'étant plus le logo de personne. */
+                  ["--seat" as string]: `${seat}deg`,
+                  ["--turn" as string]: `${turn}deg`,
                   transform: `rotateY(${seat}deg) translateZ(${radius}px)`,
                   // Never to nothing: a plate that vanishes at the back reads
                   // as a plate that failed to load rather than one turned away.

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, Geist, Geist_Mono, Martian_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { SiteProvider } from "@/lib/site-state";
 import "./globals.css";
 
@@ -10,6 +11,29 @@ const archivo = Archivo({
   subsets: ["latin"],
   axes: ["wdth"],
   variable: "--font-archivo",
+  display: "swap",
+});
+
+/* Zodiak, pris chez Fontshare et hébergé ici.
+
+   Il n'est pas sur Google Fonts, donc next/font/local plutôt que next/font/google,
+   et le fichier vit dans le dépôt. La licence libre d'ITF autorise
+   explicitement l'auto-hébergement ; elle est déposée à côté du fichier, ce
+   qu'elle demande.
+
+   La variable et non les douze coupes : trente-sept kilo-octets pour toute la
+   famille, du maigre au noir, contre une requête par graisse. C'est aussi ce
+   qui permet aux titres de prendre exactement le poids qu'on leur donne au
+   lieu du plus proche disponible.
+
+   « swap » : une page qui attend sa police est une page sans texte. Le lecteur
+   voit d'abord la substitution, puis Zodiak — jamais rien. */
+const zodiak = localFont({
+  src: [
+    { path: "../fonts/Zodiak-Variable.woff2", weight: "100 900", style: "normal" },
+    { path: "../fonts/Zodiak-VariableItalic.woff2", weight: "100 900", style: "italic" },
+  ],
+  variable: "--font-zodiak",
   display: "swap",
 });
 
@@ -81,7 +105,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
        Without this, every single page load reported a hydration mismatch. */
     <html
       lang="fr"
-      className={`${archivo.variable} ${martian.variable} ${geist.variable} ${geistMono.variable}`}
+      className={`${zodiak.variable} ${archivo.variable} ${martian.variable} ${geist.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >
       <head>

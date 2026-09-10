@@ -22,7 +22,14 @@
   --color-arc-deep: #0b7fa8;
   --color-ember: var(--ember);
 
-  --font-display: var(--font-archivo), "Arial Narrow", system-ui, sans-serif;
+  /* Zodiak porte l'affichage.
+
+     Archivo reste dans la pile derrière lui, et ce n'est pas de la prudence
+     inutile : c'est une grotesque étroite là où Zodiak est une serif à fort
+     contraste, donc la substitution qui s'affiche pendant le chargement a des
+     largeurs voisines et le titre ne saute pas de deux lignes à trois quand la
+     police arrive. */
+  --font-display: var(--font-zodiak), var(--font-archivo), "Arial Narrow", system-ui, serif;
   --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
   --font-spec: var(--font-martian), var(--font-geist-mono), ui-monospace, monospace;
@@ -280,6 +287,40 @@
     transform: translateX(-50%);
     background: var(--ground-2);
     border-block: 1px solid color-mix(in oklab, var(--color-steel) 45%, transparent);
+  }
+
+  /* Le flux vidéo, tout au fond.
+
+     Sous le ciel, la grille, la figure et le voile : c'est le sol animé sur
+     lequel tout le reste se pose. Assez discret pour rester une texture —
+     à pleine force il concurrencerait la lune et le robot, qui sont les deux
+     choses que la page a à montrer.
+
+     Coupé en plein jour. C'est un champ bleu nuit ; sur le thème clair il
+     serait une tache sombre au milieu d'une page pâle.
+
+     Coupé aussi quand on demande moins de mouvement. Une vidéo en boucle est
+     exactement ce que ce réglage veut voir s'arrêter, et la page garde son
+     sol : c'est une texture en plus, jamais un fond dont elle dépend. */
+  .flux-video {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.34;
+    pointer-events: none;
+  }
+
+  [data-sky="day"] .flux-video {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .flux-video {
+      display: none;
+    }
   }
 
   /* The sky. Strongest at the top and gone by the horizon, so the water below
@@ -2296,114 +2337,109 @@
     margin-bottom: 1.6rem;
   }
 
-  .partners-rail {
-    display: flex;
-    gap: 3rem;
-    overflow: hidden;
-    /* Fades at both ends, so names enter and leave rather than being cut. */
-    mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
+  /* ---------------------------------------------------------------
+     Les partenaires sur l'anneau
+
+     Le rail défilant est parti. Ce qui reste est la plaque claire, portée
+     par les sièges du carrousel : deux des marques sont illisibles sans
+     elle sur un fond sombre, ce qui a été vérifié à l'écran et non supposé.
+
+     Les sièges sont plus bas et plus larges que ceux des réalisations, parce
+     qu'un logotype est large et plat là où un plan d'architecte est un
+     portrait.
+  ---------------------------------------------------------------- */
+  .carousel--partners {
+    height: clamp(20rem, 34vh, 26rem);
   }
 
-  .partners-row {
-    display: flex;
-    flex: none;
-    gap: 3rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    animation: partners-run 38s linear infinite;
+  .carousel--partners .carousel-seat {
+    width: 260px;
+    height: 132px;
+    margin-left: -130px;
+    margin-top: -66px;
   }
 
-  /* A register that keeps moving while you are trying to read one entry is a
-     register you cannot read — and one you cannot click. */
-  .partners-rail:hover .partners-row,
-  .partners-rail:focus-within .partners-row {
-    animation-play-state: paused;
-  }
+  /* Contre-tournée, donc toujours face au lecteur.
 
-  @keyframes partners-run {
-    to {
-      /* The gap between copies has to travel with them, or the loop jumps by
-         exactly one gap every cycle. */
-      transform: translateX(calc(-100% - 3rem));
-    }
-  }
+     Sur l'anneau des réalisations, une plaque vue de dos montre le revers d'un
+     plan et cela ne gêne personne. Une marque vue de dos est une marque en
+     miroir, et ce n'est plus la marque de personne. La plaque reprend donc à
+     son siège une part de la rotation qu'il lui applique.
 
-  .partner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.7rem;
-    white-space: nowrap;
-  }
-
-  /* Chamfered like every other panel on the page, so a foreign mark is still
-     mounted the way this site mounts things. */
-  .partner-plate {
-    --cut: 7px;
+     Une part, et non la totalité. Annulée entièrement, la rotation emporte
+     avec elle l'éventail : deux plaques symétriques par rapport au quart de
+     tour tombent à la même abscisse — le sinus de soixante degrés vaut celui
+     de cent vingt — et se recouvrent au lieu de se ranger. Aux six dixièmes,
+     les marques se lisent et l'anneau reste un anneau. */
+  .carousel--partners .carousel-plate {
+    transform: rotateY(calc(-0.62 * (var(--seat, 0deg) + var(--turn, 0deg))));
     display: grid;
     place-items: center;
-    width: 200px;
-    height: 88px;
-    padding: 0.95rem 1.2rem;
-    background: var(--plate);
-    clip-path: polygon(
-      var(--cut) 0%,
-      100% 0%,
-      100% calc(100% - var(--cut)),
-      calc(100% - var(--cut)) 100%,
-      0% 100%,
-      0% var(--cut)
-    );
-    /* Held slightly back so the row does not out-shout the page, and brought
-       fully up on hover. */
-    opacity: 0.82;
-    transition: opacity 220ms ease;
+    padding: 0 22px;
+    background: #e9ece7;
+    border-color: transparent;
+    border-radius: 2px;
   }
 
-  /* The box is fixed and the image is fitted inside it, rather than the image
-     being left to size itself: the Enactus mark is an SVG with a viewBox and
-     no width or height, so a percentage max-height has nothing to resolve
-     against and it overflowed the plate. */
-  .partner-plate img {
-    width: 100%;
-    height: 100%;
+  /* La règle de base donne à l'image une hauteur fixe, un recadrage en
+     « cover » et un fond couleur du sol — trois choses justes pour un plan
+     d'architecte et trois choses fausses pour un logotype. Le fond surtout :
+     il dessinait un rectangle noir au milieu de la plaque claire. Les trois
+     sont reprises, pas seulement les deux que j'avais vues. */
+  .carousel--partners .carousel-plate img {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 56px;
     object-fit: contain;
+    background: none;
   }
 
-  .partner-place {
-    color: var(--ink-faint);
+  /* La légende porte un numéro et un titre d'œuvre. Un partenaire n'est ni
+     l'un ni l'autre, et son lieu est déjà dans la liste sous l'anneau. */
+  .carousel--partners .carousel-cap {
+    display: none;
   }
 
-  @media (hover: hover) and (pointer: fine) {
-    a.partner:hover .partner-plate {
-      opacity: 1;
-    }
+  /* La liste sous l'anneau : ce n'est pas une redite mais le seul chemin
+     clavier vers une plaque que l'anneau tient de dos. */
+  .partner-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem 2.25rem;
+    margin: 1.75rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
 
-    a.partner:hover .partner-place {
-      color: var(--ink-3);
-    }
+  .partner-list-link {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding: 0.35rem 0;
+    color: var(--ink-3);
+    text-decoration: none;
+    transition: color 200ms ease;
+  }
+
+  .partner-list-link:hover,
+  .partner-list-link:focus-visible {
+    color: var(--ink);
+  }
+
+  .partner-list-name {
+    font-size: 0.9rem;
+  }
+
+  .partner-list-place {
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-quiet);
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .partners-rail {
-      overflow: visible;
-      flex-wrap: wrap;
-      gap: 2rem 3rem;
-      mask-image: none;
-    }
-
-    .partners-row {
-      flex-wrap: wrap;
-      animation: none;
-    }
-
-    /* The repeats exist only to hide the seam of a loop that is no longer
-       running. */
-    .partners-rail > .partners-row[aria-hidden="true"] {
-      display: none;
-    }
-
     .gallery-track {
       scroll-snap-type: none;
     }
