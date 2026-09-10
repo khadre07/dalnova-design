@@ -135,7 +135,7 @@ export const CONTENT: Record<Lang, Content> = {
     spec: {
       label: "Périmètre couvert",
       link: "Voir nos services",
-      value: "8",
+      value: "7",
       unit: "domaines",
       floor: "Développement",
       ceiling: "Équipements",
@@ -163,19 +163,6 @@ export const CONTENT: Record<Lang, Content> = {
             "Sites web professionnels",
             "Solutions métier sur mesure",
             "De la conception à la mise en production",
-          ],
-        },
-        {
-          id: "cloud",
-          code: "CLD",
-          accent: "arc",
-          title: "Cloud, hébergement et messagerie",
-          lede: "Choix, déploiement et gestion de vos solutions d'hébergement, de messagerie et d'infrastructure Cloud, sur les plateformes les mieux adaptées.",
-          points: [
-            "Hébergement cloud et hébergement web",
-            "Gestion de noms de domaine",
-            "Messagerie professionnelle",
-            "Migration des données et sauvegarde",
           ],
         },
         {
@@ -436,7 +423,6 @@ export const CONTENT: Record<Lang, Content> = {
           title: "Services",
           links: [
             { label: "Développement", href: "#developpement" },
-            { label: "Cloud et messagerie", href: "#cloud" },
             { label: "Réseaux et systèmes", href: "#reseaux" },
             { label: "Téléphonie IP", href: "#telephonie" },
             { label: "Sécurité physique", href: "#securite" },
@@ -487,7 +473,7 @@ export const CONTENT: Record<Lang, Content> = {
     spec: {
       label: "Ground covered",
       link: "See our services",
-      value: "8",
+      value: "7",
       unit: "fields",
       floor: "Development",
       ceiling: "Equipment",
@@ -515,19 +501,6 @@ export const CONTENT: Record<Lang, Content> = {
             "Professional websites",
             "Line-of-business software, built to fit",
             "From the specification through to production",
-          ],
-        },
-        {
-          id: "cloud",
-          code: "CLD",
-          accent: "arc",
-          title: "Cloud, hosting and email",
-          lede: "Choosing, deploying and running your hosting, email and cloud infrastructure on whichever platform suits you.",
-          points: [
-            "Cloud and web hosting",
-            "Domain name management",
-            "Business email",
-            "Data migration and backup",
           ],
         },
         {
@@ -788,7 +761,6 @@ export const CONTENT: Record<Lang, Content> = {
           title: "Services",
           links: [
             { label: "Development", href: "#developpement" },
-            { label: "Cloud and email", href: "#cloud" },
             { label: "Networks and systems", href: "#reseaux" },
             { label: "IP telephony", href: "#telephonie" },
             { label: "Physical security", href: "#securite" },
