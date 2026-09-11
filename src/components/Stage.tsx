@@ -17,16 +17,15 @@ import dynamic from "next/dynamic";
    on someone else's host, and a hero whose words wait on a request to a third
    party is a hero that can stay blank. */
 const Water = dynamic(() => import("./WaterStage"), { ssr: false });
-const Spline = dynamic(() => import("./SplineFigure"), { ssr: false });
+const Mind = dynamic(() => import("./MindFigure"), { ssr: false });
 
 /** The scene the prompt names. */
-const SCENE = "https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode";
 
 export default function Stage() {
   return (
     <>
       <Water />
-      <Spline scene={SCENE} />
+      <Mind />
     </>
   );
 }

@@ -289,6 +289,71 @@
     border-block: 1px solid color-mix(in oklab, var(--color-steel) 45%, transparent);
   }
 
+  /* ---------------------------------------------------------------
+     La figure
+
+     Elle occupe la place de la scène Spline, aux mêmes coordonnées : fixe pour
+     tenir le cadre de l'écran, décalée du défilement par le composant lui-même
+     pour s'en aller avec le héros.
+
+     Et elle est peinte comme le flux du fond : mélange par écran. C'est ce qui
+     fait qu'on ne voit pas deux vidéos. Le rush est une figure lumineuse sur
+     un noir quasi pur, et en « screen » le noir ne dépose rien — il n'y a donc
+     ni rectangle, ni bord, ni raccord à masquer. Deux sources, une seule
+     lumière ajoutée au même fond.
+  ---------------------------------------------------------------- */
+  .mind-figure {
+    position: fixed;
+    inset: 0;
+    /* Plus à droite, et plus petite : à 46 % elle occupait la moitié de
+       l'écran et devenait le sujet au lieu d'en être un. */
+    left: 54%;
+    top: 0;
+    height: 100svh;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .mind-video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: 54% 44%;
+    mix-blend-mode: screen;
+    opacity: 0.9;
+    /* Les bords fondus, et c'est là que se joue la demande.
+
+       Le mélange par écran efface le noir mais pas la géométrie : le cadre de
+       la vidéo reste une arête nette là où le halo du sujet s'arrête, et cette
+       verticale trahit la seconde source plus sûrement qu'un rectangle
+       visible. Mesuré à l'écran : une ligne franche à 46 % de la largeur.
+
+       Deux dégradés croisés éteignent le calque avant son propre bord. Il n'y
+       a donc plus d'arête du tout — la figure se dissout dans le fond au lieu
+       d'y être posée. */
+    -webkit-mask-image:
+      linear-gradient(90deg, transparent 0%, #000 26%, #000 78%, transparent 100%),
+      linear-gradient(180deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-image:
+      linear-gradient(90deg, transparent 0%, #000 26%, #000 78%, transparent 100%),
+      linear-gradient(180deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
+    mask-composite: intersect;
+  }
+
+  /* En plein jour, une figure faite de lumière additive sur une page pâle
+     n'ajoute rien : le blanc est déjà au plafond. */
+  [data-sky="day"] .mind-figure {
+    display: none;
+  }
+
+  @media (max-width: 1023px) {
+    .mind-figure {
+      left: 0;
+      opacity: 0.42;
+    }
+  }
+
   /* Le flux, devant la figure.
 
      Masqué en dégradé : rien en haut, tout en bas. C'est ce qui fait que la
