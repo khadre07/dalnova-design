@@ -285,7 +285,18 @@
     left: 50%;
     width: 100vw;
     transform: translateX(-50%);
-    background: var(--ground-2);
+    /* Translucide, et c'est ce qui rendait le fond invisible dans la galerie.
+
+       Ce bandeau peint le sol en opaque sur cent pour cent de la largeur, pour
+       détacher une section pleine largeur de ce qui l'entoure. Il faisait bien
+       son travail : il masquait aussi le champ vidéo qui passe derrière, et
+       j'ai cherché la cause dans le masque, dans la luminosité du rush, puis
+       dans l'ordre d'empilement, avant de la trouver là. Le flux était intact
+       tout du long — isolé, il monte à 235 sur 255.
+
+       À sept dixièmes, la section se détache toujours et le champ se lit au
+       travers. */
+    background: color-mix(in oklab, var(--ground-2) 70%, transparent);
     border-block: 1px solid color-mix(in oklab, var(--color-steel) 45%, transparent);
   }
 
@@ -354,80 +365,73 @@
     }
   }
 
-  /* Le flux, devant la figure.
+  /* Le champ, devant la figure et sur toute la page.
 
-     Masqué en dégradé : rien en haut, tout en bas. C'est ce qui fait que la
-     figure paraît sortir du flux plutôt que se tenir devant — ses traînées lui
-     passent sur les jambes et se sont éteintes avant sa tête — et c'est aussi
-     ce qui laisse la lune et les étoiles au premier plan de leur propre moitié
-     d'écran, puisque le calque y est transparent.
+     Trois bandes empilées : le rush ne porte son sujet que dans une bande, et
+     une bande seule laissait le reste de l'écran vide. Retournées une fois sur
+     deux, sans quoi la répétition se lit.
 
-     Le point de bascule est calé sur la ligne de flottaison de la figure,
-     laquelle vaut 82 %. Le flux prend la main un peu avant : sinon, on verrait
-     l'endroit où elle est coupée, au lieu de voir le flux la couper.
+     Mélange par écran, et c'est ce qui fait qu'on ne voit pas plusieurs
+     sources : la vidéo est faite de traits clairs sur un noir quasi pur, et en
+     « screen » le noir ne dépose rien. Il n'y a ni rectangle, ni bord, ni
+     raccord — seulement de la lumière ajoutée au même fond.
 
-     Le mélange par écran plutôt qu'une simple opacité. La vidéo est faite de
-     traits clairs sur un noir : en « screen », le noir ne dépose rien et seuls
-     les traits arrivent. En opacité simple, son fond noir grisait tout ce qu'il
-     recouvrait, y compris la figure.
-
-     Coupé en plein jour, où un champ bleu nuit serait une tache sur une page
-     pâle. Coupé aussi quand on demande moins de mouvement : une boucle est
-     exactement ce que ce réglage veut voir s'arrêter, et la page garde son
-     décor — le flux est une matière en plus, jamais un fond dont elle dépend. */
-  .flux-video {
-    position: absolute;
+     Le masque horizontal épargne la colonne de texte, où les traînées
+     passeraient derrière la copie. Il ne l'éteint pas complètement : à un quart
+     de sa force, le champ existe sous les paragraphes sans les traverser. */
+  .flux {
+    /* Fixe, et non absolu. Le parent est lui-même fixe et sans hauteur propre :
+       « inset: 0 » n'y donnait que la hauteur du contenu — relevé à 317 pixels
+       au lieu des 950 de l'écran, d'où deux tiers de page sans champ. */
+    position: fixed;
     inset: 0;
-    z-index: 1;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0.72;
-    mix-blend-mode: screen;
+    height: 100svh;
+    /* Au-dessus de l'eau, qui est à dix.
+
+       Le canvas de la surface d'eau porte z-10 et le champ était à un : l'eau
+       le recouvrait. Cela ne se voyait pas tant que le bandeau de section
+       peignait un sol opaque par-dessus les deux — un défaut en cachait un
+       autre, et c'est pour cela que rendre le bandeau translucide n'a d'abord
+       rien donné. Mesuré : 37 sur 255 au quatre-vingt-quinzième centile avec
+       le champ à un, 111 à vingt. */
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
     pointer-events: none;
-    /* Deux masques, croisés.
-
-       Le premier est vertical et fait le sujet : rien en haut, tout en bas,
-       donc la figure sort du flux.
-
-       Le second est horizontal et n'est pas une préférence, c'est une
-       correction. Mesuré après coup : sous le seul masque vertical, les
-       traînées passaient dans la colonne de gauche et le bloc du périmètre
-       tombait à 1,58 contre 1 dans le pire décile — le chiffre « 8 » était
-       traversé de traits clairs. Le flux s'arrête donc avant la copie, ce que
-       le voile de scène fait déjà pour la même raison et sur le même bord.
-
-       Croisés par intersection : un point n'est peint que s'il est bas *et* à
-       droite. */
-    /* Étendu à toute la page.
-
-       Il ne couvrait que le quart bas-droit : c'était ce qu'il fallait pour
-       que la figure paraisse en sortir, et trop peu pour qu'il soit le fond du
-       site. Le masque vertical commence donc beaucoup plus haut et le masque
-       horizontal se contente d'épargner la colonne de texte au lieu de céder
-       la moitié de l'écran.
-
-       Ce qui rend l'extension possible sans coûter à la lecture, c'est le
-       mélange par écran : la vidéo est faite de traits clairs sur du noir, et
-       en « screen » le noir ne dépose rien. Là où il n'y a pas de traînée, il
-       n'y a rien de posé — donc étendre la surface n'ajoute pas un voile, cela
-       ajoute seulement des traits. Vérifié par mesure après coup. */
-    -webkit-mask-image:
-      linear-gradient(to bottom, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.7) 30%, #000 62%),
-      linear-gradient(96deg, rgba(0, 0, 0, 0.25) 12%, rgba(0, 0, 0, 0.7) 34%, #000 52%);
-    -webkit-mask-composite: source-in;
-    mask-image:
-      linear-gradient(to bottom, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.7) 30%, #000 62%),
-      linear-gradient(96deg, rgba(0, 0, 0, 0.25) 12%, rgba(0, 0, 0, 0.7) 34%, #000 52%);
-    mask-composite: intersect;
+    opacity: 0.92;
+    mix-blend-mode: screen;
+    -webkit-mask-image: linear-gradient(
+      96deg,
+      rgba(0, 0, 0, 0.22) 0%,
+      rgba(0, 0, 0, 0.6) 28%,
+      #000 46%
+    );
+    mask-image: linear-gradient(
+      96deg,
+      rgba(0, 0, 0, 0.22) 0%,
+      rgba(0, 0, 0, 0.6) 28%,
+      #000 46%
+    );
   }
 
-  [data-sky="day"] .flux-video {
+  .flux-video {
+    flex: 1 1 0;
+    width: 100%;
+    min-height: 0;
+    object-fit: cover;
+    filter: brightness(1.4) contrast(1.12) saturate(1.08);
+  }
+
+  .flux-video:nth-child(2) {
+    transform: scaleY(-1);
+  }
+
+  [data-sky="day"] .flux {
     display: none;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .flux-video {
+    .flux {
       display: none;
     }
   }
