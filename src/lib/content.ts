@@ -127,7 +127,7 @@ export const CONTENT: Record<Lang, Content> = {
     hero: {
       eyebrow: "Services informatiques · Dakar, Sénégal",
       title: ["On gère", "votre IT,", "du câble", "au code."],
-      lede: "De l'installation du serveur jusqu'au développement de votre application métier, en passant par l'infrastructure réseau et la sécurité physique de vos locaux — nous accompagnons votre transformation digitale de bout en bout.",
+      lede: "Le câble dans le mur, le serveur dans le local, l'application que vos équipes ouvrent chaque matin. Rien de tout cela n'est décoratif : c'est ce qui fait qu'une entreprise tient debout un lundi de panne.",
       ctaPrimary: "Demander un devis",
       ctaSecondary: "Découvrir nos services",
       scrollHint: "Faites défiler",
@@ -149,7 +149,7 @@ export const CONTENT: Record<Lang, Content> = {
     },
     capabilities: {
       eyebrow: "Services",
-      title: "Huit domaines, un seul prestataire",
+      title: "Sept domaines, un seul prestataire",
       lede: "Vous perdez du temps à jongler entre trois prestataires — un pour les caméras, un pour le réseau, un autre pour les logiciels. Une équipe unique, un interlocuteur unique, une facture unique.",
       items: [
         {
@@ -157,7 +157,7 @@ export const CONTENT: Record<Lang, Content> = {
           code: "DEV",
           accent: "arc",
           title: "Développement d'applications",
-          lede: "Des solutions logicielles performantes, évolutives et adaptées aux besoins spécifiques de votre entreprise, de la conception à la mise en production.",
+          lede: "Le logiciel que votre métier réclame et qu'aucun éditeur ne vend. On écrit, on livre, on corrige quand vous appelez.",
           points: [
             "Applications web, mobiles et desktop",
             "Sites web professionnels",
@@ -170,7 +170,7 @@ export const CONTENT: Record<Lang, Content> = {
           code: "RES",
           accent: "arc",
           title: "Réseaux et systèmes",
-          lede: "Conception, déploiement et administration d'infrastructures réseau et systèmes fiables, sécurisées et adaptées à vos besoins.",
+          lede: "Le câblage, les baies, les serveurs et l'annuaire qui décide qui ouvre quoi. C'est la plomberie du bâtiment : invisible tant qu'elle tient.",
           points: [
             "Infrastructures LAN et WAN, câblage structuré",
             "Interconnexion de sites : VPN, liaison radio PtP et PtMP",
@@ -183,7 +183,7 @@ export const CONTENT: Record<Lang, Content> = {
           code: "TEL",
           accent: "arc",
           title: "Téléphonie IP",
-          lede: "Solutions de téléphonie IP et de communications unifiées pour améliorer la collaboration et réduire les coûts de communication.",
+          lede: "Vos postes passent sur le réseau. Un numéro qui suit la personne et non le bureau, et la facture de l'opérateur qui maigrit.",
           points: [
             "Téléphonie IP sur IPBX",
             "Déploiement VoIP et portabilité des numéros",
@@ -196,7 +196,7 @@ export const CONTENT: Record<Lang, Content> = {
           code: "SEC",
           accent: "arc",
           title: "Sécurité physique",
-          lede: "Des solutions fiables pour protéger vos locaux, vos biens et vos collaborateurs grâce à des systèmes de surveillance et de contrôle d'accès performants.",
+          lede: "Caméras, badges, enregistrement. Savoir qui est entré, quand, et pouvoir le montrer — le jour où la question se pose, il est trop tard pour l'installer.",
           points: [
             "Vidéosurveillance IP (CCTV)",
             "Contrôle d'accès",
@@ -222,7 +222,7 @@ export const CONTENT: Record<Lang, Content> = {
           code: "SUP",
           accent: "ember",
           title: "Support IT et infogérance",
-          lede: "Gestion, maintenance et suivi de votre infrastructure informatique pour assurer disponibilité, sécurité et performances — pendant que vous vous concentrez sur votre activité.",
+          lede: "On surveille le parc, on applique les mises à jour, on décroche quand ça casse. Le but est que vous ayez rarement à nous appeler.",
           points: [
             "Maintenance informatique",
             "Assistance technique sur site et à distance",
@@ -235,7 +235,7 @@ export const CONTENT: Record<Lang, Content> = {
           code: "EQP",
           accent: "ember",
           title: "Équipements et licences",
-          lede: "Choix, fourniture, installation et intégration d'équipements informatiques adaptés à votre activité.",
+          lede: "On choisit le matériel, on le fait venir, on l'installe et on le raccorde. Vous recevez des machines qui marchent, pas des cartons.",
           points: [
             "Ordinateurs et stations de travail",
             "Serveurs et solutions de stockage",
@@ -253,7 +253,7 @@ export const CONTENT: Record<Lang, Content> = {
     method: {
       eyebrow: "Méthode",
       title: "Notre approche",
-      lede: "Un accompagnement structuré en cinq étapes, de l'analyse initiale jusqu'au support dans la durée.",
+      lede: "Cinq étapes, de la première visite jusqu'aux années qui suivent.",
       steps: [
         {
           n: "01",
@@ -285,7 +285,7 @@ export const CONTENT: Record<Lang, Content> = {
     sectors: {
       eyebrow: "Clients",
       title: "Nos secteurs d'intervention",
-      lede: "Les mêmes exigences de fiabilité, quel que soit le métier.",
+      lede: "Une banque, une clinique et une école n'ont pas les mêmes contraintes. Elles ont la même intolérance à la panne.",
       items: [
         "Entreprises",
         "PME / PMI",
@@ -385,7 +385,7 @@ export const CONTENT: Record<Lang, Content> = {
     contact: {
       eyebrow: "Contact",
       title: "Parlons de votre projet",
-      lede: "Dites-nous ce qui vous bloque. Nous étudions votre besoin et vous proposons une solution adaptée.",
+      lede: "Dites-nous ce qui ne marche pas. On regarde, et on vous dit ce que ça demande.",
       channels: [
         {
           label: "Écrire",
@@ -465,7 +465,7 @@ export const CONTENT: Record<Lang, Content> = {
     hero: {
       eyebrow: "IT services · Dakar, Senegal",
       title: ["We run", "your IT,", "from cable", "to code."],
-      lede: "From installing the server to building your line-of-business application, by way of the network and the physical security of your premises — we take your digital transformation end to end.",
+      lede: "The cable in the wall, the server in the back room, the application your staff open every morning. None of it is decoration: it is what keeps a business standing on a Monday when something breaks.",
       ctaPrimary: "Request a quote",
       ctaSecondary: "See our services",
       scrollHint: "Scroll",
@@ -487,7 +487,7 @@ export const CONTENT: Record<Lang, Content> = {
     },
     capabilities: {
       eyebrow: "Services",
-      title: "Eight fields, one supplier",
+      title: "Seven fields, one supplier",
       lede: "You lose time juggling three suppliers — one for the cameras, one for the network, another for the software. One team, one point of contact, one invoice.",
       items: [
         {
@@ -495,7 +495,7 @@ export const CONTENT: Record<Lang, Content> = {
           code: "DEV",
           accent: "arc",
           title: "Application development",
-          lede: "Software that performs, scales, and fits what your business actually does — from the specification to production.",
+          lede: "The software your trade needs and no vendor sells. We write it, we ship it, we fix it when you call.",
           points: [
             "Web, mobile and desktop applications",
             "Professional websites",
@@ -508,7 +508,7 @@ export const CONTENT: Record<Lang, Content> = {
           code: "NET",
           accent: "arc",
           title: "Networks and systems",
-          lede: "Designing, deploying and administering network and system infrastructure that is reliable, secure and sized for you.",
+          lede: "Cabling, racks, servers, and the directory that decides who opens what. It is the plumbing of the building: invisible while it holds.",
           points: [
             "LAN and WAN infrastructure, structured cabling",
             "Site interconnection: VPN, PtP and PtMP radio links",
@@ -521,7 +521,7 @@ export const CONTENT: Record<Lang, Content> = {
           code: "TEL",
           accent: "arc",
           title: "IP telephony",
-          lede: "IP telephony and unified communications, to work together better and spend less on calls.",
+          lede: "Your handsets move onto the network. A number that follows the person rather than the desk, and a smaller bill from the carrier.",
           points: [
             "IP telephony on an IPBX",
             "VoIP rollout and number portability",
@@ -534,7 +534,7 @@ export const CONTENT: Record<Lang, Content> = {
           code: "SEC",
           accent: "arc",
           title: "Physical security",
-          lede: "Protecting your premises, your assets and your people with surveillance and access control that works.",
+          lede: "Cameras, badges, recording. Knowing who came in and when, and being able to show it — the day the question is asked, it is too late to install it.",
           points: [
             "IP video surveillance (CCTV)",
             "Access control",
@@ -560,7 +560,7 @@ export const CONTENT: Record<Lang, Content> = {
           code: "SUP",
           accent: "ember",
           title: "IT support and managed services",
-          lede: "Running, maintaining and watching your IT so it stays available, secure and quick — while you get on with your work.",
+          lede: "We watch the estate, apply the updates, and pick up the phone when something breaks. The point is that you rarely have to call.",
           points: [
             "IT maintenance",
             "On-site and remote technical assistance",
@@ -573,7 +573,7 @@ export const CONTENT: Record<Lang, Content> = {
           code: "EQP",
           accent: "ember",
           title: "Equipment and licences",
-          lede: "Choosing, supplying, installing and integrating the hardware your work actually needs.",
+          lede: "We pick the hardware, get it shipped, install it and wire it in. You receive machines that work, not boxes.",
           points: [
             "Computers and workstations",
             "Servers and storage",
@@ -591,7 +591,7 @@ export const CONTENT: Record<Lang, Content> = {
     method: {
       eyebrow: "Method",
       title: "How we work",
-      lede: "Five steps, from the first analysis through to support over time.",
+      lede: "Five steps, from the first site visit to the years that follow.",
       steps: [
         {
           n: "01",
@@ -623,7 +623,7 @@ export const CONTENT: Record<Lang, Content> = {
     sectors: {
       eyebrow: "Clients",
       title: "Sectors we work in",
-      lede: "The same standard of reliability, whatever the trade.",
+      lede: "A bank, a clinic and a school do not share the same constraints. They share the same intolerance for downtime.",
       items: [
         "Businesses",
         "Small and medium industry",
@@ -723,7 +723,7 @@ export const CONTENT: Record<Lang, Content> = {
     contact: {
       eyebrow: "Contact",
       title: "Tell us about your project",
-      lede: "Tell us what is blocking you. We look at what you need and propose something that fits.",
+      lede: "Tell us what is not working. We look, and we tell you what it takes.",
       channels: [
         {
           label: "Email",
