@@ -48,37 +48,32 @@ export default function Backdrop() {
 
           Muette, en boucle, jouée en ligne sur iOS. Sans « controls » ni piste
           audio : ce n'est pas un lecteur, c'est une matière. */}
-      {/* Le champ, en trois bandes.
+      {/* Le champ, une seule vidéo.
 
-          Une seule vidéo tendue sur l'écran ne pouvait pas faire un fond : le
-          rush concentre tout son sujet — une ligne d'horizon et un champ de
-          particules — dans sa moitié basse, et en « cover » sur un écran large
-          cette bande sort du cadre. Le reste est du noir, et en mélange par
-          écran le noir ne dépose rien. D'où une galerie sur un sol nu, quoi
-          qu'on fasse au masque ou à la luminosité.
+          J'étais passé par trois bandes empilées pour couvrir la hauteur. Le
+          remède était pire : les trois répétaient la ligne d'horizon du rush,
+          et ces traits en travers se lisaient comme ce qu'ils étaient, trois
+          morceaux collés. Le décor y passait tout entier — plus de lune, plus
+          de ciel, un bleu uniforme.
 
-          Le rush est donc recadré sur sa bande utile, et cette bande est
-          répétée sur la hauteur. Trois exemplaires du même élément et non trois
-          fichiers : le navigateur ne décode qu'une fois et partage les images
-          entre les trois lecteurs.
+          Ce qui me les avait fait poser n'était d'ailleurs pas la bonne cause.
+          La galerie restait nue à cause du bandeau de section, opaque sur toute
+          la largeur, et du canvas de l'eau qui passait au-dessus. Les deux sont
+          corrigés ; une seule vidéo suffit donc, et elle est ce qu'elle doit
+          être : une texture, pas un décor.
 
-          Retournées une fois sur deux, sinon on lit la répétition : trois
-          bandes identiques empilées font un motif, alternées elles font un
-          champ. */}
-      <div className="flux" aria-hidden="true">
-        {[0, 1, 2].map((i) => (
-          <video
-            key={i}
-            className="flux-video"
-            src="/video/flux.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-          />
-        ))}
-      </div>
+          Muette, en boucle, jouée en ligne sur iOS. Sans commandes ni piste
+          audio : ce n'est pas un lecteur. */}
+      <video
+        className="flux-video"
+        src="/video/flux.mp4"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        aria-hidden="true"
+      />
 
       {/* On narrow screens the figure sits behind the copy, so the left edge is
           darkened enough to keep body text at AA contrast. */}

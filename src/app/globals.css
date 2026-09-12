@@ -365,40 +365,40 @@
     }
   }
 
-  /* Le champ, devant la figure et sur toute la page.
+  /* Le champ : une texture, pas un décor.
 
-     Trois bandes empilées : le rush ne porte son sujet que dans une bande, et
-     une bande seule laissait le reste de l'écran vide. Retournées une fois sur
-     deux, sans quoi la répétition se lit.
+     Une seule vidéo tendue sur l'écran. J'étais passé par trois bandes
+     empilées et c'était pire que le mal : elles répétaient la ligne d'horizon
+     du rush, ces traits en travers trahissaient le collage, et le décor y
+     passait — plus de lune, plus de ciel, un bleu uniforme. Le fond doit se
+     tenir sous la page, pas la remplacer.
 
-     Mélange par écran, et c'est ce qui fait qu'on ne voit pas plusieurs
-     sources : la vidéo est faite de traits clairs sur un noir quasi pur, et en
-     « screen » le noir ne dépose rien. Il n'y a ni rectangle, ni bord, ni
-     raccord — seulement de la lumière ajoutée au même fond.
+     Au-dessus de l'eau, qui est à dix. Le canvas de la surface porte z-10 et le
+     champ était à un : l'eau le recouvrait, sans que cela se voie tant que le
+     bandeau de section peignait un sol opaque par-dessus les deux. Un défaut
+     en cachait un autre.
+
+     Le mélange par écran est ce qui fait qu'on ne voit pas deux sources : le
+     rush est fait de traits clairs sur un noir quasi pur, et en « screen » le
+     noir ne dépose rien. Ni rectangle, ni bord, ni raccord — de la lumière
+     ajoutée au même fond, c'est tout.
 
      Le masque horizontal épargne la colonne de texte, où les traînées
-     passeraient derrière la copie. Il ne l'éteint pas complètement : à un quart
-     de sa force, le champ existe sous les paragraphes sans les traverser. */
-  .flux {
-    /* Fixe, et non absolu. Le parent est lui-même fixe et sans hauteur propre :
-       « inset: 0 » n'y donnait que la hauteur du contenu — relevé à 317 pixels
-       au lieu des 950 de l'écran, d'où deux tiers de page sans champ. */
+     passeraient derrière la copie, sans l'éteindre : à un quart de sa force, le
+     champ existe sous les paragraphes sans les traverser.
+  ---------------------------------------------------------------- */
+  .flux-video {
     position: fixed;
     inset: 0;
     height: 100svh;
-    /* Au-dessus de l'eau, qui est à dix.
-
-       Le canvas de la surface d'eau porte z-10 et le champ était à un : l'eau
-       le recouvrait. Cela ne se voyait pas tant que le bandeau de section
-       peignait un sol opaque par-dessus les deux — un défaut en cachait un
-       autre, et c'est pour cela que rendre le bandeau translucide n'a d'abord
-       rien donné. Mesuré : 37 sur 255 au quatre-vingt-quinzième centile avec
-       le champ à un, 111 à vingt. */
     z-index: 20;
-    display: flex;
-    flex-direction: column;
+    width: 100%;
+    object-fit: cover;
     pointer-events: none;
-    opacity: 0.92;
+    /* Assez pour se voir, assez peu pour rester dessous. La lune et la figure
+       sont ce que la page a à montrer ; le champ est ce sur quoi elles se
+       tiennent. */
+    opacity: 0.5;
     mix-blend-mode: screen;
     -webkit-mask-image: linear-gradient(
       96deg,
@@ -414,24 +414,12 @@
     );
   }
 
-  .flux-video {
-    flex: 1 1 0;
-    width: 100%;
-    min-height: 0;
-    object-fit: cover;
-    filter: brightness(1.4) contrast(1.12) saturate(1.08);
-  }
-
-  .flux-video:nth-child(2) {
-    transform: scaleY(-1);
-  }
-
-  [data-sky="day"] .flux {
+  [data-sky="day"] .flux-video {
     display: none;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .flux {
+    .flux-video {
       display: none;
     }
   }
