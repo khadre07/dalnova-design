@@ -48,27 +48,6 @@ export default function Backdrop() {
 
           Muette, en boucle, jouée en ligne sur iOS. Sans « controls » ni piste
           audio : ce n'est pas un lecteur, c'est une matière. */}
-      {/* Le clair de lune.
-
-          La lune était là — dans la planche de ciel — mais elle ne faisait
-          rien. Elle éclaire maintenant : une nappe posée à l'endroit exact où
-          elle tombe, relevé à l'écran plutôt qu'estimé, 78 pour cent en
-          largeur et 30 en hauteur.
-
-          Deux couches, parce que la lumière lunaire a deux composantes. Le
-          halo, serré autour du disque, qui dit d'où elle vient. Et la nappe,
-          large et très faible, qui descend sur la page : c'est elle qu'on ne
-          remarque pas et qui fait que la galerie paraît éclairée plutôt que
-          simplement posée dans le noir.
-
-          Elle respire. Pas un clignotement — une lune ne clignote pas — mais
-          une lente montée et descente sur vingt secondes, du même ordre que la
-          dérive des nuages derrière elle. */}
-      <div className="moonlight" aria-hidden="true">
-        <span className="moonlight-halo" />
-        <span className="moonlight-wash" />
-      </div>
-
       {/* Le champ, une seule vidéo.
 
           J'étais passé par trois bandes empilées pour couvrir la hauteur. Le

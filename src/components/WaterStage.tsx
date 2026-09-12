@@ -85,6 +85,12 @@ export default function WaterStage() {
         uHalf: { value: new THREE.Vector2(1, 1) },
         // The figure is one unit tall; the ripples are sized against it.
         uUnit: { value: 1 },
+        /* La lune, dans les unités du plan. Posée à la mesure : son disque se
+           trouve à 78 pour cent de la largeur de l'écran et 30 de la hauteur,
+           relevé en masquant tout le reste du décor. Ce qui compte ici est son
+           écart en x au plan, qui est lui-même calé sur la figure. */
+        uMoon: { value: new THREE.Vector2(0, 0) },
+        uMoonLight: { value: 0 },
       };
       /* Added at night, painted by day. Adding light to a pale ground does
          nothing at all, so under a bright sky the water is drawn over what is
@@ -140,6 +146,21 @@ export default function WaterStage() {
         const depth = width;
         water.scale.set(width, depth, 1);
         waterUniforms.uHalf.value.set(width / 2, depth / 2);
+
+        /* Le clair de lune, placé une fois par mise en page.
+
+           La lune est à 78 pour cent de la largeur de l'écran ; le plan est
+           centré sur la figure, à `at`. L'écart entre les deux, ramené aux
+           unités du plan — lesquelles valent l'unité monde, uUnit restant à un —
+           est où son reflet doit tomber. Il est devant, pas
+           dessous : une lune haute dans le ciel se reflète vers celui qui
+           regarde, donc en y négatif.
+
+           Éteint en plein jour. Il n'y a pas de clair de lune à midi, et la
+           surface y est peinte par-dessus le fond plutôt qu'ajoutée. */
+        const MOON_AT = 0.78;
+        waterUniforms.uMoon.value.set((MOON_AT - at) * visibleWidth, -2.6);
+        waterUniforms.uMoonLight.value = day ? 0 : 1;
 
         const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
         renderer.setPixelRatio(dpr);

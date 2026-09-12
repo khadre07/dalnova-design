@@ -365,86 +365,13 @@
     }
   }
 
-  /* ---------------------------------------------------------------
-     Le clair de lune
+  /* Le clair de lune est passé dans l'eau.
 
-     Ancré sur la position réelle de la lune, mesurée à l'écran et non estimée :
-     78 pour cent en largeur, 30 en hauteur. Les deux couches partent de ce
-     point, donc la lumière vient de la lune et pas d'un endroit plausible.
-
-     Sous le champ vidéo — qui est à vingt — et au-dessus de l'eau, à dix. La
-     lune éclaire donc la scène, et les traînées de données passent devant elle
-     comme elles passent devant tout le reste.
-
-     Le blanc est bleuté et non pur : la lumière de la lune est du soleil
-     réfléchi par une roche grise, et un blanc franc sur une page nuit se lit
-     comme une lampe.
-  ---------------------------------------------------------------- */
-  .moonlight {
-    position: fixed;
-    inset: 0;
-    height: 100svh;
-    z-index: 15;
-    pointer-events: none;
-    mix-blend-mode: screen;
-  }
-
-  .moonlight-halo,
-  .moonlight-wash {
-    position: absolute;
-    inset: 0;
-    display: block;
-  }
-
-  /* Le halo : serré, il dit d'où vient la lumière. */
-  .moonlight-halo {
-    background: radial-gradient(
-      34vmax 34vmax at 78% 30%,
-      rgba(196, 222, 245, 0.3) 0%,
-      rgba(160, 196, 228, 0.14) 26%,
-      rgba(120, 160, 200, 0.05) 52%,
-      transparent 74%
-    );
-    animation: moon-breathe 20s ease-in-out infinite alternate;
-  }
-
-  /* La nappe : large et très faible, c'est elle qui fait qu'une section
-     paraît éclairée plutôt que posée dans le noir. Décalée d'un tiers de
-     cycle, pour que les deux ne montent pas ensemble — deux couches en phase
-     font un clignotement, déphasées elles font une respiration. */
-  .moonlight-wash {
-    background: radial-gradient(
-      120vmax 88vmax at 78% 30%,
-      rgba(176, 206, 234, 0.13) 0%,
-      rgba(140, 176, 210, 0.07) 34%,
-      rgba(96, 132, 172, 0.025) 62%,
-      transparent 86%
-    );
-    animation: moon-breathe 20s ease-in-out infinite alternate -7s;
-  }
-
-  @keyframes moon-breathe {
-    from {
-      opacity: 0.72;
-      transform: scale(1);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1.06);
-    }
-  }
-
-  /* En plein jour il n'y a pas de lune à suivre. */
-  [data-sky="day"] .moonlight {
-    display: none;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .moonlight-halo,
-    .moonlight-wash {
-      animation: none;
-    }
-  }
+     C'était deux dégradés radiaux plein écran, donc deux compositions par
+     image pour dire une chose que la surface savait déjà dire : elle porte un
+     reflet et une nappe depuis le premier jour, seulement centrés sur la
+     figure. Ils ont maintenant une seconde source, posée sur la lune. Un
+     calque de moins, et une lumière qui ondule au lieu d'être posée à plat. */
 
   /* Le champ : une texture, pas un décor.
 

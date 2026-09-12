@@ -38,6 +38,15 @@ export const WATER_FRAG = /* glsl */ `
      ripples the same size relative to what is floating on them rather than the
      same size in a scene's own arbitrary units. */
   uniform float uUnit;
+  /* Où se tient la lune, dans les unités du plan, et ce qu'elle donne.
+
+     Elle était un calque plein écran par-dessus toute la page : un dégradé
+     radial qui coûtait une composition à chaque image pour dire une chose que
+     l'eau sait déjà dire. L'eau porte un reflet et une nappe depuis le
+     premier jour — ils étaient seulement centrés sur la figure. Il suffisait de
+     leur donner une seconde source. */
+  uniform vec2 uMoon;
+  uniform float uMoonLight;
   varying vec2 vUv;
 
   void main() {
@@ -80,7 +89,27 @@ export const WATER_FRAG = /* glsl */ `
     // outward rather than stopping at arm's length.
     float pool = exp(-r * 0.9) * (1.0 - exp(-r * 5.6));
 
-    float a = rings * 0.26 + grid * 0.17 + smear * 0.42 + pool * 0.3;
+    /* Le clair de lune, dans l'eau.
+
+       Deux termes, les mêmes que pour la lumière du milieu, mais posés sur la
+       lune plutôt que sur la figure.
+
+       Le sentier : une lune sur une eau sombre ne fait pas une tache, elle fait
+       une allée qui vient vers celui qui regarde. Étroite en travers, longue
+       dans la profondeur, et rompue sur sa longueur — continue, elle se lirait
+       comme une bande peinte.
+
+       La nappe : large et très faible, c'est elle qui fait qu'une surface
+       paraît éclairée plutôt que posée dans le noir. Elle décroît depuis la
+       lune, donc la lumière vient d'un endroit et non de partout. */
+    vec2 m = w - uMoon;
+    float mAway = m.y > 0.0 ? m.y * 2.6 : -m.y * 0.6;
+    float sentier = exp(-abs(m.x) * 2.2) * exp(-mAway * 0.9);
+    sentier *= 0.5 + 0.5 * sin(m.y * 12.0 - uTime * 1.1);
+    float nappe = exp(-length(m) * 0.42);
+
+    float a = rings * 0.26 + grid * 0.17 + smear * 0.42 + pool * 0.3
+            + (sentier * 0.5 + nappe * 0.26) * uMoonLight;
 
     /* Held to the plane's own edges rather than to a circle. A radial cut made
        the surface a disc that went out well before the sides of the frame. The
@@ -90,6 +119,13 @@ export const WATER_FRAG = /* glsl */ `
     a *= uIgnite;
 
     if (a <= 0.001) discard;
-    gl_FragColor = vec4(uAccent * a, a);
+
+    /* La part lunaire ne prend pas l'accent. Le reste de l'eau suit la couleur
+       de la section — c'est ce qui fait passer la page du cyan à l'ambre — mais
+       une lune ne change pas de couleur avec le sujet dont on parle. Un blanc
+       bleuté, qui est du soleil réfléchi par une roche grise. */
+    float part = (sentier * 0.5 + nappe * 0.26) * uMoonLight / max(a, 0.001);
+    vec3 teinte = mix(uAccent, vec3(0.74, 0.83, 0.94), clamp(part, 0.0, 1.0));
+    gl_FragColor = vec4(teinte * a, a);
   }
 `;
