@@ -9,7 +9,6 @@ import Method from "@/components/Method";
 import Partners from "@/components/Partners";
 import Sectors from "@/components/Sectors";
 import SiteNav from "@/components/SiteNav";
-import SmokeVeil from "@/components/SmokeVeil";
 
 const shell = { paddingInline: "var(--shell-x)" };
 
@@ -40,10 +39,6 @@ export default function Page() {
       <Boot />
 
       <Backdrop />
-
-      {/* Above the copy (z-10), below the header (z-50): the smoke has to be
-          able to roll over the text it is writing. */}
-      <SmokeVeil />
 
       <SiteNav />
 

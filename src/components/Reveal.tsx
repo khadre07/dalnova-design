@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, type ElementType, type ReactNode } from "react";
 import { CHARGE_MS, chargeLive } from "@/lib/charge";
-import { registerBlock, setBlockActive } from "@/lib/veil";
 
 type Props = {
   children: ReactNode;
@@ -55,20 +54,6 @@ export default function Reveal({ children, as: Tag = "div", delay = 0, className
     observer.observe(node);
     return () => observer.disconnect();
   }, [delay]);
-
-  /* Registered for as long as the block is mounted; the smoke layer reads the
-     registry every frame. */
-  useEffect(() => {
-    const node = ref.current;
-    return node ? registerBlock(node) : undefined;
-  }, []);
-
-  /* Leaving resets the block's ink, so the smoke writes it again on the way
-     back rather than finding it already done. */
-  useEffect(() => {
-    const node = ref.current;
-    if (node) setBlockActive(node, shown);
-  }, [shown]);
 
   /* Narrowed before it is rendered.
 

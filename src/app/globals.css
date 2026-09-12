@@ -1374,22 +1374,15 @@
      being written: a finished paragraph carries no filter at all.
   ------------------------------------------------------------------- */
 
-  .veil-canvas {
-    mix-blend-mode: screen;
-  }
+  /* Le voile de fumée retiré.
 
-  [data-veil="on"] .reveal,
-  [data-veil="on"] .reveal[data-shown="true"] {
-    opacity: var(--ink, 0);
-    transform: none;
-    /* The rise is eased in JS, frame-rate independently. A CSS transition on
-       top would be a second easing fighting the first. */
-    transition: none;
-  }
+     Il écrivait la copie : son opacité était pilotée bloc par bloc au passage
+     des volutes, et trois règles la lui confiaient entièrement. Les retirer
+     sans le dire serait laisser une page dont le texte n'apparaît jamais.
 
-  [data-veil="on"] .reveal[data-inking] {
-    filter: blur(calc((1 - var(--ink, 0)) * 5px));
-  }
+     Le repli existait sous elles et reprend la main : .reveal part à zéro et
+     passe à un quand l'observateur la déclare vue. C'est la révélation
+     ordinaire, celle qui servait déjà en mouvement réduit. */
 
   /* ------------------------------------------------------------------
      Left column — one idea: a line is uncovered, not slid about. The mask
